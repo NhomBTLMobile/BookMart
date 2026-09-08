@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../constants/colors';
 
 type props = {
@@ -8,6 +8,8 @@ type props = {
     secureTextEntry?: boolean;
     value: string;
     onChangeText: (text: string) => void;
+    showPassword?: boolean;
+    onTongglePassword?: () => void;
 };
 
 export default function AuthInput({
@@ -16,6 +18,8 @@ export default function AuthInput({
     secureTextEntry = false,
     value,
     onChangeText,
+    showPassword,
+    onTongglePassword,
 }: props){
     return(
         <View style={styles.container}>
@@ -26,8 +30,17 @@ export default function AuthInput({
                 placeholderTextColor={COLORS.textSecondary}
                 value={value}
                 onChangeText={onChangeText}
+                secureTextEntry={secureTextEntry}
                 autoCapitalize="none"
+                autoCorrect={false}
             />
+
+            {/* Show/Hide Password */}
+            {secureTextEntry && onTongglePassword && (
+                <TouchableOpacity onPress ={onTongglePassword}>
+                    <Ionicons name = {showPassword ? 'eye-outline': 'eye-off-outline'} size={21} color={COLORS.textSecondary}/>
+                </TouchableOpacity>
+            )}
         </View>
     );
 }
