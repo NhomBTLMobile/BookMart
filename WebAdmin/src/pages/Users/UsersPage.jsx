@@ -1,118 +1,171 @@
-import { useState } from 'react'
 import {
-  Card, Table, Button, Input, Space, Modal, Form, Select,
-  Tag, Avatar, Switch, Tooltip, Popconfirm, Typography,
-} from 'antd'
+  CheckCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 import {
-  PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined,
-  UserOutlined, CheckCircleOutlined, StopOutlined,
-} from '@ant-design/icons'
-import { useCrud } from '../../hooks/useCrud'
-import { usersApi } from '../../api/services'
-import { App } from 'antd'
+  App,
+  Avatar,
+  Button,
+  Card,
+  Form,
+  Input,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Switch,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from "antd";
+import { useState } from "react";
+import { usersApi } from "../../api/services";
+import { useCrud } from "../../hooks/useCrud";
 
-const { Text } = Typography
+const { Text } = Typography;
 
-const ROLE_COLOR = { ADMIN: 'red', STAFF: 'blue', CUSTOMER: 'default' }
-const ROLE_LABEL = { ADMIN: 'Admin', STAFF: 'Staff', CUSTOMER: 'Khách hàng' }
+const ROLE_COLOR = { ADMIN: "red", STAFF: "blue", CUSTOMER: "default" };
+const ROLE_LABEL = { ADMIN: "Admin", STAFF: "Staff", CUSTOMER: "Khách hàng" };
 
 const INIT = {
-  email: '', password_hash: '', full_name: '',
-  phone_number: '', avatar_url: '', role: 'CUSTOMER', is_active: true,
-}
+  email: "",
+  password_hash: "",
+  full_name: "",
+  phone_number: "",
+  avatar_url: "",
+  role: "CUSTOMER",
+  is_active: true,
+};
 
 export default function UsersPage() {
-  const { message } = App.useApp()
-  const crud = useCrud(usersApi)
-  const [form] = Form.useForm()
-  const [open, setOpen]         = useState(false)
-  const [editing, setEditing]   = useState(null)
-  const [saving, setSaving]     = useState(false)
+  const { message } = App.useApp();
+  const crud = useCrud(usersApi);
+  const [form] = Form.useForm();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const openCreate = () => {
-    setEditing(null)
-    form.setFieldsValue(INIT)
-    setOpen(true)
-  }
+    setEditing(null);
+    form.setFieldsValue(INIT);
+    setOpen(true);
+  };
 
   const openEdit = (rec) => {
-    setEditing(rec)
+    setEditing(rec);
     form.setFieldsValue({
-      email:        rec.email,
-      password_hash: '',
-      full_name:    rec.full_name,
-      phone_number: rec.phone_number || '',
-      avatar_url:   rec.avatar_url  || '',
-      role:         rec.role,
-      is_active:    rec.is_active,
-    })
-    setOpen(true)
-  }
+      email: rec.email,
+      password_hash: "",
+      full_name: rec.full_name,
+      phone_number: rec.phone_number || "",
+      avatar_url: rec.avatar_url || "",
+      role: rec.role,
+      is_active: rec.is_active,
+    });
+    setOpen(true);
+  };
 
   const handleOk = async () => {
     try {
-      const values = await form.validateFields()
-      setSaving(true)
-      const payload = { ...values }
-      if (!payload.password_hash) delete payload.password_hash
-      if (editing) await crud.update(editing.id, payload)
-      else         await crud.create(payload)
-      setOpen(false)
+      const values = await form.validateFields();
+      setSaving(true);
+      const payload = { ...values };
+      if (!payload.password_hash) delete payload.password_hash;
+      if (editing) await crud.update(editing.id, payload);
+      else await crud.create(payload);
+      setOpen(false);
     } catch (err) {
-      if (err?.response) message.error(err.response.data?.message || 'Lỗi')
+      if (err?.response) message.error(err.response.data?.message || "Lỗi");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
-  const initials = name => name?.trim().split(' ').slice(-2).map(w => w[0]).join('').toUpperCase() || '?'
+  const initials = (name) =>
+    name
+      ?.trim()
+      .split(" ")
+      .slice(-2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase() || "?";
 
   const columns = [
     {
-      title: 'Người dùng',
-      dataIndex: 'full_name',
+      title: "Người dùng",
+      dataIndex: "full_name",
       render: (name, rec) => (
         <Space>
-          <Avatar style={{ background: 'linear-gradient(135deg,#52c41a,#237804)', fontWeight: 700 }}>
+          {/* Sử dụng prop 'src' của antd thay vì style background */}
+          <Avatar
+            src={rec.avatar_url || undefined}
+            style={{
+              backgroundColor: "#b6b6b6",
+              color: "#fff",
+              fontWeight: 700,
+            }}
+          >
             {initials(name)}
           </Avatar>
           <div>
             <div style={{ fontWeight: 600, fontSize: 13.5 }}>{name}</div>
-            <Text type="secondary" style={{ fontSize: 12 }}>{rec.email}</Text>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {rec.email}
+            </Text>
           </div>
         </Space>
       ),
     },
     {
-      title: 'Số điện thoại',
-      dataIndex: 'phone_number',
-      render: v => v || <Text type="secondary">—</Text>,
+      title: "Số điện thoại",
+      dataIndex: "phone_number",
+      render: (v) => v || <Text type="secondary">—</Text>,
     },
     {
-      title: 'Vai trò',
-      dataIndex: 'role',
-      render: v => <Tag color={ROLE_COLOR[v] || 'default'}>{ROLE_LABEL[v] || v}</Tag>,
+      title: "Vai trò",
+      dataIndex: "role",
+      render: (v) => (
+        <Tag color={ROLE_COLOR[v] || "default"}>{ROLE_LABEL[v] || v}</Tag>
+      ),
     },
     {
-      title: 'Trạng thái',
-      dataIndex: 'is_active',
-      render: v => v
-        ? <Tag icon={<CheckCircleOutlined />} color="success">Hoạt động</Tag>
-        : <Tag icon={<StopOutlined />}        color="error">Bị khóa</Tag>,
+      title: "Trạng thái",
+      dataIndex: "is_active",
+      render: (v) =>
+        v ? (
+          <Tag icon={<CheckCircleOutlined />} color="success">
+            Hoạt động
+          </Tag>
+        ) : (
+          <Tag icon={<StopOutlined />} color="error">
+            Bị khóa
+          </Tag>
+        ),
     },
     {
-      title: 'Ngày tạo',
-      dataIndex: 'created_at',
-      render: v => <Text type="secondary">{new Date(v).toLocaleDateString('vi-VN')}</Text>,
+      title: "Ngày tạo",
+      dataIndex: "created_at",
+      render: (v) => (
+        <Text type="secondary">{new Date(v).toLocaleDateString("vi-VN")}</Text>
+      ),
     },
     {
-      title: '',
-      key: 'actions',
+      title: "",
+      key: "actions",
       width: 90,
       render: (_, rec) => (
         <Space size={4}>
           <Tooltip title="Chỉnh sửa">
-            <Button icon={<EditOutlined />} size="small" onClick={() => openEdit(rec)} />
+            <Button
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => openEdit(rec)}
+            />
           </Tooltip>
           <Popconfirm
             title="Xóa người dùng này?"
@@ -129,16 +182,25 @@ export default function UsersPage() {
         </Space>
       ),
     },
-  ]
+  ];
 
   return (
     <>
       <div className="page-header-row">
         <div>
-          <Typography.Title level={4} style={{ margin: 0 }}>Người dùng</Typography.Title>
-          <Text type="secondary">Quản lý tài khoản người dùng trong hệ thống</Text>
+          <Typography.Title level={4} style={{ margin: 0 }}>
+            Người dùng
+          </Typography.Title>
+          <Text type="secondary">
+            Quản lý tài khoản người dùng trong hệ thống
+          </Text>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate} id="create-user-btn">
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={openCreate}
+          id="create-user-btn"
+        >
           Thêm người dùng
         </Button>
       </div>
@@ -149,7 +211,7 @@ export default function UsersPage() {
             prefix={<SearchOutlined />}
             placeholder="Tìm theo tên, email..."
             value={crud.search}
-            onChange={e => crud.handleSearch(e.target.value)}
+            onChange={(e) => crud.handleSearch(e.target.value)}
             style={{ width: 280 }}
             allowClear
           />
@@ -174,49 +236,77 @@ export default function UsersPage() {
 
       <Modal
         open={open}
-        title={editing ? 'Chỉnh sửa người dùng' : 'Thêm người dùng'}
+        title={editing ? "Chỉnh sửa người dùng" : "Thêm người dùng"}
         onOk={handleOk}
         onCancel={() => setOpen(false)}
-        okText={editing ? 'Lưu thay đổi' : 'Tạo'}
+        okText={editing ? "Lưu thay đổi" : "Tạo"}
         cancelText="Hủy"
         confirmLoading={saving}
         width={540}
         destroyOnHide
       >
         <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item label="Họ và tên" name="full_name" rules={[{ required: true }]}>
+          <Form.Item
+            label="Họ và tên"
+            name="full_name"
+            rules={[{ required: true }]}
+          >
             <Input placeholder="Nguyễn Văn A" />
           </Form.Item>
-          <Form.Item label="Email" name="email" rules={[{ required: true }, { type: 'email' }]}>
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[{ required: true }, { type: "email" }]}
+          >
             <Input placeholder="email@example.com" />
           </Form.Item>
           <Form.Item
-            label={editing ? 'Mật khẩu mới (để trống nếu không đổi)' : 'Mật khẩu'}
+            label={
+              editing ? "Mật khẩu mới (để trống nếu không đổi)" : "Mật khẩu"
+            }
             name="password_hash"
             rules={editing ? [] : [{ required: true, min: 6 }]}
           >
             <Input.Password placeholder="••••••••" />
           </Form.Item>
-          <Space style={{ width: '100%' }} size={12}>
-            <Form.Item label="Số điện thoại" name="phone_number" style={{ flex: 1, marginBottom: 0 }}>
+          <Space style={{ width: "100%" }} size={12}>
+            <Form.Item
+              label="Số điện thoại"
+              name="phone_number"
+              style={{ flex: 1, marginBottom: 0 }}
+            >
               <Input placeholder="0901234567" />
             </Form.Item>
-            <Form.Item label="Vai trò" name="role" style={{ flex: 1, marginBottom: 0 }}>
-              <Select options={[
-                { label: 'Khách hàng', value: 'CUSTOMER' },
-                { label: 'Staff',      value: 'STAFF' },
-                { label: 'Admin',      value: 'ADMIN' },
-              ]} />
+            <Form.Item
+              label="Vai trò"
+              name="role"
+              style={{ flex: 1, marginBottom: 0 }}
+            >
+              <Select
+                options={[
+                  { label: "Khách hàng", value: "CUSTOMER" },
+                  { label: "Staff", value: "STAFF" },
+                  { label: "Admin", value: "ADMIN" },
+                ]}
+              />
             </Form.Item>
           </Space>
-          <Form.Item label="Avatar URL" name="avatar_url" style={{ marginTop: 16 }}>
+          <Form.Item
+            label="Avatar URL"
+            name="avatar_url"
+            style={{ marginTop: 16 }}
+          >
             <Input placeholder="https://..." />
           </Form.Item>
-          <Form.Item label="Trạng thái" name="is_active" valuePropName="checked">
+          <Form.Item
+            label="Trạng thái"
+            name="is_active"
+            valuePropName="checked"
+          >
             <Switch checkedChildren="Hoạt động" unCheckedChildren="Khóa" />
           </Form.Item>
         </Form>
       </Modal>
     </>
-  )
+  );
 }
