@@ -22,6 +22,9 @@ api.interceptors.response.use(
   async (err) => {
     const original = err.config
     if (err.response?.status === 401 && !original._retry) {
+      if (original.url === '/Users/login') {
+        return Promise.reject(err)
+      }
       original._retry = true
       try {
         const refreshToken = localStorage.getItem('refreshToken')
@@ -33,7 +36,9 @@ api.interceptors.response.use(
         return api(original)
       } catch {
         localStorage.clear()
-        window.location.href = '/login'
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
       }
     }
     return Promise.reject(err)

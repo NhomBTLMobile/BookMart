@@ -105,7 +105,7 @@ export default function UsersPage() {
           <Avatar
             src={rec.avatar_url || undefined}
             style={{
-              backgroundColor: "#b6b6b6",
+              backgroundColor: "#999999",
               color: "#fff",
               fontWeight: 700,
             }}
