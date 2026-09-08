@@ -44,7 +44,7 @@ body,
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #52c41a, #237804);
+  background: linear-gradient(135deg, #689f38, #3d6b1d);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,7 +135,7 @@ body,
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #52c41a, #237804);
+  background: linear-gradient(135deg, #689f38, #3d6b1d);
   display: flex;
   align-items: center;
   justify-content: center;

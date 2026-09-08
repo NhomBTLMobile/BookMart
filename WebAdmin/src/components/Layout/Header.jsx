@@ -49,7 +49,7 @@ export default function AppHeader() {
           <Switch
             checked={isDark}
             size="small"
-            style={{ background: isDark ? '#52c41a' : undefined }}
+            style={{ background: isDark ? '#689f38' : undefined }}
           />
           <MoonOutlined style={{ fontSize: 15, color: isDark ? '#c084fc' : undefined }} />
         </Space>

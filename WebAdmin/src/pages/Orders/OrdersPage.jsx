@@ -61,7 +61,7 @@ export default function OrdersPage() {
     {
       title: 'Tổng tiền',
       dataIndex: 'final_price',
-      render: v => <Text strong style={{ color: '#52c41a' }}>₫ {fmt(v || 0)}</Text>,
+      render: v => <Text strong style={{ color: '#689f38' }}>₫ {fmt(v || 0)}</Text>,
     },
     {
       title: 'Giảm giá',
@@ -142,10 +142,10 @@ export default function OrdersPage() {
               <Text strong>₫ {fmt(viewRec.total_price || 0)}</Text>
             </Descriptions.Item>
             <Descriptions.Item label="Giảm giá">
-              <Text style={{ color: '#52c41a' }}>{viewRec.discount_price > 0 ? `-₫ ${fmt(viewRec.discount_price)}` : '₫ 0'}</Text>
+              <Text style={{ color: '#689f38' }}>{viewRec.discount_price > 0 ? `-₫ ${fmt(viewRec.discount_price)}` : '₫ 0'}</Text>
             </Descriptions.Item>
             <Descriptions.Item label="Thành tiền" span={2}>
-              <Text strong style={{ fontSize: 16, color: '#52c41a' }}>₫ {fmt(viewRec.final_price || 0)}</Text>
+              <Text strong style={{ fontSize: 16, color: '#689f38' }}>₫ {fmt(viewRec.final_price || 0)}</Text>
             </Descriptions.Item>
             <Descriptions.Item label="Phương thức TT">
               <Tag color={viewRec.payment_method === 'VNPAY' ? 'purple' : 'default'}>{viewRec.payment_method}</Tag>

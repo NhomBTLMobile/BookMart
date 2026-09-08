@@ -1,19 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
+import { Form, Input, Button, Alert, Typography } from "antd";
 import {
-  Form,
-  Input,
-  Button,
-  Alert,
-  Typography,
-  Space,
-  theme as antTheme,
-} from "antd";
-import {
-  BookOutlined,
   MailOutlined,
   LockOutlined,
   ArrowRightOutlined,
+  EyeInvisibleOutlined,
+  EyeTwoTone,
   SunOutlined,
   MoonOutlined,
 } from "@ant-design/icons";
@@ -24,12 +17,17 @@ const { Title, Text } = Typography;
 export default function LoginPage() {
   const { login, user, isDark, toggleTheme } = useAuth();
   const navigate = useNavigate();
-  const { token } = antTheme.useToken();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   if (user) return <Navigate to="/" replace />;
+
+  const pageBg = isDark ? "#111b15" : "#eef3eeff";
+  const cardBg = isDark ? "#1a261f" : "#f1f5eb";
+  const textColorPrimary = isDark ? "#e4ebe4" : "#12422b";
+  const textColorSecondary = isDark ? "#8ca898" : "#4b6b58";
+  const inputBorder = isDark ? "#3d5746" : "#a3b8aa";
 
   const onFinish = async ({ email, password }) => {
     setError("");
@@ -42,7 +40,9 @@ export default function LoginPage() {
       }
       navigate("/");
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || "Lỗi kết nối API");
+      setError(
+        err?.response?.data?.message || err?.message || "Lỗi kết nối API",
+      );
     } finally {
       setLoading(false);
     }
@@ -53,259 +53,282 @@ export default function LoginPage() {
       style={{
         minHeight: "100vh",
         display: "flex",
-        background: token.colorBgLayout,
+        alignItems: "center",
+        justifyContent: "center",
+        background: pageBg,
         position: "relative",
         overflow: "hidden",
+        padding: "0 4%",
+        transition: "background 0.3s ease",
       }}
     >
-      {/* ── Left decorative panel ───────────────────────── */}
+      {/* Theme toggle top-right */}
+      <div style={{ position: "absolute", top: 24, right: 32, zIndex: 10 }}>
+        <Button
+          type="text"
+          icon={
+            isDark ? (
+              <SunOutlined style={{ color: "#faad14", fontSize: 20 }} />
+            ) : (
+              <MoonOutlined style={{ color: "#12422b", fontSize: 20 }} />
+            )
+          }
+          onClick={toggleTheme}
+        />
+      </div>
+
+      {/* Decorative blobs/leaves effect in background */}
       <div
         style={{
-          flex: 1,
-          background: `linear-gradient(145deg, #237804 0%, #52c41a 50%, #95de64 100%)`,
+          position: "absolute",
+          top: -50,
+          left: -50,
+          width: 300,
+          height: 300,
+          background: isDark
+            ? "radial-gradient(circle, rgba(104,159,56,0.15) 0%, rgba(17,27,21,0) 70%)"
+            : "radial-gradient(circle, rgba(104,159,56,0.15) 0%, rgba(255,255,255,0) 70%)",
+          borderRadius: "50%",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: -50,
+          left: -50,
+          width: 400,
+          height: 400,
+          background: isDark
+            ? "radial-gradient(circle, rgba(104,159,56,0.18) 0%, rgba(17,27,21,0) 70%)"
+            : "radial-gradient(circle, rgba(104,159,56,0.2) 0%, rgba(255,255,255,0) 70%)",
+          borderRadius: "50%",
+        }}
+      />
+
+      <div
+        style={{
           display: "flex",
-          flexDirection: "column",
+          width: "100%",
+          maxWidth: 1300,
           alignItems: "center",
-          justifyContent: "center",
-          padding: 60,
-          position: "relative",
-          overflow: "hidden",
+          gap: 40,
+          zIndex: 1,
         }}
       >
-        {/* Decorative circles */}
-        <div
-          style={{
-            position: "absolute",
-            width: 300,
-            height: 300,
-            borderRadius: "50%",
-            border: "60px solid rgba(255,255,255,0.07)",
-            top: -80,
-            left: -80,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: 220,
-            height: 220,
-            borderRadius: "50%",
-            border: "40px solid rgba(255,255,255,0.07)",
-            bottom: -60,
-            right: -60,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: 150,
-            height: 150,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.06)",
-            bottom: 100,
-            left: "30%",
-          }}
-        />
-
-        <div
-          style={{
-            position: "relative",
-            zIndex: 1,
-            maxWidth: 380,
-            textAlign: "center",
-          }}
-        >
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: 20,
-              background: "rgba(255,255,255,0.2)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 24px",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-            }}
-          >
-            <BookOutlined style={{ fontSize: 34, color: "white" }} />
-          </div>
+        {/* ── Left Text ───────────────────────── */}
+        <div style={{ flex: 1.2 }}>
           <Title
-            level={2}
             style={{
-              color: "white",
-              margin: "0 0 12px",
-              textShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              color: textColorPrimary,
+              marginBottom: 20,
+              fontWeight: 700,
+              fontSize: 54,
+              lineHeight: 1.2,
+              fontFamily: "Georgia, serif", // Serif font like in the image
             }}
           >
-            BookMart
+            Quản lý Nhà sách
+            <br />
+            thông minh
           </Title>
           <Text
             style={{
-              color: "rgba(255,255,255,0.85)",
-              fontSize: 15,
-              lineHeight: 1.7,
+              color: textColorPrimary,
+              fontSize: 18,
+              display: "block",
+              maxWidth: 420,
+              lineHeight: 1.6,
             }}
           >
-            Hệ thống quản lý nhà sách trực tuyến. Quản lý sách, đơn hàng và
-            khách hàng một cách dễ dàng.
+            Nền tảng quản trị tối ưu, đồng hành cùng bạn trên từng trang sách và
+            khách hàng.
           </Text>
+        </div>
 
+        {/* ── Center Image ───────────────────────── */}
+        <div style={{ flex: 1.5, display: "flex", justifyContent: "center" }}>
+          <img
+            src="/logo1.png"
+            alt="Illustration"
+            style={{
+              maxWidth: "100%",
+              maxHeight: "85vh",
+              objectFit: "contain",
+              filter: "drop-shadow(0 20px 40px rgba(0, 0, 0, 0.05))",
+            }}
+          />
+        </div>
+
+        {/* ── Right login form ─────────────────────────────── */}
+        <div style={{ flex: 1, minWidth: 380, maxWidth: 420 }}>
           <div
             style={{
-              marginTop: 48,
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
+              background: cardBg,
+              borderRadius: 24,
+              padding: "48px 40px",
+              boxShadow: isDark
+                ? "0 24px 50px rgba(0, 0, 0, 0.2)"
+                : "0 24px 50px rgba(18, 66, 43, 0.08)",
+              position: "relative",
+              transition: "background 0.3s ease",
             }}
           >
-            {[
-              "Quản lý kho sách & tác giả",
-              "Theo dõi đơn hàng real-time",
-              "Phân quyền ADMIN & STAFF",
-            ].map((f) => (
-              <div
-                key={f}
-                style={{ display: "flex", alignItems: "center", gap: 10 }}
+            <div style={{ marginBottom: 32, textAlign: "center" }}>
+              <img
+                src="/logo.png"
+                alt="BookMart Logo"
+                style={{ height: 80, marginBottom: 16 }}
+              />
+              <Title
+                level={4}
+                style={{
+                  margin: "0 0 8px",
+                  color: textColorPrimary,
+                  fontWeight: 700,
+                }}
               >
-                <div
+                Đăng nhập hệ thống
+              </Title>
+              <Text style={{ color: textColorSecondary, fontSize: 13 }}>
+                Vui lòng nhập thông tin để tiếp tục
+              </Text>
+            </div>
+
+            {error && (
+              <Alert
+                message={error}
+                type="error"
+                showIcon
+                closable
+                onClose={() => setError("")}
+                style={{ marginBottom: 24, borderRadius: 8 }}
+              />
+            )}
+
+            <Form
+              layout="vertical"
+              onFinish={onFinish}
+              autoComplete="off"
+              size="large"
+            >
+              <Form.Item
+                label={
+                  <span
+                    style={{
+                      color: textColorPrimary,
+                      fontSize: 13,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Email
+                  </span>
+                }
+                name="email"
+                rules={[
+                  { required: true, message: "Vui lòng nhập email" },
+                  { type: "email", message: "Email không hợp lệ" },
+                ]}
+                style={{ marginBottom: 20 }}
+              >
+                <Input
+                  id="login-email"
+                  prefix={
+                    <MailOutlined
+                      style={{ color: textColorSecondary, marginRight: 8 }}
+                    />
+                  }
+                  placeholder="admin@bookmart.vn"
                   style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: "50%",
-                    background: "rgba(255,255,255,0.25)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 10,
-                    color: "white",
-                    fontWeight: 700,
-                    flexShrink: 0,
+                    background: "transparent",
+                    borderColor: inputBorder,
+                    borderRadius: 8,
+                    height: 44,
+                    color: textColorPrimary,
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={
+                  <span
+                    style={{
+                      color: textColorPrimary,
+                      fontSize: 13,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Mật khẩu
+                  </span>
+                }
+                name="password"
+                rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
+                style={{ marginBottom: 32 }}
+              >
+                <Input.Password
+                  id="login-password"
+                  prefix={
+                    <LockOutlined
+                      style={{ color: textColorSecondary, marginRight: 8 }}
+                    />
+                  }
+                  placeholder="Nhập mật khẩu của bạn"
+                  iconRender={(visible) =>
+                    visible ? (
+                      <EyeTwoTone />
+                    ) : (
+                      <EyeInvisibleOutlined
+                        style={{ color: textColorSecondary }}
+                      />
+                    )
+                  }
+                  style={{
+                    background: "transparent",
+                    borderColor: inputBorder,
+                    borderRadius: 8,
+                    height: 44,
+                    color: textColorPrimary,
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item style={{ marginBottom: 0 }}>
+                <Button
+                  id="login-submit"
+                  type="primary"
+                  htmlType="submit"
+                  block
+                  loading={loading}
+                  icon={<ArrowRightOutlined />}
+                  iconPlacement="end"
+                  size="large"
+                  style={{
+                    height: 46,
+                    borderRadius: 24, // Capsule shape
+                    background: "#689f38", // Solid green matching image button, but lighter
+                    fontWeight: 600,
+                    boxShadow: "0 8px 20px rgba(104, 159, 56, 0.3)",
                   }}
                 >
-                  ✓
-                </div>
-                <Text style={{ color: "rgba(255,255,255,0.88)", fontSize: 14 }}>
-                  {f}
-                </Text>
-              </div>
-            ))}
+                  Đăng nhập
+                </Button>
+              </Form.Item>
+            </Form>
+
+            <Text
+              style={{
+                textAlign: "center",
+                marginTop: 32,
+                fontSize: 11,
+                display: "block",
+                color: textColorSecondary,
+              }}
+            >
+              BookMart Admin &copy; {new Date().getFullYear()}
+              <br />
+              Chỉ dành cho tài khoản ADMIN &amp; STAFF
+            </Text>
           </div>
         </div>
-      </div>
-
-      {/* ── Right login form ─────────────────────────────── */}
-      <div
-        style={{
-          width: 480,
-          flexShrink: 0,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          padding: "48px 56px",
-          background: token.colorBgContainer,
-          position: "relative",
-        }}
-      >
-        {/* Theme toggle top-right */}
-        <div style={{ position: "absolute", top: 24, right: 24 }}>
-          <Button
-            type="text"
-            icon={
-              isDark ? (
-                <SunOutlined style={{ color: "#faad14" }} />
-              ) : (
-                <MoonOutlined style={{ color: "#722ed1" }} />
-              )
-            }
-            onClick={toggleTheme}
-            title={isDark ? "Chuyển Light Mode" : "Chuyển Dark Mode"}
-          />
-        </div>
-
-        <div style={{ marginBottom: 36 }}>
-          <Title level={3} style={{ margin: "0 0 6px" }}>
-            Đăng nhập
-          </Title>
-          <Text type="secondary">Nhập thông tin tài khoản để tiếp tục</Text>
-        </div>
-
-        {error && (
-          <Alert
-            message={error}
-            type="error"
-            showIcon
-            closable
-            onClose={() => setError("")}
-            style={{ marginBottom: 24, borderRadius: 8 }}
-          />
-        )}
-
-        <Form
-          layout="vertical"
-          onFinish={onFinish}
-          autoComplete="off"
-          size="large"
-        >
-          <Form.Item
-            label="Địa chỉ Email"
-            name="email"
-            rules={[
-              { required: true, message: "Vui lòng nhập email" },
-              { type: "email", message: "Email không hợp lệ" },
-            ]}
-          >
-            <Input
-              id="login-email"
-              prefix={<MailOutlined style={{ opacity: 0.35 }} />}
-              placeholder="admin@bookmart.vn"
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="Mật khẩu"
-            name="password"
-            rules={[{ required: true, message: "Vui lòng nhập mật khẩu" }]}
-          >
-            <Input.Password
-              id="login-password"
-              prefix={<LockOutlined style={{ opacity: 0.35 }} />}
-              placeholder="Nhập mật khẩu của bạn"
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>
-            <Button
-              id="login-submit"
-              type="primary"
-              htmlType="submit"
-              block
-              loading={loading}
-              icon={<ArrowRightOutlined />}
-              iconPlacement="end"
-              size="large"
-              style={{ height: 44 }}
-            >
-              Đăng nhập
-            </Button>
-          </Form.Item>
-        </Form>
-
-        <Text
-          type="secondary"
-          style={{
-            textAlign: "center",
-            marginTop: 32,
-            fontSize: 12,
-            display: "block",
-          }}
-        >
-          BookMart Admin &copy; {new Date().getFullYear()}
-          <br />
-          Chỉ dành cho tài khoản ADMIN &amp; STAFF
-        </Text>
       </div>
     </div>
   );

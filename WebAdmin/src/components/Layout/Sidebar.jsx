@@ -125,7 +125,7 @@ export default function Sidebar() {
   const menuItems = filterItems(ALL_ITEMS, user?.role || "");
 
   const roleTag = {
-    ADMIN: { color: "green", text: "Admin" },
+    ADMIN: { color: "#689f38", text: "Admin" },
     STAFF: { color: "blue", text: "Staff" },
   }[user?.role] || { color: "default", text: user?.role };
 
@@ -144,13 +144,43 @@ export default function Sidebar() {
       }}
     >
       {/* Logo */}
-      <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <BookOutlined style={{ color: "white", fontSize: 18 }} />
-        </div>
-        <div className="sidebar-logo-text">
-          <h3 style={{ color: isDark ? "#fff" : "#1a1a1a" }}>BookMart</h3>
-          <span>Admin Panel</span>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "20px 20px",
+          borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
+          cursor: "default",
+          userSelect: "none",
+        }}
+      >
+        <img src="/logo.png" alt="BookMart" style={{ height: 42 }} />
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <h3
+            style={{
+              margin: 0,
+              color: isDark ? "#e4ebe4" : "#12422b",
+              fontSize: 20,
+              fontWeight: 700,
+              fontFamily: "Georgia, serif",
+              lineHeight: 1.2,
+            }}
+          >
+            BookMart
+          </h3>
+          <span
+            style={{
+              fontSize: 10,
+              color: isDark ? "#8ca898" : "#4b6b58",
+              textTransform: "uppercase",
+              letterSpacing: 0.8,
+              fontWeight: 600,
+              marginTop: 2,
+            }}
+          >
+            Admin Panel
+          </span>
         </div>
       </div>
 

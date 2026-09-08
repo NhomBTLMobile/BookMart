@@ -15,14 +15,34 @@ import OrdersPage     from './pages/Orders/OrdersPage'
 import VouchersPage   from './pages/Vouchers/VouchersPage'
 import ReviewsPage    from './pages/Reviews/ReviewsPage'
 
-// Green brand token
-const GREEN_TOKEN = {
-  colorPrimary:       '#52c41a',
-  colorLink:          '#52c41a',
-  colorSuccess:       '#52c41a',
-  borderRadius:       8,
-  borderRadiusLG:     12,
-  fontFamily:         `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`,
+const getThemeTokens = (isDark) => {
+  const common = {
+    colorPrimary: '#689f38', // Darker banana-leaf green (Yellow-Green)
+    colorInfo: '#689f38',
+    colorSuccess: '#689f38',
+    colorWarning: '#D07646', 
+    colorError: '#EF4444',   
+    colorLink: '#689f38', 
+    borderRadius: 8,
+    borderRadiusLG: 12,
+    fontFamily: `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`,
+  };
+
+  if (isDark) {
+    return {
+      ...common,
+      colorPrimary: '#8bc34a', // Brighter banana-leaf green for dark mode
+    };
+  }
+
+  return {
+    ...common,
+    colorBgLayout: '#F4F7F6', // Clean light gray-green for app background
+    colorBgContainer: '#FFFFFF', // Pure white for cards/tables
+    colorBgElevated: '#FFFFFF',
+    colorTextBase: '#1F2922', // Very dark slate for text
+    colorTextSecondary: '#627164', // Muted slate for secondary text
+  };
 }
 
 function AdminRoutes() {
@@ -56,15 +76,15 @@ function ThemedApp() {
       locale={viVN}
       theme={{
         algorithm: isDark ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
-        token: GREEN_TOKEN,
+        token: getThemeTokens(isDark),
         components: {
           Menu: {
             itemBorderRadius: 8,
             subMenuItemBorderRadius: 8,
           },
           Layout: {
-            siderBg: isDark ? '#141414' : '#ffffff',
-            headerBg: isDark ? '#141414' : '#ffffff',
+            siderBg: isDark ? '#141414' : '#FFFFFF',
+            headerBg: isDark ? '#141414' : '#FFFFFF',
           },
           Table: {
             borderRadius: 12,

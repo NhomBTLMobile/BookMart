@@ -8,7 +8,7 @@ import { categoriesApi } from '../../api/services'
 const { Text } = Typography
 const INIT = { name: '', description: '' }
 
-const PALETTE = ['#52c41a','#1677ff','#722ed1','#fa8c16','#f5222d','#13c2c2','#eb2f96','#2f54eb']
+const PALETTE = ['#689f38','#1677ff','#722ed1','#fa8c16','#f5222d','#13c2c2','#eb2f96','#2f54eb']
 const catColor = name => PALETTE[(name?.charCodeAt(0) || 0) % PALETTE.length]
 
 export default function CategoriesPage() {

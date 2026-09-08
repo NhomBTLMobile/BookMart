@@ -44,11 +44,11 @@ export default function BooksPage() {
         <Space>
           <div style={{
             width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-            background: 'linear-gradient(135deg,#52c41a22,#237804aa)',
+            background: 'linear-gradient(135deg,#689f3822,#3d6b1daa)',
             border: '1px solid rgba(82,196,26,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <BookOutlined style={{ color: '#52c41a' }} />
+            <BookOutlined style={{ color: '#689f38' }} />
           </div>
           <Text strong style={{ fontSize: 13.5 }}>{title}</Text>
         </Space>
@@ -59,7 +59,7 @@ export default function BooksPage() {
     {
       title: 'Giá bán',
       dataIndex: 'price',
-      render: v => <Text strong style={{ color: '#52c41a' }}>₫ {fmt(v)}</Text>,
+      render: v => <Text strong style={{ color: '#689f38' }}>₫ {fmt(v)}</Text>,
     },
     {
       title: 'Tồn kho',

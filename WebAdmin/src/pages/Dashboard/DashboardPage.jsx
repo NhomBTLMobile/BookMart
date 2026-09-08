@@ -25,7 +25,7 @@ const REVENUE_DATA = [
 ]
 
 const PIE_DATA = [
-  { name: 'Hoàn thành', value: 58, color: '#52c41a' },
+  { name: 'Hoàn thành', value: 58, color: '#689f38' },
   { name: 'Đang xử lý', value: 22, color: '#1677ff' },
   { name: 'Đang giao',  value: 13, color: '#faad14' },
   { name: 'Đã hủy',    value:  7, color: '#ff4d4f' },
@@ -51,7 +51,7 @@ const ORDER_COLS = [
   {
     title: 'Thanh toán',
     dataIndex: 'final_price',
-    render: v => <Text strong style={{ color: '#52c41a' }}>₫ {fmt(v || 0)}</Text>,
+    render: v => <Text strong style={{ color: '#689f38' }}>₫ {fmt(v || 0)}</Text>,
   },
   {
     title: 'PT Thanh toán',
@@ -115,7 +115,7 @@ export default function DashboardPage() {
             prefix: '₫',
             icon: <DollarOutlined />,
             iconBg: 'rgba(82,196,26,0.12)',
-            iconColor: '#52c41a',
+            iconColor: '#689f38',
             change: '+12.5%',
             up: true,
             demo: true,
@@ -166,7 +166,7 @@ export default function DashboardPage() {
                       {card.value ?? '–'}
                     </div>
                   )}
-                  <Text style={{ fontSize: 12, color: card.up ? '#52c41a' : '#ff4d4f' }}>
+                  <Text style={{ fontSize: 12, color: card.up ? '#689f38' : '#ff4d4f' }}>
                     {card.up ? <ArrowUpOutlined /> : <ArrowDownOutlined />} {card.change}
                   </Text>
                 </div>
@@ -189,15 +189,15 @@ export default function DashboardPage() {
               <AreaChart data={REVENUE_DATA} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#52c41a" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#52c41a" stopOpacity={0}   />
+                    <stop offset="5%"  stopColor="#689f38" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#689f38" stopOpacity={0}   />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#303030' : '#f0f0f0'} />
                 <XAxis dataKey="month" tick={{ fill: isDark ? '#8c8c8c' : '#595959', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: isDark ? '#8c8c8c' : '#595959', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${v}M`} />
                 <ReTooltip contentStyle={tooltipStyle} formatter={(v, n) => [n === 'revenue' ? `₫ ${v}M` : `${v} đơn`, n === 'revenue' ? 'Doanh thu' : 'Đơn hàng']} />
-                <Area type="monotone" dataKey="revenue" stroke="#52c41a" strokeWidth={2.5} fill="url(#gRev)" dot={false} activeDot={{ r: 5 }} />
+                <Area type="monotone" dataKey="revenue" stroke="#689f38" strokeWidth={2.5} fill="url(#gRev)" dot={false} activeDot={{ r: 5 }} />
                 <Area type="monotone" dataKey="orders" stroke="#1677ff" strokeWidth={1.5} fill="none" dot={false} strokeDasharray="4 2" />
               </AreaChart>
             </ResponsiveContainer>
