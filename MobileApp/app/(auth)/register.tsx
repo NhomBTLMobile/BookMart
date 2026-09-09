@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, Platform, ScrollView, KeyboardAvoidingView ,TouchableOpacity, View, Image } from 'react-native';
+import { StyleSheet, Text, Platform, ScrollView, KeyboardAvoidingView ,TouchableOpacity,View, Image } from 'react-native';
 import { router } from 'expo-router';
 import AuthInput from '../../components/auth/AuthInput';
 import PrimaryButton from '../../components/auth/PrimaryButton';
@@ -39,6 +39,58 @@ export default function RegisterScreen() {
           {'\n'}
           và nhận nhiều ưu đãi hấp dẫn!
       </Text>
+      <AuthInput icon="person-outline" 
+        placeholder='Họ và tên' value={fullName}
+        onChangeText={setFullName}/>
+      <AuthInput 
+        icon = "call-outline"
+        placeholder='Số điện thoại' 
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+      />
+      <AuthInput 
+        icon = "lock-closed-outline"
+        placeholder='Mật khẩu' 
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry={!showPassword}
+        showPassword={showPassword}
+        onTongglePassword={() => setShowPassword(!showPassword)}
+      />
+      <AuthInput 
+        icon = "lock-closed-outline"
+        placeholder='Xác nhận mật khẩu' 
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        secureTextEntry={!showConfirmPassword}
+        showPassword={showConfirmPassword}
+        onTongglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+      />
+      <PrimaryButton 
+        title="Đăng ký"
+        onPress={() => {console.log('Đăng ký')}}
+      />
+      <View style={styles.orContainer}>
+        <View style={styles.line}/>
+        <Text style={styles.orText}>Hoặc</Text>
+        <View style={styles.line}/>
+      </View>
+      <SocialButton
+        title="Đăng ký với Google"
+        onPress={() => {console.log('Đăng ký với Google')}}
+      />
+
+      <View style={styles.loginContainer}>
+        <Text style={styles.loginNormal}>
+          Bạn đã có tài khoản?
+        </Text>
+        <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+          <Text style={styles.loginLink}>
+            {' '}Đăng nhập
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -61,5 +113,51 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.textSecondary,
     lineHeight: 22,
-  }
+    marginBottom: 30,
+  },
+  orContainer: {
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    marginVertical: 20,
+  },
+
+  line: {
+    flex: 1,
+
+    height: 1,
+
+    backgroundColor: COLORS.border,
+  },
+
+  orText: {
+    marginHorizontal: 14,
+
+    fontSize: 14,
+
+    color: COLORS.textSecondary,
+  },
+
+  loginContainer: {
+    flexDirection: 'row',
+
+    justifyContent: 'center',
+
+    marginTop: 24,
+  },
+
+  loginNormal: {
+    fontSize: 14,
+
+    color: COLORS.textSecondary,
+  },
+
+  loginLink: {
+    fontSize: 14,
+
+    fontWeight: '700',
+
+    color: COLORS.primaryDark,
+  },
 })
