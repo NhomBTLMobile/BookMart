@@ -3,7 +3,7 @@ export const COLORS = {
   primaryDark: "#236B32",
   primaryLight: "#EAF4E5",
 
-  background: "#FFF9E8",
+  background: "#fffbf1",
   surface: "#FFFFFF",
 
   text: "#183C27",
