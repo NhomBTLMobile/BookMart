@@ -229,7 +229,7 @@ export default function UsersPage() {
             total: crud.meta?.total,
             onChange: crud.setPage,
             showSizeChanger: false,
-            showTotal: (total, range) => `${range[0]}–${range[1]} / ${total}`,
+            showTotal: (total, range) => `${range[0]} / ${total}`,
           }}
         />
       </Card>
