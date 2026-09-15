@@ -130,7 +130,7 @@ export default function HomeScreen() {
 
             <BookCard
               image={require(
-                '../../assets/images/book1.png'
+                '../../assets/images/book1.jpg'
               )}
               title="Đắc Nhân Tâm"
               author="Dale Carnegie"
@@ -146,7 +146,7 @@ export default function HomeScreen() {
 
             <BookCard
               image={require(
-                '../../assets/images/book2.png'
+                '../../assets/images/book2.jpg'
               )}
               title="Nhà Giả Kim"
               author="Paulo Coelho"
@@ -162,7 +162,7 @@ export default function HomeScreen() {
 
             <BookCard
               image={require(
-                '../../assets/images/book3.png'
+                '../../assets/images/book3.jpg'
               )}
               title="Tôi thấy hoa vàng trên cỏ xanh"
               author="Nguyễn Nhật Ánh"
@@ -178,7 +178,7 @@ export default function HomeScreen() {
 
             <BookCard
               image={require(
-                '../../assets/images/book4.png'
+                '../../assets/images/book4.jpg'
               )}
               title="Tuổi trẻ đáng giá bao nhiêu"
               author="Rosie Nguyễn"

@@ -19,7 +19,7 @@ export default function BannerCard({
 }: Props) {
   return (
     <ImageBackground
-      source={require('../../assets/images/home-banner.png')}
+      source={require('../../assets/images/home-banner.jpg')}
       style={styles.banner}
       imageStyle={styles.image}
     >

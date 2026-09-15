@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -8,7 +9,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 import { router } from 'expo-router';
@@ -18,11 +19,19 @@ import PrimaryButton from '../../components/auth/PrimaryButton';
 import SocialButton from '../../components/auth/SocialButton';
 
 import { COLORS } from '../../constants/colors';
-
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
+  const handleLogin = () =>{
+    if(!email || !password){
+      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ email và mật khẩu');
+      return;
+    }
+    if(email==='test' && password==='123456'){
+      console.log('Đang đăng nhập với: ', email, password)
+      router.replace('/(tabs)')
+    }
+  }
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -68,7 +77,7 @@ export default function LoginScreen() {
         <AuthInput
           icon="lock-closed-outline"
           placeholder="Mật khẩu"
-          secureTextEntry
+          isPassword
           value={password}
           onChangeText={setPassword}
         />
@@ -86,9 +95,7 @@ export default function LoginScreen() {
         {/* Login button */}
         <PrimaryButton
           title="Đăng nhập"
-          onPress={() => {
-            console.log('Login');
-          }}
+          onPress={handleLogin}
         />
 
         {/* Or */}
