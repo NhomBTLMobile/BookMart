@@ -71,6 +71,34 @@ export default function HomeScreen() {
           />
         </View>
 
+        {/* RECENTLY VIEWED (Zeigarnik Effect) */}
+        <View style={styles.section}>
+          <SectionHeader
+            title="Sản phẩm xem gần đây"
+            onPress={() => console.log('Xem tất cả')}
+          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <BookCard
+              image={require('../../assets/images/book3.jpg')}
+              title="Tôi thấy hoa vàng trên cỏ xanh"
+              author="Nguyễn Nhật Ánh"
+              price="65.000đ"
+              rating={4.7}
+              onPress={() => console.log('Book 3')}
+              onAddToCart={() => console.log('Add book 3')}
+            />
+            <BookCard
+              image={require('../../assets/images/book1.jpg')}
+              title="Đắc Nhân Tâm"
+              author="Dale Carnegie"
+              price="89.000đ"
+              rating={4.8}
+              onPress={() => console.log('Book 1')}
+              onAddToCart={() => console.log('Add book 1')}
+            />
+          </ScrollView>
+        </View>
+
 
         {/* CATEGORY */}
         <SectionHeader
@@ -112,6 +140,46 @@ export default function HomeScreen() {
           />
 
         </ScrollView>
+
+        {/* FLASH SALE (FOMO / Scarcity) */}
+        <View style={styles.section}>
+          <SectionHeader
+            title="🔥 Giá sốc hôm nay"
+            onPress={() => console.log('Xem tất cả')}
+          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <BookCard
+              image={require('../../assets/images/book2.jpg')}
+              title="Nhà Giả Kim"
+              author="Paulo Coelho"
+              price="55.000đ"
+              rating={4.9}
+              discount="-25%"
+              onPress={() => console.log('Book 2')}
+              onAddToCart={() => console.log('Add book 2')}
+            />
+            <BookCard
+              image={require('../../assets/images/book4.jpg')}
+              title="Tuổi trẻ đáng giá bao nhiêu"
+              author="Rosie Nguyễn"
+              price="49.000đ"
+              rating={4.8}
+              discount="-38%"
+              onPress={() => console.log('Book 4')}
+              onAddToCart={() => console.log('Add book 4')}
+            />
+            <BookCard
+              image={require('../../assets/images/book1.jpg')}
+              title="Đắc Nhân Tâm"
+              author="Dale Carnegie"
+              price="70.000đ"
+              rating={4.8}
+              discount="-21%"
+              onPress={() => console.log('Book 1')}
+              onAddToCart={() => console.log('Add book 1')}
+            />
+          </ScrollView>
+        </View>
 
 
         {/* BOOKS */}
@@ -193,7 +261,34 @@ export default function HomeScreen() {
             />
 
           </ScrollView>
+        </View>
 
+        {/* RECOMMENDED (Cocktail Party Effect) */}
+        <View style={styles.section}>
+          <SectionHeader
+            title="Dành riêng cho Thanh Đào"
+            onPress={() => console.log('Xem thêm')}
+          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <BookCard
+              image={require('../../assets/images/book4.jpg')}
+              title="Tuổi trẻ đáng giá bao nhiêu"
+              author="Rosie Nguyễn"
+              price="79.000đ"
+              rating={4.8}
+              onPress={() => console.log('Book 4')}
+              onAddToCart={() => console.log('Add book 4')}
+            />
+            <BookCard
+              image={require('../../assets/images/book3.jpg')}
+              title="Tôi thấy hoa vàng trên cỏ xanh"
+              author="Nguyễn Nhật Ánh"
+              price="65.000đ"
+              rating={4.7}
+              onPress={() => console.log('Book 3')}
+              onAddToCart={() => console.log('Add book 3')}
+            />
+          </ScrollView>
         </View>
 
 

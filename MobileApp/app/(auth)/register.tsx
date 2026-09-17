@@ -1,49 +1,44 @@
-import { useState } from 'react';
+import { useState } from "react";
 
+import { Image } from "expo-image";
 import {
-  StyleSheet,
-  Text,
+  KeyboardAvoidingView,
   Platform,
   ScrollView,
-  KeyboardAvoidingView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
   View,
-  Image,
-} from 'react-native';
+} from "react-native";
 
-import { router } from 'expo-router';
+import { router } from "expo-router";
 
-import AuthInput from '../../components/auth/AuthInput';
-import PrimaryButton from '../../components/auth/PrimaryButton';
-import SocialButton from '../../components/auth/SocialButton';
+import AuthInput from "../../components/auth/AuthInput";
+import PrimaryButton from "../../components/auth/PrimaryButton";
+import SocialButton from "../../components/auth/SocialButton";
 
-import { COLORS } from '@/constants/colors';
+import { COLORS } from "@/constants/colors";
 
 export default function RegisterScreen() {
-
   // =========================
   // STATE
   // =========================
 
-  const [fullName, setFullName] = useState('');
+  const [fullName, setFullName] = useState("");
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
 
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState("");
 
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState("");
 
-  const [confirmPassword, setConfirmPassword] =
-    useState('');
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   // true = hiện mật khẩu
   // false = ẩn mật khẩu
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
-
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // =========================
   // REGISTER
@@ -51,15 +46,14 @@ export default function RegisterScreen() {
 
   const handleRegister = () => {
     console.log(
-      'Đăng ký:',
+      "Đăng ký:",
       fullName,
       email,
       phoneNumber,
       password,
-      confirmPassword
+      confirmPassword,
     );
   };
-
 
   // =========================
   // UI
@@ -68,45 +62,36 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={
-        Platform.OS === 'ios'
-          ? 'padding'
-          : undefined
-      }
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-
         {/* =========================
-            ILLUSTRATION
+            LOGO
         ========================= */}
 
-        <Image
-          source={require(
-            '../../assets/images/register-illustration.png'
-          )}
-          style={styles.illustration}
-        />
-
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../../assets/images/bookmart_logo.png")}
+            style={styles.logo}
+            contentFit="contain"
+          />
+        </View>
 
         {/* =========================
             TITLE
         ========================= */}
 
-        <Text style={styles.title}>
-          Đăng ký tài khoản
-        </Text>
+        <Text style={styles.title}>Đăng ký tài khoản</Text>
 
         <Text style={styles.subtitle}>
           Tạo tài khoản để mua sách, theo dõi đơn hàng
-          {'\n'}
+          {"\n"}
           và nhận nhiều ưu đãi hấp dẫn!
         </Text>
-
 
         {/* =========================
             FULL NAME
@@ -119,7 +104,6 @@ export default function RegisterScreen() {
           onChangeText={setFullName}
         />
 
-
         {/* =========================
             EMAIL
         ========================= */}
@@ -130,7 +114,6 @@ export default function RegisterScreen() {
           value={email}
           onChangeText={setEmail}
         />
-
 
         {/* =========================
             PHONE
@@ -143,7 +126,6 @@ export default function RegisterScreen() {
           onChangeText={setPhoneNumber}
         />
 
-
         {/* =========================
             PASSWORD
         ========================= */}
@@ -155,11 +137,8 @@ export default function RegisterScreen() {
           onChangeText={setPassword}
           isPassword={true}
           showPassword={showPassword}
-          onTogglePassword={() =>
-            setShowPassword(!showPassword)
-          }
+          onTogglePassword={() => setShowPassword(!showPassword)}
         />
-
 
         {/* =========================
             CONFIRM PASSWORD
@@ -172,40 +151,26 @@ export default function RegisterScreen() {
           onChangeText={setConfirmPassword}
           isPassword={true}
           showPassword={showConfirmPassword}
-          onTogglePassword={() =>
-            setShowConfirmPassword(
-              !showConfirmPassword
-            )
-          }
+          onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
         />
-
 
         {/* =========================
             REGISTER BUTTON
         ========================= */}
 
-        <PrimaryButton
-          title="Đăng ký"
-          onPress={handleRegister}
-        />
-
+        <PrimaryButton title="Đăng ký" onPress={handleRegister} />
 
         {/* =========================
             OR
         ========================= */}
 
         <View style={styles.orContainer}>
-
           <View style={styles.line} />
 
-          <Text style={styles.orText}>
-            Hoặc
-          </Text>
+          <Text style={styles.orText}>Hoặc</Text>
 
           <View style={styles.line} />
-
         </View>
-
 
         {/* =========================
             GOOGLE
@@ -214,77 +179,57 @@ export default function RegisterScreen() {
         <SocialButton
           title="Đăng ký với Google"
           onPress={() => {
-            console.log(
-              'Đăng ký với Google'
-            );
+            console.log("Đăng ký với Google");
           }}
         />
-
 
         {/* =========================
             LOGIN
         ========================= */}
 
         <View style={styles.loginContainer}>
+          <Text style={styles.loginNormal}>Bạn đã có tài khoản?</Text>
 
-          <Text style={styles.loginNormal}>
-            Bạn đã có tài khoản?
-          </Text>
-
-          <TouchableOpacity
-            onPress={() =>
-              router.push('/(auth)/login')
-            }
-          >
-            <Text style={styles.loginLink}>
-              {' '}Đăng nhập
-            </Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+            <Text style={styles.loginLink}> Đăng nhập</Text>
           </TouchableOpacity>
-
         </View>
-
       </ScrollView>
-
     </KeyboardAvoidingView>
   );
 }
-
 
 // =========================
 // STYLES
 // =========================
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
 
-    backgroundColor:
-      COLORS.background,
+    backgroundColor: COLORS.background,
   },
 
   scrollContent: {
     paddingHorizontal: 24,
-
-    paddingTop: 45,
-
+    paddingTop: 60,
     paddingBottom: 30,
   },
 
-  illustration: {
-    width: '100%',
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
 
-    height: 175,
-
-    resizeMode: 'contain',
-
-    marginBottom: 8,
+  logo: {
+    width: 220,
+    height: 100,
   },
 
   title: {
     fontSize: 28,
 
-    fontWeight: 'bold',
+    fontWeight: "bold",
 
     color: COLORS.text,
 
@@ -294,8 +239,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
 
-    color:
-      COLORS.textSecondary,
+    color: COLORS.textSecondary,
 
     lineHeight: 22,
 
@@ -303,9 +247,9 @@ const styles = StyleSheet.create({
   },
 
   orContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
 
-    alignItems: 'center',
+    alignItems: "center",
 
     marginVertical: 20,
   },
@@ -315,8 +259,7 @@ const styles = StyleSheet.create({
 
     height: 1,
 
-    backgroundColor:
-      COLORS.border,
+    backgroundColor: COLORS.border,
   },
 
   orText: {
@@ -324,14 +267,13 @@ const styles = StyleSheet.create({
 
     fontSize: 14,
 
-    color:
-      COLORS.textSecondary,
+    color: COLORS.textSecondary,
   },
 
   loginContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
 
-    justifyContent: 'center',
+    justifyContent: "center",
 
     marginTop: 24,
   },
@@ -339,17 +281,14 @@ const styles = StyleSheet.create({
   loginNormal: {
     fontSize: 14,
 
-    color:
-      COLORS.textSecondary,
+    color: COLORS.textSecondary,
   },
 
   loginLink: {
     fontSize: 14,
 
-    fontWeight: '700',
+    fontWeight: "700",
 
-    color:
-      COLORS.primaryDark,
+    color: COLORS.primaryDark,
   },
-
 });

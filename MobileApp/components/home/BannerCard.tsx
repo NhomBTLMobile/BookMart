@@ -1,4 +1,3 @@
-import React from 'react';
 
 import {
   ImageBackground,
@@ -6,46 +5,37 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
-import { COLORS } from '@/constants/colors';
+import { COLORS } from "@/constants/colors";
 
 type Props = {
   onPress?: () => void;
 };
 
-export default function BannerCard({
-  onPress,
-}: Props) {
+export default function BannerCard({ onPress }: Props) {
   return (
     <ImageBackground
-      source={require('../../assets/images/home-banner.jpg')}
+      source={require("../../assets/images/home-banner.png")}
       style={styles.banner}
       imageStyle={styles.image}
     >
       <View style={styles.content}>
-
         <Text style={styles.title}>
           Khám phá
-          {'\n'}
+          {"\n"}
           thế giới tri thức
         </Text>
 
         <Text style={styles.subtitle}>
           Sách hay cho mọi hành trình
-          {'\n'}
+          {"\n"}
           của bạn
         </Text>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={onPress}
-        >
-          <Text style={styles.buttonText}>
-            Mua ngay →
-          </Text>
+        <TouchableOpacity style={styles.button} onPress={onPress}>
+          <Text style={styles.buttonText}>Mua ngay →</Text>
         </TouchableOpacity>
-
       </View>
     </ImageBackground>
   );
@@ -57,7 +47,7 @@ const styles = StyleSheet.create({
 
     borderRadius: 18,
 
-    overflow: 'hidden',
+    overflow: "hidden",
 
     marginBottom: 10,
   },
@@ -71,13 +61,13 @@ const styles = StyleSheet.create({
 
     padding: 20,
 
-    width: '65%',
+    width: "65%",
   },
 
   title: {
     fontSize: 23,
 
-    fontWeight: '800',
+    fontWeight: "800",
 
     color: COLORS.text,
 
@@ -95,7 +85,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
 
     backgroundColor: COLORS.primary,
 
@@ -113,6 +103,6 @@ const styles = StyleSheet.create({
 
     fontSize: 13,
 
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

@@ -189,7 +189,7 @@ export default function BooksPage() {
             allowClear
           />
         </div>
-        <Table
+        <Table scroll={{ x: 'max-content' }}
           dataSource={crud.data}
           columns={columns}
           rowKey="id"
@@ -283,3 +283,4 @@ export default function BooksPage() {
     </>
   );
 }
+

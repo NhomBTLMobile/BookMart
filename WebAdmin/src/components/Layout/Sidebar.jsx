@@ -107,7 +107,7 @@ function filterItems(items, role) {
     .filter(Boolean);
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isMobile, onClose }) {
   const { user, logout, isDark, toggleTheme } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -135,7 +135,7 @@ export default function Sidebar() {
       style={{
         overflow: "auto",
         height: "100vh",
-        position: "sticky",
+        position: isMobile ? "static" : "sticky",
         top: 0,
         left: 0,
         display: "flex",
@@ -191,7 +191,12 @@ export default function Sidebar() {
           selectedKeys={[location.pathname]}
           items={menuItems}
           style={{ border: "none", background: "transparent" }}
-          onClick={({ key }) => navigate(key)}
+          onClick={({ key }) => {
+            navigate(key);
+            if (isMobile && onClose) {
+              onClose();
+            }
+          }}
         />
       </div>
 

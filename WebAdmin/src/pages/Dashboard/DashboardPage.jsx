@@ -237,6 +237,7 @@ export default function DashboardPage() {
           loading={loading}
           pagination={false}
           size="small"
+          scroll={{ x: 600 }}
         />
       </Card>
     </div>

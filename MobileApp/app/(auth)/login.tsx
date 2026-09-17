@@ -1,68 +1,63 @@
-import { useState } from 'react';
+import { useState } from "react";
 
+import { Image } from "expo-image";
 import {
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
-} from 'react-native';
+  View,
+} from "react-native";
 
-import { router } from 'expo-router';
+import { router } from "expo-router";
 
-import AuthInput from '../../components/auth/AuthInput';
-import PrimaryButton from '../../components/auth/PrimaryButton';
-import SocialButton from '../../components/auth/SocialButton';
+import AuthInput from "../../components/auth/AuthInput";
+import PrimaryButton from "../../components/auth/PrimaryButton";
+import SocialButton from "../../components/auth/SocialButton";
 
-import { COLORS } from '../../constants/colors';
+import { COLORS } from "../../constants/colors";
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const handleLogin = () =>{
-    if(!email || !password){
-      Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ email và mật khẩu');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const handleLogin = () => {
+    if (!email || !password) {
+      Alert.alert("Thông báo", "Vui lòng nhập đầy đủ email và mật khẩu");
       return;
     }
-    if(email==='test' && password==='123456'){
-      console.log('Đang đăng nhập với: ', email, password)
-      router.replace('/(tabs)')
+    if (email === "test" && password === "123456") {
+      console.log("Đang đăng nhập với: ", email, password);
+      router.replace("/(tabs)");
     }
-  }
+  };
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={
-        Platform.OS === 'ios'
-          ? 'padding'
-          : undefined
-      }
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-
-        {/* Illustration */}
-        <Image
-          source={require('../../assets/images/login-illustration.png')}
-          style={styles.illustration}
-        />
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../../assets/images/bookmart_logo.png")}
+            style={styles.logo}
+            contentFit="contain"
+          />
+        </View>
 
         {/* Title */}
-        <Text style={styles.title}>
-          Đăng nhập
-        </Text>
+        <Text style={styles.title}>Đăng nhập</Text>
 
         <Text style={styles.subtitle}>
           Chào mừng bạn quay trở lại!
-          {'\n'}
-          Cùng tiếp tục hành trình khám phá
-          tri thức nhé!
+          {"\n"}
+          Cùng tiếp tục hành trình khám phá tri thức nhé!
         </Text>
 
         {/* Email */}
@@ -83,28 +78,18 @@ export default function LoginScreen() {
         />
 
         {/* Forgot password */}
-        <TouchableOpacity
-          style={styles.forgotWrapper}
-          onPress={() => {}}
-        >
-          <Text style={styles.forgotText}>
-            Quên mật khẩu?
-          </Text>
+        <TouchableOpacity style={styles.forgotWrapper} onPress={() => {}}>
+          <Text style={styles.forgotText}>Quên mật khẩu?</Text>
         </TouchableOpacity>
 
         {/* Login button */}
-        <PrimaryButton
-          title="Đăng nhập"
-          onPress={handleLogin}
-        />
+        <PrimaryButton title="Đăng nhập" onPress={handleLogin} />
 
         {/* Or */}
         <View style={styles.orContainer}>
           <View style={styles.line} />
 
-          <Text style={styles.orText}>
-            Hoặc
-          </Text>
+          <Text style={styles.orText}>Hoặc</Text>
 
           <View style={styles.line} />
         </View>
@@ -113,25 +98,18 @@ export default function LoginScreen() {
         <SocialButton
           title="Đăng nhập bằng Google"
           onPress={() => {
-            console.log('Google login');
+            console.log("Google login");
           }}
         />
 
         {/* Register */}
         <View style={styles.registerContainer}>
-          <Text style={styles.registerNormal}>
-            Chưa có tài khoản?
-          </Text>
+          <Text style={styles.registerNormal}>Chưa có tài khoản?</Text>
 
-          <TouchableOpacity
-            onPress={() => router.push('/(auth)/register')}
-          >
-            <Text style={styles.registerLink}>
-              {' '}Đăng ký
-            </Text>
+          <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+            <Text style={styles.registerLink}> Đăng ký</Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -145,20 +123,23 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 55,
+    paddingTop: 60, // Tăng khoảng trống phía trên
     paddingBottom: 30,
   },
 
-  illustration: {
-    width: '100%',
-    height: 190,
-    resizeMode: 'contain',
-    marginBottom: 12,
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 10, // Đẩy title xuống một chút
+  },
+
+  logo: {
+    width: 220,
+    height: 100,
   },
 
   title: {
     fontSize: 30,
-    fontWeight: '800',
+    fontWeight: "800",
     color: COLORS.text,
 
     marginBottom: 8,
@@ -174,7 +155,7 @@ const styles = StyleSheet.create({
   },
 
   forgotWrapper: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     marginTop: -2,
     marginBottom: 20,
   },
@@ -182,12 +163,12 @@ const styles = StyleSheet.create({
   forgotText: {
     color: COLORS.primaryDark,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
 
     marginVertical: 20,
   },
@@ -206,8 +187,8 @@ const styles = StyleSheet.create({
   },
 
   registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
 
     marginTop: 24,
   },
@@ -220,6 +201,6 @@ const styles = StyleSheet.create({
   registerLink: {
     color: COLORS.primaryDark,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

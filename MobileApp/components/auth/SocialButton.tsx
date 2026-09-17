@@ -1,4 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { COLORS } from '../../constants/colors';
 
 type Props = {
@@ -9,22 +10,24 @@ type Props = {
 export default function SocialButton({
     title, 
     onPress,
-
 }: Props) {
     return(
         <TouchableOpacity 
             style={styles.button}
             activeOpacity={0.8}
             onPress={onPress}>
-        <Text style={styles.google}>
-            G
-        </Text>
-        <Text style={styles.text}>
-            {title}
-        </Text>
+            <Image
+                source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png' }}
+                style={styles.icon}
+                contentFit="contain"
+            />
+            <Text style={styles.text}>
+                {title}
+            </Text>
         </TouchableOpacity>
     );
 }
+
 const styles = StyleSheet.create({
     button: {
         height: 52,
@@ -37,16 +40,14 @@ const styles = StyleSheet.create({
         
         marginTop: 16,
     },
-    google: {
-        fontSize: 22,
-        fontWeight: '700',
-        color: '#4285F4',
-
+    icon: {
+        width: 22,
+        height: 22,
         marginRight: 10,
-  },
+    },
     text: {
         fontSize: 15,
         fontWeight: '600',
         color: COLORS.text,
     }
-})
+});

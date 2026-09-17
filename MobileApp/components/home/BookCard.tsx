@@ -11,15 +11,23 @@ type Props = {
     rating: number;
     onPress: () => void;
     onAddToCart: () => void;
+    discount?: string;
 }
 
-export default function BookCard({ image, title, author, price, rating, onPress, onAddToCart}: Props){
+export default function BookCard({ image, title, author, price, rating, discount, onPress, onAddToCart}: Props){
     return(
         <TouchableOpacity 
             style={styles.card} 
             activeOpacity={0.85}
             onPress={onPress}>
-            <Image source={image} style={styles.image} />
+            <View style={styles.imageContainer}>
+                <Image source={image} style={styles.image} />
+                {discount && (
+                    <View style={styles.discountBadge}>
+                        <Text style={styles.discountText}>{discount}</Text>
+                    </View>
+                )}
+            </View>
             <Text style={styles.title} numberOfLines={2}>{title}</Text>
             <Text style={styles.author} numberOfLines={1}>{author}</Text>
             <View style={styles.ratingContainer}>
@@ -51,6 +59,10 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
 
+  imageContainer: {
+    position: 'relative',
+  },
+  
   image: {
     width: '100%',
     height: 185,
@@ -60,6 +72,22 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
 
     marginBottom: 10,
+  },
+
+  discountBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: '#E53935',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+
+  discountText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
 
   title: {

@@ -217,7 +217,7 @@ export default function UsersPage() {
           />
         </div>
 
-        <Table
+        <Table scroll={{ x: 'max-content' }}
           dataSource={crud.data}
           columns={columns}
           rowKey="id"
@@ -310,3 +310,4 @@ export default function UsersPage() {
     </>
   );
 }
+
