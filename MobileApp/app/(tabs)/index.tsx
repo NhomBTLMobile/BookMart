@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 import SearchBar from '@/components/home/SearchBar';
 import BannerCard from '@/components/home/BannerCard';
@@ -84,7 +85,7 @@ export default function HomeScreen() {
               author="Nguyễn Nhật Ánh"
               price="65.000đ"
               rating={4.7}
-              onPress={() => console.log('Book 3')}
+              onPress={() => router.push('/book/3')}
               onAddToCart={() => console.log('Add book 3')}
             />
             <BookCard
@@ -93,7 +94,7 @@ export default function HomeScreen() {
               author="Dale Carnegie"
               price="89.000đ"
               rating={4.8}
-              onPress={() => console.log('Book 1')}
+              onPress={() => router.push('/book/1')}
               onAddToCart={() => console.log('Add book 1')}
             />
           </ScrollView>
@@ -155,7 +156,7 @@ export default function HomeScreen() {
               price="55.000đ"
               rating={4.9}
               discount="-25%"
-              onPress={() => console.log('Book 2')}
+              onPress={() => router.push('/book/2')}
               onAddToCart={() => console.log('Add book 2')}
             />
             <BookCard
@@ -165,7 +166,7 @@ export default function HomeScreen() {
               price="49.000đ"
               rating={4.8}
               discount="-38%"
-              onPress={() => console.log('Book 4')}
+              onPress={() => router.push('/book/4')}
               onAddToCart={() => console.log('Add book 4')}
             />
             <BookCard
@@ -175,7 +176,7 @@ export default function HomeScreen() {
               price="70.000đ"
               rating={4.8}
               discount="-21%"
-              onPress={() => console.log('Book 1')}
+              onPress={() => router.push('/book/1')}
               onAddToCart={() => console.log('Add book 1')}
             />
           </ScrollView>
@@ -205,7 +206,7 @@ export default function HomeScreen() {
               price="89.000đ"
               rating={4.8}
               onPress={() => {
-                console.log('Book 1');
+                router.push('/book/1');
               }}
               onAddToCart={() => {
                 console.log('Add book 1');
@@ -221,7 +222,7 @@ export default function HomeScreen() {
               price="75.000đ"
               rating={4.9}
               onPress={() => {
-                console.log('Book 2');
+                router.push('/book/2');
               }}
               onAddToCart={() => {
                 console.log('Add book 2');
@@ -237,7 +238,7 @@ export default function HomeScreen() {
               price="65.000đ"
               rating={4.7}
               onPress={() => {
-                console.log('Book 3');
+                router.push('/book/3');
               }}
               onAddToCart={() => {
                 console.log('Add book 3');
@@ -253,7 +254,7 @@ export default function HomeScreen() {
               price="79.000đ"
               rating={4.8}
               onPress={() => {
-                console.log('Book 4');
+                router.push('/book/4');
               }}
               onAddToCart={() => {
                 console.log('Add book 4');
@@ -276,7 +277,7 @@ export default function HomeScreen() {
               author="Rosie Nguyễn"
               price="79.000đ"
               rating={4.8}
-              onPress={() => console.log('Book 4')}
+              onPress={() => router.push('/book/4')}
               onAddToCart={() => console.log('Add book 4')}
             />
             <BookCard
@@ -285,7 +286,7 @@ export default function HomeScreen() {
               author="Nguyễn Nhật Ánh"
               price="65.000đ"
               rating={4.7}
-              onPress={() => console.log('Book 3')}
+              onPress={() => router.push('/book/3')}
               onAddToCart={() => console.log('Add book 3')}
             />
           </ScrollView>
