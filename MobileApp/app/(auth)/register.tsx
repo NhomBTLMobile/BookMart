@@ -109,13 +109,8 @@ export default function RegisterScreen() {
           </Text>
         </View>
 
-        {/* ── NHÓM 1: Thông tin cá nhân (Chunking) ── */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: COLORS.primary }]} />
-            <Text style={styles.sectionLabel}>Thông tin cá nhân</Text>
-          </View>
-
+        {/* ── FORM ── */}
+        <View style={styles.card}>
           <AuthInput
             label="Họ và tên"
             required
@@ -145,15 +140,6 @@ export default function RegisterScreen() {
             onChangeText={handlePhoneChange}
             errorMessage={phoneError}
           />
-        </View>
-
-        {/* ── NHÓM 2: Bảo mật (Chunking) ── */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionDot, { backgroundColor: COLORS.primaryDark }]} />
-            <Text style={styles.sectionLabel}>Bảo mật tài khoản</Text>
-          </View>
-
           <AuthInput
             label="Mật khẩu"
             required
@@ -239,35 +225,17 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
 
-  // ── Section card ──
-  sectionCard: {
+  // ── Card form ──
+  card: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
     padding: SPACING.xl,
-    marginBottom: SPACING.md,
-    shadowColor: '#183C27',
-    shadowOpacity: 0.06,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: SPACING.lg,
-    gap: SPACING.sm,
-  },
-  sectionDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  sectionLabel: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: FONT_WEIGHT.bold,
-    color: COLORS.text,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    shadowColor: '#183C27',
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 14,
+    elevation: 3,
   },
 
   // ── Divider ──

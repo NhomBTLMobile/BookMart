@@ -1,5 +1,5 @@
 // CATEGORIES SCREEN — đồng bộ Design System
-// (giữ nguyên logic tâm lý học, chỉ cập nhật sang dùng token)
+// Màu đơn sắc: chỉ dùng brand xanh lá, 2 mức nền nhạt → không rối mắt
 
 import React, { useState } from 'react';
 import {
@@ -20,8 +20,6 @@ type Category = {
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   bookCount: number;
-  color: string;
-  accent: string;
   featured?: boolean;
 };
 
@@ -36,40 +34,40 @@ const CATEGORY_GROUPS: CategoryGroup[] = [
     groupId: 'popular',
     groupName: '🔥 Phổ biến nhất',
     items: [
-      { id: '1',  title: 'Văn học',      icon: 'book-outline',          bookCount: 248, color: '#FFF3E0', accent: '#E65100', featured: true },
-      { id: '2',  title: 'Kinh tế',      icon: 'trending-up-outline',   bookCount: 186, color: '#E8F5E9', accent: '#2E7D32', featured: true },
-      { id: '3',  title: 'Kỹ năng sống', icon: 'bulb-outline',          bookCount: 312, color: '#E3F2FD', accent: '#1565C0', featured: true },
-      { id: '4',  title: 'Thiếu nhi',    icon: 'happy-outline',         bookCount: 174, color: '#FCE4EC', accent: '#AD1457' },
+      { id: '1',  title: 'Văn học',      icon: 'book-outline',        bookCount: 248, featured: true },
+      { id: '2',  title: 'Kinh tế',      icon: 'trending-up-outline', bookCount: 186, featured: true },
+      { id: '3',  title: 'Kỹ năng sống', icon: 'bulb-outline',        bookCount: 312, featured: true },
+      { id: '4',  title: 'Thiếu nhi',    icon: 'happy-outline',       bookCount: 174 },
     ],
   },
   {
     groupId: 'academic',
     groupName: '🎓 Học thuật & Nghề nghiệp',
     items: [
-      { id: '5',  title: 'Sách giáo khoa', icon: 'school-outline',      bookCount: 421, color: '#EDE7F6', accent: '#4527A0' },
-      { id: '6',  title: 'Công nghệ',      icon: 'laptop-outline',      bookCount: 137, color: '#E0F7FA', accent: '#006064' },
-      { id: '7',  title: 'Khoa học',       icon: 'flask-outline',       bookCount: 98,  color: '#F3E5F5', accent: '#6A1B9A' },
-      { id: '8',  title: 'Ngoại ngữ',      icon: 'language-outline',    bookCount: 203, color: '#E8EAF6', accent: '#283593' },
+      { id: '5',  title: 'Sách giáo khoa', icon: 'school-outline',   bookCount: 421 },
+      { id: '6',  title: 'Công nghệ',      icon: 'laptop-outline',   bookCount: 137 },
+      { id: '7',  title: 'Khoa học',       icon: 'flask-outline',    bookCount: 98  },
+      { id: '8',  title: 'Ngoại ngữ',      icon: 'language-outline', bookCount: 203 },
     ],
   },
   {
     groupId: 'lifestyle',
     groupName: '🌱 Sức khỏe & Đời sống',
     items: [
-      { id: '9',  title: 'Sức khỏe',  icon: 'heart-outline',       bookCount: 115, color: '#FFEBEE', accent: '#B71C1C' },
-      { id: '10', title: 'Nấu ăn',    icon: 'restaurant-outline',  bookCount: 89,  color: '#FFF8E1', accent: '#E65100' },
-      { id: '11', title: 'Du lịch',   icon: 'airplane-outline',    bookCount: 74,  color: '#E0F2F1', accent: '#004D40' },
-      { id: '12', title: 'Thể thao',  icon: 'barbell-outline',     bookCount: 62,  color: '#FBE9E7', accent: '#BF360C' },
+      { id: '9',  title: 'Sức khỏe', icon: 'heart-outline',      bookCount: 115 },
+      { id: '10', title: 'Nấu ăn',   icon: 'restaurant-outline', bookCount: 89  },
+      { id: '11', title: 'Du lịch',  icon: 'airplane-outline',   bookCount: 74  },
+      { id: '12', title: 'Thể thao', icon: 'barbell-outline',    bookCount: 62  },
     ],
   },
   {
     groupId: 'arts',
     groupName: '🎨 Nghệ thuật & Giải trí',
     items: [
-      { id: '13', title: 'Truyện tranh', icon: 'images-outline',         bookCount: 356, color: '#FFFDE7', accent: '#F57F17' },
-      { id: '14', title: 'Âm nhạc',      icon: 'musical-notes-outline',  bookCount: 54,  color: '#E8F5E9', accent: '#1B5E20' },
-      { id: '15', title: 'Điện ảnh',     icon: 'film-outline',           bookCount: 43,  color: '#F5F5F5', accent: '#212121' },
-      { id: '16', title: 'Triết học',    icon: 'telescope-outline',      bookCount: 77,  color: '#EDE7F6', accent: '#311B92' },
+      { id: '13', title: 'Truyện tranh', icon: 'images-outline',        bookCount: 356 },
+      { id: '14', title: 'Âm nhạc',      icon: 'musical-notes-outline', bookCount: 54  },
+      { id: '15', title: 'Điện ảnh',     icon: 'film-outline',          bookCount: 43  },
+      { id: '16', title: 'Triết học',    icon: 'telescope-outline',     bookCount: 77  },
     ],
   },
 ];
@@ -80,22 +78,22 @@ const ALL_CATEGORIES = CATEGORY_GROUPS.flatMap((g) => g.items);
 function CategoryGridItem({ item, onPress }: { item: Category; onPress: () => void }) {
   return (
     <TouchableOpacity
-      style={[styles.gridItem, { backgroundColor: item.color }]}
+      style={styles.gridItem}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      {/* Von Restorff Effect — badge Hot */}
+      {/* Von Restorff Effect — badge Hot chỉ cho mục nổi bật */}
       {item.featured && (
-        <View style={[styles.hotBadge, { backgroundColor: item.accent }]}>
+        <View style={styles.hotBadge}>
           <Text style={styles.hotText}>Hot</Text>
         </View>
       )}
 
-      <View style={[styles.iconWrap, { backgroundColor: item.accent + '20' }]}>
-        <Ionicons name={item.icon} size={26} color={item.accent} />
+      <View style={styles.iconWrap}>
+        <Ionicons name={item.icon} size={26} color={COLORS.primary} />
       </View>
 
-      <Text style={[styles.gridTitle, { color: item.accent }]} numberOfLines={1}>
+      <Text style={styles.gridTitle} numberOfLines={1}>
         {item.title}
       </Text>
       <Text style={styles.gridCount}>{item.bookCount} cuốn</Text>
@@ -227,21 +225,24 @@ const styles = StyleSheet.create({
     width: '47.5%',
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
+    backgroundColor: COLORS.primaryLight,
     ...SHADOW.sm,
   },
   hotBadge: {
     position: 'absolute', top: 10, right: 10,
     borderRadius: RADIUS.sm - 2,
     paddingHorizontal: 7, paddingVertical: 2,
+    backgroundColor: COLORS.primaryDark,
   },
   hotText: { fontSize: 10, fontWeight: FONT_WEIGHT.bold, color: COLORS.white },
 
   iconWrap: {
-    width: 50, height: 50,
+    width: 46, height: 46,
     borderRadius: RADIUS.md,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: SPACING.md,
+    backgroundColor: COLORS.white,
   },
-  gridTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, marginBottom: 3 },
+  gridTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, marginBottom: 3, color: COLORS.text },
   gridCount: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
 });
