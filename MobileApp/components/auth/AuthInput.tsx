@@ -1,3 +1,5 @@
+// AuthInput — Dùng token từ Design System
+// Validate real-time, label + dấu *, inline error message
 
 import {
   StyleSheet,
@@ -8,30 +10,20 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-
-import { COLORS } from '@/constants/colors';
+import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SPACING } from '@/constants/colors';
 
 type Props = {
-  /** Nhãn hiển thị phía trên ô nhập */
   label?: string;
-  /** Nếu true, sẽ hiện dấu * đỏ bên cạnh nhãn */
   required?: boolean;
-
   icon: keyof typeof Ionicons.glyphMap;
   placeholder: string;
-
   value: string;
   onChangeText: (text: string) => void;
-
-  /** Dùng cho ô mật khẩu */
   isPassword?: boolean;
-  /** Trạng thái đang hiện hay ẩn mật khẩu */
   showPassword?: boolean;
-  /** Hàm được gọi khi bấm icon con mắt */
   onTogglePassword?: () => void;
-
-  /** Thông báo lỗi validation — hiển thị chữ đỏ nhỏ bên dưới ô nhập */
   errorMessage?: string;
+  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'numeric';
 };
 
 export default function AuthInput({
@@ -45,13 +37,13 @@ export default function AuthInput({
   showPassword = false,
   onTogglePassword,
   errorMessage,
+  keyboardType = 'default',
 }: Props) {
   const hasError = !!errorMessage;
 
   return (
     <View style={styles.wrapper}>
-
-      {/* Nhãn + dấu * */}
+      {/* Nhãn + dấu * bắt buộc */}
       {label && (
         <View style={styles.labelRow}>
           <Text style={styles.label}>{label}</Text>
@@ -60,110 +52,96 @@ export default function AuthInput({
       )}
 
       {/* Ô nhập */}
-      <View style={[styles.container, hasError && styles.containerError]}>
-
-        {/* Icon bên trái */}
+      <View style={[styles.inputRow, hasError && styles.inputRowError]}>
         <Ionicons
           name={icon}
-          size={20}
-          color={hasError ? COLORS.error : COLORS.textSecondary}
+          size={19}
+          color={hasError ? COLORS.error : COLORS.textHint}
         />
-
-        {/* Ô nhập dữ liệu */}
         <TextInput
           style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor={COLORS.textSecondary}
+          placeholderTextColor={COLORS.textHint}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={isPassword && !showPassword}
           autoCapitalize="none"
           autoCorrect={false}
+          keyboardType={keyboardType}
         />
-
-        {/* Icon con mắt */}
         {isPassword && onTogglePassword && (
-          <TouchableOpacity
-            onPress={onTogglePassword}
-            hitSlop={10}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity onPress={onTogglePassword} hitSlop={10} activeOpacity={0.7}>
             <Ionicons
               name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-              size={20}
-              color={COLORS.textSecondary}
+              size={19}
+              color={COLORS.textHint}
             />
           </TouchableOpacity>
         )}
-
       </View>
 
-      {/* Thông báo lỗi — luôn chiếm đúng 1 dòng để layout không giật */}
+      {/* Lỗi — luôn giữ 1 dòng để layout không giật */}
       <Text style={[styles.errorText, !hasError && styles.errorHidden]}>
         {errorMessage ?? ' '}
       </Text>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
 
-  /* Nhãn */
+  // ── Nhãn ──
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: SPACING.xs,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.semibold,
     color: COLORS.text,
   },
   asterisk: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.error,
     lineHeight: 18,
   },
 
-  /* Ô nhập */
-  container: {
-    height: 54,
+  // ── Ô nhập ──
+  inputRow: {
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
     backgroundColor: COLORS.surface,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
   },
-
-  containerError: {
+  inputRowError: {
     borderColor: COLORS.error,
     backgroundColor: '#FFF5F5',
   },
-
   input: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 15,
+    fontSize: FONT_SIZE.base,
     color: COLORS.text,
   },
 
-  /* Lỗi */
+  // ── Lỗi ──
   errorText: {
-    marginTop: 4,
+    marginTop: SPACING.xs - 2,
     marginLeft: 2,
-    fontSize: 12,
+    fontSize: FONT_SIZE.xs,
     color: COLORS.error,
-    fontWeight: '500',
-    minHeight: 18,
+    fontWeight: FONT_WEIGHT.medium,
+    minHeight: 16,
   },
-
   errorHidden: {
     color: 'transparent',
   },

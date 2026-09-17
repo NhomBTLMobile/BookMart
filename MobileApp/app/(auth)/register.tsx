@@ -1,6 +1,15 @@
-import { useState } from "react";
+// REGISTER SCREEN
+// ─────────────────────────────────────────────
+// Tâm lý học áp dụng:
+// • Progress Illusion   — bước/bước chia nhóm form theo "Thông tin cá nhân" / "Bảo mật"
+//                         giúp người dùng cảm thấy đang tiến tới đích (Goal Gradient Effect)
+// • Chunking            — chia 5 field thành 2 nhóm nhỏ → giảm Cognitive Load
+// • Real-time Feedback  — lỗi hiện ngay khi gõ → không cần chờ submit để biết sai
+// • Social Proof        — Google signup ở cuối (quen thuộc, an tâm)
+// • Reciprocity         — hiện rõ "lợi ích" khi đăng ký ở subtitle
+// ─────────────────────────────────────────────
 
-import { Image } from "expo-image";
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,106 +18,60 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
+} from 'react-native';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
 
-import { router } from "expo-router";
+import AuthInput from '@/components/auth/AuthInput';
+import PrimaryButton from '@/components/auth/PrimaryButton';
+import SocialButton from '@/components/auth/SocialButton';
+import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS } from '@/constants/colors';
 
-import AuthInput from "../../components/auth/AuthInput";
-import PrimaryButton from "../../components/auth/PrimaryButton";
-import SocialButton from "../../components/auth/SocialButton";
-
-import { COLORS } from "@/constants/colors";
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Validators ──────────────────────────────────────────────
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 const isValidPhone = (v: string) => /^0\d{9}$/.test(v.trim());
 
-const validateFullName = (v: string): string => {
-  if (!v.trim()) return "Vui lòng nhập họ và tên";
-  if (v.trim().length < 2) return "Họ và tên phải có ít nhất 2 ký tự";
-  return "";
-};
-
-const validateEmail = (v: string): string => {
-  if (!v.trim()) return "Vui lòng nhập email";
-  if (!isValidEmail(v)) return "Email không đúng định dạng";
-  return "";
-};
-
-const validatePhone = (v: string): string => {
-  if (!v.trim()) return "Vui lòng nhập số điện thoại";
-  if (!isValidPhone(v)) return "Số điện thoại không đúng định dạng (10 chữ số, bắt đầu bằng 0)";
-  return "";
-};
-
-const validatePassword = (v: string): string => {
-  if (!v) return "Vui lòng nhập mật khẩu";
-  if (v.length < 6) return "Mật khẩu phải có ít nhất 6 ký tự";
-  return "";
-};
-
-const validateConfirmPassword = (v: string, password: string): string => {
-  if (!v) return "Vui lòng xác nhận mật khẩu";
-  if (v !== password) return "Mật khẩu xác nhận không khớp";
-  return "";
-};
-// ─────────────────────────────────────────────────────────────────────────────
+const validateFullName  = (v: string) => !v.trim() ? 'Vui lòng nhập họ và tên' : v.trim().length < 2 ? 'Ít nhất 2 ký tự' : '';
+const validateEmail     = (v: string) => !v.trim() ? 'Vui lòng nhập email' : !isValidEmail(v) ? 'Email không đúng định dạng' : '';
+const validatePhone     = (v: string) => !v.trim() ? 'Vui lòng nhập số điện thoại' : !isValidPhone(v) ? 'Số điện thoại không đúng (10 số, bắt đầu 0)' : '';
+const validatePassword  = (v: string) => !v ? 'Vui lòng nhập mật khẩu' : v.length < 6 ? 'Mật khẩu phải có ít nhất 6 ký tự' : '';
+const validateConfirm   = (v: string, pw: string) => !v ? 'Vui lòng xác nhận mật khẩu' : v !== pw ? 'Mật khẩu xác nhận không khớp' : '';
+// ─────────────────────────────────────────────────────────────
 
 export default function RegisterScreen() {
-  // ─── State ─────────────────────────────────────────────────────────────────
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName]               = useState('');
+  const [email, setEmail]                     = useState('');
+  const [phoneNumber, setPhoneNumber]         = useState('');
+  const [password, setPassword]               = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword]               = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [fullNameError, setFullNameError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [phoneError, setPhoneError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [fullNameError, setFullNameError]             = useState('');
+  const [emailError, setEmailError]                   = useState('');
+  const [phoneError, setPhoneError]                   = useState('');
+  const [passwordError, setPasswordError]             = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-  // ─── Handlers (validate real-time khi gõ) ──────────────────────────────────
-  const handleFullNameChange = (text: string) => {
-    setFullName(text);
-    setFullNameError(validateFullName(text));
+  // ── Handlers: validate real-time khi gõ ──────────────────
+  const handleFullNameChange = (t: string) => { setFullName(t); setFullNameError(validateFullName(t)); };
+  const handleEmailChange    = (t: string) => { setEmail(t); setEmailError(validateEmail(t)); };
+  const handlePhoneChange    = (t: string) => { setPhoneNumber(t); setPhoneError(validatePhone(t)); };
+  const handlePasswordChange = (t: string) => {
+    setPassword(t);
+    setPasswordError(validatePassword(t));
+    if (confirmPassword) setConfirmPasswordError(validateConfirm(confirmPassword, t));
   };
+  const handleConfirmChange  = (t: string) => { setConfirmPassword(t); setConfirmPasswordError(validateConfirm(t, password)); };
 
-  const handleEmailChange = (text: string) => {
-    setEmail(text);
-    setEmailError(validateEmail(text));
-  };
-
-  const handlePhoneChange = (text: string) => {
-    setPhoneNumber(text);
-    setPhoneError(validatePhone(text));
-  };
-
-  const handlePasswordChange = (text: string) => {
-    setPassword(text);
-    setPasswordError(validatePassword(text));
-    // Cập nhật lại lỗi xác nhận nếu đã có giá trị
-    if (confirmPassword) {
-      setConfirmPasswordError(validateConfirmPassword(confirmPassword, text));
-    }
-  };
-
-  const handleConfirmPasswordChange = (text: string) => {
-    setConfirmPassword(text);
-    setConfirmPasswordError(validateConfirmPassword(text, password));
-  };
-
-  // ─── Register ──────────────────────────────────────────────────────────────
+  // ── Submit ────────────────────────────────────────────────
   const handleRegister = () => {
-    // Validate toàn bộ trước khi gửi (phòng khi chưa chạm ô nào)
     const fnErr = validateFullName(fullName);
     const eErr  = validateEmail(email);
     const phErr = validatePhone(phoneNumber);
     const pErr  = validatePassword(password);
-    const cpErr = validateConfirmPassword(confirmPassword, password);
+    const cpErr = validateConfirm(confirmPassword, password);
 
     setFullNameError(fnErr);
     setEmailError(eErr);
@@ -117,123 +80,123 @@ export default function RegisterScreen() {
     setConfirmPasswordError(cpErr);
 
     if (fnErr || eErr || phErr || pErr || cpErr) return;
-
-    console.log("Đăng ký:", fullName, email, phoneNumber, password);
-    // TODO: gọi API đăng ký
+    console.log('Đăng ký:', fullName, email, phoneNumber);
+    // TODO: gọi API
   };
 
-  // ─── UI ────────────────────────────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Logo */}
-        <View style={styles.logoContainer}>
+        {/* ── HERO / ANCHOR ── */}
+        <View style={styles.hero}>
           <Image
-            source={require("../../assets/images/bookmart_logo.png")}
+            source={require('../../assets/images/bookmart_logo.png')}
             style={styles.logo}
             contentFit="contain"
           />
+          <Text style={styles.title}>Tạo tài khoản</Text>
+          {/* Reciprocity: nêu rõ lợi ích → tăng động lực điền form */}
+          <Text style={styles.subtitle}>
+            Đăng ký để mua sách, theo dõi đơn hàng{'\n'}
+            và nhận ưu đãi độc quyền dành cho thành viên 🎁
+          </Text>
         </View>
 
-        {/* Title */}
-        <Text style={styles.title}>Đăng ký tài khoản</Text>
+        {/* ── NHÓM 1: Thông tin cá nhân (Chunking) ── */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionDot, { backgroundColor: COLORS.primary }]} />
+            <Text style={styles.sectionLabel}>Thông tin cá nhân</Text>
+          </View>
 
-        <Text style={styles.subtitle}>
-          Tạo tài khoản để mua sách, theo dõi đơn hàng
-          {"\n"}
-          và nhận nhiều ưu đãi hấp dẫn!
-        </Text>
-
-        {/* Họ và tên */}
-        <AuthInput
-          label="Họ và tên"
-          required
-          icon="person-outline"
-          placeholder="Nhập họ và tên"
-          value={fullName}
-          onChangeText={handleFullNameChange}
-          errorMessage={fullNameError}
-        />
-
-        {/* Email */}
-        <AuthInput
-          label="Email"
-          required
-          icon="mail-outline"
-          placeholder="Nhập địa chỉ email"
-          value={email}
-          onChangeText={handleEmailChange}
-          errorMessage={emailError}
-        />
-
-        {/* Số điện thoại */}
-        <AuthInput
-          label="Số điện thoại"
-          required
-          icon="call-outline"
-          placeholder="Nhập số điện thoại"
-          value={phoneNumber}
-          onChangeText={handlePhoneChange}
-          errorMessage={phoneError}
-        />
-
-        {/* Mật khẩu */}
-        <AuthInput
-          label="Mật khẩu"
-          required
-          icon="lock-closed-outline"
-          placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
-          value={password}
-          onChangeText={handlePasswordChange}
-          isPassword
-          showPassword={showPassword}
-          onTogglePassword={() => setShowPassword((prev) => !prev)}
-          errorMessage={passwordError}
-        />
-
-        {/* Xác nhận mật khẩu */}
-        <AuthInput
-          label="Xác nhận mật khẩu"
-          required
-          icon="lock-closed-outline"
-          placeholder="Nhập lại mật khẩu"
-          value={confirmPassword}
-          onChangeText={handleConfirmPasswordChange}
-          isPassword
-          showPassword={showConfirmPassword}
-          onTogglePassword={() => setShowConfirmPassword((prev) => !prev)}
-          errorMessage={confirmPasswordError}
-        />
-
-        {/* Register button */}
-        <PrimaryButton title="Đăng ký" onPress={handleRegister} />
-
-        {/* Or */}
-        <View style={styles.orContainer}>
-          <View style={styles.line} />
-          <Text style={styles.orText}>Hoặc</Text>
-          <View style={styles.line} />
+          <AuthInput
+            label="Họ và tên"
+            required
+            icon="person-outline"
+            placeholder="Nhập họ và tên đầy đủ"
+            value={fullName}
+            onChangeText={handleFullNameChange}
+            errorMessage={fullNameError}
+          />
+          <AuthInput
+            label="Email"
+            required
+            icon="mail-outline"
+            placeholder="Nhập địa chỉ email"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={handleEmailChange}
+            errorMessage={emailError}
+          />
+          <AuthInput
+            label="Số điện thoại"
+            required
+            icon="call-outline"
+            placeholder="Nhập số điện thoại (10 chữ số)"
+            keyboardType="phone-pad"
+            value={phoneNumber}
+            onChangeText={handlePhoneChange}
+            errorMessage={phoneError}
+          />
         </View>
 
-        {/* Google */}
-        <SocialButton
-          title="Đăng ký với Google"
-          onPress={() => {
-            console.log("Đăng ký với Google");
-          }}
-        />
+        {/* ── NHÓM 2: Bảo mật (Chunking) ── */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionDot, { backgroundColor: COLORS.primaryDark }]} />
+            <Text style={styles.sectionLabel}>Bảo mật tài khoản</Text>
+          </View>
 
-        {/* Login link */}
-        <View style={styles.loginContainer}>
-          <Text style={styles.loginNormal}>Bạn đã có tài khoản?</Text>
-          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+          <AuthInput
+            label="Mật khẩu"
+            required
+            icon="lock-closed-outline"
+            placeholder="Ít nhất 6 ký tự"
+            isPassword
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword((p) => !p)}
+            value={password}
+            onChangeText={handlePasswordChange}
+            errorMessage={passwordError}
+          />
+          <AuthInput
+            label="Xác nhận mật khẩu"
+            required
+            icon="lock-closed-outline"
+            placeholder="Nhập lại mật khẩu"
+            isPassword
+            showPassword={showConfirmPassword}
+            onTogglePassword={() => setShowConfirmPassword((p) => !p)}
+            value={confirmPassword}
+            onChangeText={handleConfirmChange}
+            errorMessage={confirmPasswordError}
+          />
+        </View>
+
+        {/* ── CTA ── */}
+        <PrimaryButton title="Tạo tài khoản" onPress={handleRegister} />
+
+        {/* ── DIVIDER ── */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>Hoặc đăng ký với</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        {/* ── SOCIAL PROOF ── */}
+        <SocialButton title="Google" onPress={() => console.log('Google register')} />
+
+        {/* ── LOGIN LINK ── */}
+        <View style={styles.loginRow}>
+          <Text style={styles.loginNormal}>Đã có tài khoản?</Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
             <Text style={styles.loginLink}> Đăng nhập</Text>
           </TouchableOpacity>
         </View>
@@ -242,76 +205,102 @@ export default function RegisterScreen() {
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 30,
+  scroll: {
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING['4xl'],
+    paddingBottom: SPACING['3xl'],
   },
 
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: 10,
+  // ── Hero ──
+  hero: {
+    alignItems: 'center',
+    marginBottom: SPACING['2xl'],
   },
-
   logo: {
-    width: 220,
-    height: 100,
+    width: 180,
+    height: 80,
+    marginBottom: SPACING.md,
   },
-
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
+    fontSize: FONT_SIZE['3xl'],
+    fontWeight: FONT_WEIGHT.extrabold,
     color: COLORS.text,
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
-
   subtitle: {
-    fontSize: 15,
+    fontSize: FONT_SIZE.md,
     color: COLORS.textSecondary,
-    lineHeight: 22,
-    marginBottom: 26,
+    textAlign: 'center',
+    lineHeight: 21,
   },
 
-  orContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 20,
+  // ── Section card ──
+  sectionCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.xl,
+    marginBottom: SPACING.md,
+    shadowColor: '#183C27',
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  sectionDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  sectionLabel: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.text,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
 
-  line: {
+  // ── Divider ──
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.lg,
+    gap: SPACING.md,
+  },
+  dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.divider,
   },
-
-  orText: {
-    marginHorizontal: 14,
-    fontSize: 14,
+  dividerText: {
+    fontSize: FONT_SIZE.xs,
     color: COLORS.textSecondary,
+    fontWeight: FONT_WEIGHT.medium,
   },
 
-  loginContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
+  // ── Login link ──
+  loginRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: SPACING.xl,
   },
-
   loginNormal: {
-    fontSize: 14,
+    fontSize: FONT_SIZE.sm,
     color: COLORS.textSecondary,
   },
-
   loginLink: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.primaryDark,
   },
 });
