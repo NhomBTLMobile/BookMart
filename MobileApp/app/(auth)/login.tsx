@@ -1,8 +1,15 @@
-import { useState } from "react";
+// LOGIN SCREEN
+// ─────────────────────────────────────────────
+// Tâm lý học áp dụng:
+// • Anchoring Effect    — Logo + tagline đầu trang tạo ấn tượng brand đầu tiên
+// • Trust Signal        — "Đăng nhập bằng Google" = xã hội chứng nhận (Social Proof)
+// • Loss Aversion       — "Quên mật khẩu?" ngay dưới ô mật khẩu → giảm ma sát
+// • Visual Hierarchy    — Title lớn → Label → Input → Button (mắt đọc top-down)
+// • Fitts's Law         — Button 54px full-width, dễ nhấn bằng ngón cái
+// ─────────────────────────────────────────────
 
-import { Image } from "expo-image";
+import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -10,104 +17,134 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
+} from 'react-native';
+import { Image } from 'expo-image';
+import { router } from 'expo-router';
 
-import { router } from "expo-router";
+import AuthInput from '@/components/auth/AuthInput';
+import PrimaryButton from '@/components/auth/PrimaryButton';
+import SocialButton from '@/components/auth/SocialButton';
+import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS } from '@/constants/colors';
 
-import AuthInput from "../../components/auth/AuthInput";
-import PrimaryButton from "../../components/auth/PrimaryButton";
-import SocialButton from "../../components/auth/SocialButton";
+// ─── Validators ──────────────────────────────────────────────
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
-import { COLORS } from "../../constants/colors";
+const validateEmail = (v: string) => {
+  if (!v.trim()) return 'Vui lòng nhập email';
+  if (!isValidEmail(v)) return 'Email không đúng định dạng';
+  return '';
+};
+const validatePassword = (v: string) => {
+  if (!v) return 'Vui lòng nhập mật khẩu';
+  if (v.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
+  return '';
+};
+// ─────────────────────────────────────────────────────────────
+
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    setEmailError(validateEmail(text));
+  };
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    setPasswordError(validatePassword(text));
+  };
+
   const handleLogin = () => {
-    if (!email || !password) {
-      Alert.alert("Thông báo", "Vui lòng nhập đầy đủ email và mật khẩu");
-      return;
-    }
-    if (email === "test" && password === "123456") {
-      console.log("Đang đăng nhập với: ", email, password);
-      router.replace("/(tabs)");
+    const eErr = validateEmail(email);
+    const pErr = validatePassword(password);
+    setEmailError(eErr);
+    setPasswordError(pErr);
+    if (eErr || pErr) return;
+
+    if (email === 'test@gmail.com' && password === '123456') {
+      router.replace('/(tabs)');
+    } else {
+      setEmailError('Email hoặc mật khẩu không chính xác');
+      setPasswordError('Email hoặc mật khẩu không chính xác');
     }
   };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Logo */}
-        <View style={styles.logoContainer}>
+        {/* ── HERO / ANCHOR ── */}
+        <View style={styles.hero}>
           <Image
-            source={require("../../assets/images/bookmart_logo.png")}
+            source={require('../../assets/images/bookmart_logo.png')}
             style={styles.logo}
             contentFit="contain"
           />
+          <Text style={styles.title}>Đăng nhập</Text>
+          <Text style={styles.subtitle}>
+            Chào mừng bạn quay trở lại!{'\n'}
+            Cùng tiếp tục hành trình khám phá tri thức nhé!
+          </Text>
         </View>
 
-        {/* Title */}
-        <Text style={styles.title}>Đăng nhập</Text>
+        {/* ── FORM ── */}
+        <View style={styles.card}>
+          <AuthInput
+            label="Email"
+            required
+            icon="mail-outline"
+            placeholder="Nhập địa chỉ email"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={handleEmailChange}
+            errorMessage={emailError}
+          />
 
-        <Text style={styles.subtitle}>
-          Chào mừng bạn quay trở lại!
-          {"\n"}
-          Cùng tiếp tục hành trình khám phá tri thức nhé!
-        </Text>
+          <AuthInput
+            label="Mật khẩu"
+            required
+            icon="lock-closed-outline"
+            placeholder="Nhập mật khẩu"
+            isPassword
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword((p) => !p)}
+            value={password}
+            onChangeText={handlePasswordChange}
+            errorMessage={passwordError}
+          />
 
-        {/* Email */}
-        <AuthInput
-          icon="mail-outline"
-          placeholder="Email hoặc số điện thoại"
-          value={email}
-          onChangeText={setEmail}
-        />
+          {/* Loss Aversion: giảm rào cản khi quên mật khẩu */}
+          <TouchableOpacity style={styles.forgotRow} onPress={() => {}}>
+            <Text style={styles.forgotText}>Quên mật khẩu?</Text>
+          </TouchableOpacity>
 
-        {/* Password */}
-        <AuthInput
-          icon="lock-closed-outline"
-          placeholder="Mật khẩu"
-          isPassword
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        {/* Forgot password */}
-        <TouchableOpacity style={styles.forgotWrapper} onPress={() => {}}>
-          <Text style={styles.forgotText}>Quên mật khẩu?</Text>
-        </TouchableOpacity>
-
-        {/* Login button */}
-        <PrimaryButton title="Đăng nhập" onPress={handleLogin} />
-
-        {/* Or */}
-        <View style={styles.orContainer}>
-          <View style={styles.line} />
-
-          <Text style={styles.orText}>Hoặc</Text>
-
-          <View style={styles.line} />
+          <PrimaryButton title="Đăng nhập" onPress={handleLogin} />
         </View>
 
-        {/* Google */}
-        <SocialButton
-          title="Đăng nhập bằng Google"
-          onPress={() => {
-            console.log("Google login");
-          }}
-        />
+        {/* ── DIVIDER ── */}
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>Hoặc đăng nhập với</Text>
+          <View style={styles.dividerLine} />
+        </View>
 
-        {/* Register */}
-        <View style={styles.registerContainer}>
+        {/* ── SOCIAL PROOF ── */}
+        <SocialButton title="Google" onPress={() => console.log('Google login')} />
+
+        {/* ── REGISTER LINK ── */}
+        <View style={styles.registerRow}>
           <Text style={styles.registerNormal}>Chưa có tài khoản?</Text>
-
-          <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
-            <Text style={styles.registerLink}> Đăng ký</Text>
+          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+            <Text style={styles.registerLink}> Đăng ký ngay</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -120,87 +157,91 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 60, // Tăng khoảng trống phía trên
-    paddingBottom: 30,
+  scroll: {
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING['5xl'],
+    paddingBottom: SPACING['3xl'],
   },
 
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: 10, // Đẩy title xuống một chút
+  // ── Hero ──
+  hero: {
+    alignItems: 'center',
+    marginBottom: SPACING['2xl'],
   },
-
   logo: {
-    width: 220,
-    height: 100,
+    width: 200,
+    height: 88,
+    marginBottom: SPACING.md,
   },
-
   title: {
-    fontSize: 30,
-    fontWeight: "800",
+    fontSize: FONT_SIZE['3xl'],
+    fontWeight: FONT_WEIGHT.extrabold,
     color: COLORS.text,
-
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
-
   subtitle: {
-    fontSize: 15,
-    lineHeight: 23,
-
+    fontSize: FONT_SIZE.md,
     color: COLORS.textSecondary,
-
-    marginBottom: 26,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 
-  forgotWrapper: {
-    alignItems: "flex-end",
-    marginTop: -2,
-    marginBottom: 20,
+  // ── Card form ──
+  card: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.xl,
+    marginBottom: SPACING.lg,
+    shadowColor: '#183C27',
+    shadowOpacity: 0.07,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 14,
+    elevation: 3,
   },
 
+  // ── Forgot ──
+  forgotRow: {
+    alignSelf: 'flex-end',
+    marginTop: -SPACING.xs,
+    marginBottom: SPACING.lg,
+  },
   forgotText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.semibold,
     color: COLORS.primaryDark,
-    fontSize: 14,
-    fontWeight: "600",
   },
 
-  orContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-
-    marginVertical: 20,
+  // ── Divider ──
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.lg,
+    gap: SPACING.md,
   },
-
-  line: {
+  dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.divider,
   },
-
-  orText: {
-    marginHorizontal: 14,
-
-    fontSize: 14,
+  dividerText: {
+    fontSize: FONT_SIZE.xs,
     color: COLORS.textSecondary,
+    fontWeight: FONT_WEIGHT.medium,
   },
 
-  registerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-
-    marginTop: 24,
+  // ── Register link ──
+  registerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: SPACING.xl,
   },
-
   registerNormal: {
+    fontSize: FONT_SIZE.sm,
     color: COLORS.textSecondary,
-    fontSize: 14,
   },
-
   registerLink: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.primaryDark,
-    fontSize: 14,
-    fontWeight: "700",
   },
 });
