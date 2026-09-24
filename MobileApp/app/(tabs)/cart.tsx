@@ -290,7 +290,7 @@ export default function CartScreen() {
         <TouchableOpacity
           style={styles.checkoutBtn}
           activeOpacity={0.82}
-          onPress={() => console.log('Đặt hàng')}
+          onPress={() => router.push('/checkout')}
         >
           <Text style={styles.checkoutBtnText}>Đặt hàng</Text>
           <Ionicons name="arrow-forward" size={18} color={COLORS.white} />
