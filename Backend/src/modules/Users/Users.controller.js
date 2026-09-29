@@ -1,7 +1,7 @@
 import { UsersService } from './users.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createUsersSchema, updateUsersSchema, loginSchema } from './users.validation.js'
+import { createUsersSchema, updateUsersSchema, loginSchema, registerSchema } from './users.validation.js'
 
 const service = new UsersService()
 
@@ -68,5 +68,25 @@ export const getMe = async (req, res, next) => {
   try {
     const data = await service.getById(req.user.id)
     sendSuccess(res, 'Lấy thông tin thành công', data)
+  } catch (err) { next(err) }
+}
+
+export const register = async (req, res, next) => {
+  try {
+    const { error, value } = registerSchema.validate(req.body)
+    if (error) return sendError(res, error.details[0].message, 400)
+    const data = await service.register(value)
+    sendCreated(res, 'Đăng ký thành công', data)
+  } catch (err) { next(err) }
+}
+
+export const loginWithGoogle = async (req, res, next) => {
+  try {
+    const { idToken } = req.body
+    if (!idToken) {
+      return sendError(res, 'Thiếu idToken', 400)
+    }
+    const data = await service.loginWithGoogle(idToken)
+    sendSuccess(res, 'Đăng nhập Google thành công', data)
   } catch (err) { next(err) }
 }

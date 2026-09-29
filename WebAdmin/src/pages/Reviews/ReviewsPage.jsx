@@ -158,7 +158,7 @@ export default function ReviewsPage() {
             total: crud.meta?.total,
             onChange: crud.setPage,
             showSizeChanger: false,
-            showTotal: (t, r) => `${r[0]} / ${t}`,
+            showTotal: null,
           }}
         />
       </Card>

@@ -19,3 +19,15 @@ export const authMiddleware = (req, res, next) => {
     return sendError(res, 'Token không hợp lệ', 401)
   }
 }
+
+export const requireRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return sendError(res, 'Không có quyền truy cập', 403)
+    }
+    if (!roles.includes(req.user.role)) {
+      return sendError(res, 'Không có quyền truy cập', 403)
+    }
+    next()
+  }
+}

@@ -37,4 +37,8 @@ export class UserOauthProvidersRepository {
     return UserOauthProviders.destroy({ where: { id } })
   }
 
+  async findByProvider(provider, provider_uid) {
+    return UserOauthProviders.findOne({ where: { provider, provider_uid } })
+  }
+
 }

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove, login, refresh, getMe } from './users.controller.js'
+import { getAll, getById, create, update, remove, login, refresh, getMe, register, loginWithGoogle } from './users.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -34,7 +34,58 @@ const router = Router()
  *       200:
  *         description: Đăng nhập thành công
  */
+/**
+ * @swagger
+ * /users/login/google:
+ *   post:
+ *     tags: [Users]
+ *     summary: Đăng nhập bằng Google ID Token
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [idToken]
+ *             properties:
+ *               idToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Đăng nhập thành công
+ */
+/**
+ * @swagger
+ * /users/register:
+ *   post:
+ *     tags: [Users]
+ *     summary: Đăng ký
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password, full_name]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               full_name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Đăng ký thành công
+ */
+router.post('/register', register)
+
 router.post('/login', login)
+router.post('/login/google', loginWithGoogle)
 
 /**
  * @swagger

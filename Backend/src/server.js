@@ -1,7 +1,11 @@
 import 'dotenv/config'
 import app from './app.js'
 import { sequelize } from './config/database.js'
+import { setupAssociations } from './config/associations.js'
 import { logger } from './utils/logger.js'
+
+setupAssociations()
+
 
 const PORT = process.env.PORT || 3000
 

@@ -1,6 +1,6 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './books.controller.js'
-import { authMiddleware } from '../../middleware/auth.middleware.js'
+import { getAll, getById, create, update, remove, getFeaturedBooks, getNewBooks, getBestsellerBooks, getBookDetails, searchBooks } from './books.controller.js'
+import { authMiddleware, requireRole } from '../../middleware/auth.middleware.js'
 
 const router = Router()
 
@@ -11,6 +11,71 @@ const router = Router()
  *   description: Quản lý books
  */
 
+/**
+ * @swagger
+ * /books/home/featured:
+ *   get:
+ *     tags: [Books]
+ *     summary: Lấy danh sách sách nổi bật
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get('/home/featured', getFeaturedBooks)
+
+/**
+ * @swagger
+ * /books/home/new:
+ *   get:
+ *     tags: [Books]
+ *     summary: Lấy danh sách sách mới
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get('/home/new', getNewBooks)
+
+/**
+ * @swagger
+ * /books/home/bestsellers:
+ *   get:
+ *     tags: [Books]
+ *     summary: Lấy danh sách sách bán chạy
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get('/home/bestsellers', getBestsellerBooks)
+
+/**
+ * @swagger
+ * /books/search/advanced:
+ *   get:
+ *     tags: [Books]
+ *     summary: Tìm kiếm và lọc sách
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get('/search/advanced', searchBooks)
+
+/**
+ * @swagger
+ * /books/{id}/details:
+ *   get:
+ *     tags: [Books]
+ *     summary: Lấy chi tiết sách đầy đủ
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.get('/:id/details', getBookDetails)
 
 /**
  * @swagger
@@ -45,7 +110,9 @@ const router = Router()
  *         description: Thành công
  *   post:
  *     tags: [Books]
- *     summary: Tạo books mới
+ *     summary: Tạo books mới (Chỉ Admin/Staff)
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -99,8 +166,8 @@ const router = Router()
  *               is_active:
  *                 type: boolean
  */
-router.get('/', authMiddleware, getAll)
-router.post('/', authMiddleware, create)
+router.get('/', getAll)
+router.post('/', authMiddleware, requireRole('admin', 'staff'), create)
 
 /**
  * @swagger
@@ -119,7 +186,9 @@ router.post('/', authMiddleware, create)
  *           type: string
  *   put:
  *     tags: [Books]
- *     summary: Cập nhật books
+ *     summary: Cập nhật books (Chỉ Admin/Staff)
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Thành công
@@ -180,7 +249,9 @@ router.post('/', authMiddleware, create)
  *                 type: boolean
  *   delete:
  *     tags: [Books]
- *     summary: Xóa books
+ *     summary: Xóa books (Chỉ Admin/Staff)
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Thành công
@@ -191,8 +262,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  */
-router.get('/:id', authMiddleware, getById)
-router.put('/:id', authMiddleware, update)
-router.delete('/:id', authMiddleware, remove)
+router.get('/:id', getById)
+router.put('/:id', authMiddleware, requireRole('admin', 'staff'), update)
+router.delete('/:id', authMiddleware, requireRole('admin', 'staff'), remove)
 
 export default router

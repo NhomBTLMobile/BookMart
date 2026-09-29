@@ -46,3 +46,50 @@ export const remove = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
+export const getFeaturedBooks = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10
+    const data = await service.getFeaturedBooks(limit)
+    sendSuccess(res, 'Lấy danh sách sách nổi bật thành công', data)
+  } catch (err) { next(err) }
+}
+
+export const getNewBooks = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10
+    const data = await service.getNewBooks(limit)
+    sendSuccess(res, 'Lấy danh sách sách mới thành công', data)
+  } catch (err) { next(err) }
+}
+
+export const getBestsellerBooks = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10
+    const data = await service.getBestsellerBooks(limit)
+    sendSuccess(res, 'Lấy danh sách sách bán chạy thành công', data)
+  } catch (err) { next(err) }
+}
+
+export const getBookDetails = async (req, res, next) => {
+  try {
+    const data = await service.getBookDetails(req.params.id)
+    sendSuccess(res, 'Lấy chi tiết sách thành công', data)
+  } catch (err) { next(err) }
+}
+
+export const searchBooks = async (req, res, next) => {
+  try {
+    const pagination = getPagination(req.query)
+    const filters = {
+      query: req.query.query,
+      category_id: req.query.category_id,
+      publisher_id: req.query.publisher_id,
+      min_price: req.query.min_price,
+      max_price: req.query.max_price,
+      ...pagination
+    }
+    const { total, data } = await service.searchAdvanced(filters)
+    const meta = getPaginationMeta(total, pagination.page, pagination.limit)
+    sendSuccess(res, 'Tìm kiếm thành công', data, meta)
+  } catch (err) { next(err) }
+}

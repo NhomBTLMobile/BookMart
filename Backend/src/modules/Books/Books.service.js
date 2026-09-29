@@ -31,4 +31,30 @@ export class BooksService {
     return repo.delete(id)
   }
 
+  async getFeaturedBooks(limit) {
+    return repo.findFeatured({ limit })
+  }
+
+  async getNewBooks(limit) {
+    return repo.findNew({ limit })
+  }
+
+  async getBestsellerBooks(limit) {
+    return repo.findBestsellers({ limit })
+  }
+
+  async getBookDetails(id) {
+    const item = await repo.findDetails(id)
+    if (!item) {
+      const err = new Error('Không tìm thấy books')
+      err.status = 404
+      throw err
+    }
+    return item
+  }
+
+  async searchAdvanced(filters) {
+    return repo.searchAdvanced(filters)
+  }
+
 }
