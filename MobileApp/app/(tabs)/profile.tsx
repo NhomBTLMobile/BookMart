@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS, SHADOW } from '@/constants/colors';
 
 // ─── Dữ liệu mock ────────────────────────────────────────────
@@ -127,7 +128,13 @@ export default function ProfileScreen() {
             <Text style={styles.menuGroupTitle}>{group.title}</Text>
             {group.items.map((item, idx) => (
               <View key={item.id}>
-                <MenuItem item={item} onPress={() => console.log(item.id)} />
+                <MenuItem 
+                  item={item} 
+                  onPress={() => {
+                    if (item.id === 'orders') router.push('/my-orders');
+                    else console.log(item.id);
+                  }} 
+                />
                 {idx < group.items.length - 1 && <View style={styles.separator} />}
               </View>
             ))}
