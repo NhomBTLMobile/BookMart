@@ -64,7 +64,7 @@ const BOOKS: Record<
     originalPrice: string;
     discount: string;
     rating: number;
-    images: any[];        // ← Thử đa ảnh
+    images: any[]; // ← Thử đa ảnh
     reviewsCount: number;
     soldCount: string;
     publisher: string;
@@ -238,9 +238,7 @@ export default function BookDetailsScreen() {
             style={styles.imageCarousel}
             scrollEventThrottle={16}
             onScroll={(e) => {
-              const index = Math.round(
-                e.nativeEvent.contentOffset.x / width
-              );
+              const index = Math.round(e.nativeEvent.contentOffset.x / width);
               if (index !== activeImage) setActiveImage(index);
             }}
           >
@@ -251,9 +249,24 @@ export default function BookDetailsScreen() {
                   <View style={styles.bookShadowEllipse} />
                   <View style={styles.bookGroup}>
                     <View style={styles.pageEdgesRight}>
-                      <View style={[styles.pageLine, { backgroundColor: "#E8E0D0" }]} />
-                      <View style={[styles.pageLine, { backgroundColor: "#F0EAE0", marginLeft: 2 }]} />
-                      <View style={[styles.pageLine, { backgroundColor: "#F5F0EA", marginLeft: 4 }]} />
+                      <View
+                        style={[
+                          styles.pageLine,
+                          { backgroundColor: "#E8E0D0" },
+                        ]}
+                      />
+                      <View
+                        style={[
+                          styles.pageLine,
+                          { backgroundColor: "#F0EAE0", marginLeft: 2 },
+                        ]}
+                      />
+                      <View
+                        style={[
+                          styles.pageLine,
+                          { backgroundColor: "#F5F0EA", marginLeft: 4 },
+                        ]}
+                      />
                     </View>
                     <View style={styles.bookCoverWrapper}>
                       <Image
@@ -556,10 +569,10 @@ export default function BookDetailsScreen() {
           <Ionicons name="cart-outline" size={24} color={COLORS.text} />
           <Text style={styles.cartBtnText}>Giỏ hàng</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.buyBtn} 
+        <TouchableOpacity
+          style={styles.buyBtn}
           activeOpacity={0.85}
-          onPress={() => router.push('/checkout')}
+          onPress={() => router.push("/checkout" as any)}
         >
           <Text style={styles.buyBtnText}>Mua ngay</Text>
         </TouchableOpacity>
