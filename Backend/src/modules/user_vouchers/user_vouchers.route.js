@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Wishlists.controller.js'
+import { getAll, getById, create, update, remove } from './user_vouchers.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -7,17 +7,17 @@ const router = Router()
 /**
  * @swagger
  * tags:
- *   name: Wishlists
- *   description: Quản lý Wishlists
+ *   name: UserVouchers
+ *   description: Quản lý user_vouchers
  */
 
 
 /**
  * @swagger
- * /Wishlists:
+ * /user_vouchers:
  *   get:
- *     tags: [Wishlists]
- *     summary: Lấy danh sách Wishlists
+ *     tags: [UserVouchers]
+ *     summary: Lấy danh sách user_vouchers
  *     parameters:
  *       - in: query
  *         name: page
@@ -44,8 +44,8 @@ const router = Router()
  *       200:
  *         description: Thành công
  *   post:
- *     tags: [Wishlists]
- *     summary: Tạo Wishlists mới
+ *     tags: [UserVouchers]
+ *     summary: Tạo user_vouchers mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -56,16 +56,22 @@ const router = Router()
  *           schema:
  *             type: object
  *             properties:
+ *               user_id:
+ *                 type: string
+ *               voucher_id:
+ *                 type: string
+ *               is_used:
+ *                 type: boolean
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Wishlists/{id}:
+ * /user_vouchers/{id}:
  *   get:
- *     tags: [Wishlists]
- *     summary: Lấy Wishlists theo ID
+ *     tags: [UserVouchers]
+ *     summary: Lấy user_vouchers theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -76,8 +82,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  *   put:
- *     tags: [Wishlists]
- *     summary: Cập nhật Wishlists
+ *     tags: [UserVouchers]
+ *     summary: Cập nhật user_vouchers
  *     responses:
  *       200:
  *         description: Thành công
@@ -94,9 +100,15 @@ router.post('/', authMiddleware, create)
  *           schema:
  *             type: object
  *             properties:
+ *               user_id:
+ *                 type: string
+ *               voucher_id:
+ *                 type: string
+ *               is_used:
+ *                 type: boolean
  *   delete:
- *     tags: [Wishlists]
- *     summary: Xóa Wishlists
+ *     tags: [UserVouchers]
+ *     summary: Xóa user_vouchers
  *     responses:
  *       200:
  *         description: Thành công

@@ -1,11 +1,11 @@
 import { Op } from 'sequelize'
-import Orders from './Orders.model.js'
+import Orders from './orders.model.js'
 
 export class OrdersRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
     if (search) {
-      where['vnpay_tran_no'] = { [Op.iLike]: `%${search}%` }
+      where['order_code'] = { [Op.iLike]: `%${search}%` }
     }
 
     const sortField = sort || 'id'

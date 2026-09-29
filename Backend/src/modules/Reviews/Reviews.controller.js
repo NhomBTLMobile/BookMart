@@ -1,7 +1,7 @@
-import { ReviewsService } from './Reviews.service.js'
+import { ReviewsService } from './reviews.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createReviewsSchema, updateReviewsSchema } from './Reviews.validation.js'
+import { createReviewsSchema, updateReviewsSchema } from './reviews.validation.js'
 
 const service = new ReviewsService()
 

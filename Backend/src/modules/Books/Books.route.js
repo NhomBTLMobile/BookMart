@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Books.controller.js'
+import { getAll, getById, create, update, remove } from './books.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -8,16 +8,16 @@ const router = Router()
  * @swagger
  * tags:
  *   name: Books
- *   description: Quản lý Books
+ *   description: Quản lý books
  */
 
 
 /**
  * @swagger
- * /Books:
+ * /books:
  *   get:
  *     tags: [Books]
- *     summary: Lấy danh sách Books
+ *     summary: Lấy danh sách books
  *     parameters:
  *       - in: query
  *         name: page
@@ -45,7 +45,7 @@ const router = Router()
  *         description: Thành công
  *   post:
  *     tags: [Books]
- *     summary: Tạo Books mới
+ *     summary: Tạo books mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -58,15 +58,43 @@ const router = Router()
  *             properties:
  *               title:
  *                 type: string
- *               publisher:
+ *               slug:
  *                 type: string
- *               publish_year:
- *                 type: integer
  *               description:
  *                 type: string
- *               price:
+ *               publisher_id:
  *                 type: integer
- *               stock:
+ *               format:
+ *                 type: string
+ *               isbn:
+ *                 type: string
+ *               barcode:
+ *                 type: string
+ *               warehouse_location:
+ *                 type: string
+ *               stock_qty:
+ *                 type: integer
+ *               original_price:
+ *                 type: number
+ *               sale_price:
+ *                 type: number
+ *               sold_count:
+ *                 type: integer
+ *               weight_grams:
+ *                 type: integer
+ *               length_cm:
+ *                 type: integer
+ *               width_cm:
+ *                 type: integer
+ *               height_cm:
+ *                 type: integer
+ *               copyright_holder:
+ *                 type: string
+ *               license_end_date:
+ *                 type: string
+ *               avg_rating:
+ *                 type: number
+ *               review_count:
  *                 type: integer
  *               is_active:
  *                 type: boolean
@@ -76,10 +104,10 @@ router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Books/{id}:
+ * /books/{id}:
  *   get:
  *     tags: [Books]
- *     summary: Lấy Books theo ID
+ *     summary: Lấy books theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -91,7 +119,7 @@ router.post('/', authMiddleware, create)
  *           type: string
  *   put:
  *     tags: [Books]
- *     summary: Cập nhật Books
+ *     summary: Cập nhật books
  *     responses:
  *       200:
  *         description: Thành công
@@ -110,21 +138,49 @@ router.post('/', authMiddleware, create)
  *             properties:
  *               title:
  *                 type: string
- *               publisher:
+ *               slug:
  *                 type: string
- *               publish_year:
- *                 type: integer
  *               description:
  *                 type: string
- *               price:
+ *               publisher_id:
  *                 type: integer
- *               stock:
+ *               format:
+ *                 type: string
+ *               isbn:
+ *                 type: string
+ *               barcode:
+ *                 type: string
+ *               warehouse_location:
+ *                 type: string
+ *               stock_qty:
+ *                 type: integer
+ *               original_price:
+ *                 type: number
+ *               sale_price:
+ *                 type: number
+ *               sold_count:
+ *                 type: integer
+ *               weight_grams:
+ *                 type: integer
+ *               length_cm:
+ *                 type: integer
+ *               width_cm:
+ *                 type: integer
+ *               height_cm:
+ *                 type: integer
+ *               copyright_holder:
+ *                 type: string
+ *               license_end_date:
+ *                 type: string
+ *               avg_rating:
+ *                 type: number
+ *               review_count:
  *                 type: integer
  *               is_active:
  *                 type: boolean
  *   delete:
  *     tags: [Books]
- *     summary: Xóa Books
+ *     summary: Xóa books
  *     responses:
  *       200:
  *         description: Thành công

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Cart_Items.controller.js'
+import { getAll, getById, create, update, remove } from './cart_items.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -7,17 +7,17 @@ const router = Router()
 /**
  * @swagger
  * tags:
- *   name: Cart_Items
- *   description: Quản lý Cart_Items
+ *   name: CartItems
+ *   description: Quản lý cart_items
  */
 
 
 /**
  * @swagger
- * /Cart_Items:
+ * /cart_items:
  *   get:
- *     tags: [Cart_Items]
- *     summary: Lấy danh sách Cart_Items
+ *     tags: [CartItems]
+ *     summary: Lấy danh sách cart_items
  *     parameters:
  *       - in: query
  *         name: page
@@ -44,8 +44,8 @@ const router = Router()
  *       200:
  *         description: Thành công
  *   post:
- *     tags: [Cart_Items]
- *     summary: Tạo Cart_Items mới
+ *     tags: [CartItems]
+ *     summary: Tạo cart_items mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -56,22 +56,26 @@ const router = Router()
  *           schema:
  *             type: object
  *             properties:
- *               cart_id:
+ *               user_id:
  *                 type: string
  *               book_id:
  *                 type: string
+ *               combo_id:
+ *                 type: string
  *               quantity:
  *                 type: integer
+ *               added_at:
+ *                 type: string
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Cart_Items/{id}:
+ * /cart_items/{id}:
  *   get:
- *     tags: [Cart_Items]
- *     summary: Lấy Cart_Items theo ID
+ *     tags: [CartItems]
+ *     summary: Lấy cart_items theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -82,8 +86,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  *   put:
- *     tags: [Cart_Items]
- *     summary: Cập nhật Cart_Items
+ *     tags: [CartItems]
+ *     summary: Cập nhật cart_items
  *     responses:
  *       200:
  *         description: Thành công
@@ -100,15 +104,19 @@ router.post('/', authMiddleware, create)
  *           schema:
  *             type: object
  *             properties:
- *               cart_id:
+ *               user_id:
  *                 type: string
  *               book_id:
  *                 type: string
+ *               combo_id:
+ *                 type: string
  *               quantity:
  *                 type: integer
+ *               added_at:
+ *                 type: string
  *   delete:
- *     tags: [Cart_Items]
- *     summary: Xóa Cart_Items
+ *     tags: [CartItems]
+ *     summary: Xóa cart_items
  *     responses:
  *       200:
  *         description: Thành công

@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
-const Order_Items = sequelize.define(
-  'Order_Items',
+const OrderItems = sequelize.define(
+  'order_items',
   {
     id: {
       type: DataTypes.UUID,
@@ -11,34 +11,39 @@ const Order_Items = sequelize.define(
     },
     order_id: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
     },
     book_id: {
       type: DataTypes.UUID,
+      allowNull: true,
+    },
+    combo_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    item_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { len: [0, 500] },
+    },
+    unit_price: {
+      type: DataTypes.DECIMAL,
       allowNull: false,
     },
     quantity: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.SMALLINT,
       allowNull: false,
     },
-    unit_price: {
-      type: DataTypes.INTEGER,
+    total_price: {
+      type: DataTypes.DECIMAL,
       allowNull: false,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
     },
   },
   {
-    tableName: 'Order_Items',
+    tableName: 'order_items',
     timestamps: false,
     underscored: true,
   }
 )
 
-export default Order_Items
+export default OrderItems

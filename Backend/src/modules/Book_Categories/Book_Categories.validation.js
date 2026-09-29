@@ -1,8 +1,11 @@
 import Joi from 'joi'
 
-export const createBook_CategoriesSchema = Joi.object({
+export const createBookCategoriesSchema = Joi.object({
+  category_id: Joi.number().integer().required(),
+  is_primary: Joi.boolean().allow(null, ''),
 })
 
-export const updateBook_CategoriesSchema = Joi.object({
+export const updateBookCategoriesSchema = Joi.object({
+  is_primary: Joi.boolean().allow(null, ''),
 }).min(1)
 

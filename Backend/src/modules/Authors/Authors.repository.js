@@ -1,11 +1,14 @@
 import { Op } from 'sequelize'
-import Authors from './Authors.model.js'
+import Authors from './authors.model.js'
 
 export class AuthorsRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
     if (search) {
       where['name'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['slug'] = { [Op.iLike]: `%${search}%` }
     }
 
     const sortField = sort || 'id'

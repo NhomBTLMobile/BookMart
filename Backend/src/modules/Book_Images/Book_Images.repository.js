@@ -1,12 +1,12 @@
 import { Op } from 'sequelize'
-import Book_Images from './Book_Images.model.js'
+import BookImages from './book_images.model.js'
 
-export class Book_ImagesRepository {
+export class BookImagesRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
 
     const sortField = sort || 'id'
-    const { count, rows } = await Book_Images.findAndCountAll({
+    const { count, rows } = await BookImages.findAndCountAll({
       where,
       limit,
       offset,
@@ -17,21 +17,21 @@ export class Book_ImagesRepository {
   }
 
   async findById(id) {
-    return Book_Images.findByPk(id)
+    return BookImages.findByPk(id)
   }
 
   async create(data) {
-    return Book_Images.create(data)
+    return BookImages.create(data)
   }
 
   async update(id, data) {
-    const [affectedRows] = await Book_Images.update(data, { where: { id } })
+    const [affectedRows] = await BookImages.update(data, { where: { id } })
     if (affectedRows === 0) return null
     return this.findById(id)
   }
 
   async delete(id) {
-    return Book_Images.destroy({ where: { id } })
+    return BookImages.destroy({ where: { id } })
   }
 
 }

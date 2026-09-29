@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
-const Book_Categories = sequelize.define(
-  'Book_Categories',
+const BookCategories = sequelize.define(
+  'book_categories',
   {
     book_id: {
       type: DataTypes.UUID,
@@ -10,16 +10,19 @@ const Book_Categories = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
     },
     category_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
+    },
+    is_primary: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
     },
   },
   {
-    tableName: 'Book_Categories',
+    tableName: 'book_categories',
     timestamps: false,
     underscored: true,
   }
 )
 
-export default Book_Categories
+export default BookCategories

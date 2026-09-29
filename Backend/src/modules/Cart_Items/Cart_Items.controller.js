@@ -1,9 +1,9 @@
-import { Cart_ItemsService } from './Cart_Items.service.js'
+import { CartItemsService } from './cart_items.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createCart_ItemsSchema, updateCart_ItemsSchema } from './Cart_Items.validation.js'
+import { createCartItemsSchema, updateCartItemsSchema } from './cart_items.validation.js'
 
-const service = new Cart_ItemsService()
+const service = new CartItemsService()
 
 export const getAll = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const { error, value } = createCart_ItemsSchema.validate(req.body)
+    const { error, value } = createCartItemsSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.create(value)
     sendCreated(res, 'Tạo thành công', data)
@@ -32,7 +32,7 @@ export const create = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const { error, value } = updateCart_ItemsSchema.validate(req.body)
+    const { error, value } = updateCartItemsSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.update(req.params.id, value)
     sendSuccess(res, 'Cập nhật thành công', data)

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Orders.controller.js'
+import { getAll, getById, create, update, remove } from './orders.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -8,16 +8,16 @@ const router = Router()
  * @swagger
  * tags:
  *   name: Orders
- *   description: Quản lý Orders
+ *   description: Quản lý orders
  */
 
 
 /**
  * @swagger
- * /Orders:
+ * /orders:
  *   get:
  *     tags: [Orders]
- *     summary: Lấy danh sách Orders
+ *     summary: Lấy danh sách orders
  *     parameters:
  *       - in: query
  *         name: page
@@ -45,7 +45,7 @@ const router = Router()
  *         description: Thành công
  *   post:
  *     tags: [Orders]
- *     summary: Tạo Orders mới
+ *     summary: Tạo orders mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -56,17 +56,27 @@ const router = Router()
  *           schema:
  *             type: object
  *             properties:
+ *               order_code:
+ *                 type: string
  *               user_id:
  *                 type: string
  *               address_id:
  *                 type: string
+ *               shipping_snapshot:
+ *                 type: object
+ *               subtotal:
+ *                 type: number
+ *               shipping_fee:
+ *                 type: number
+ *               discount_amount:
+ *                 type: number
+ *               points_discount:
+ *                 type: number
+ *               total_amount:
+ *                 type: number
  *               voucher_id:
  *                 type: string
- *               total_price:
- *                 type: integer
- *               discount_price:
- *                 type: integer
- *               final_price:
+ *               points_used:
  *                 type: integer
  *               payment_method:
  *                 type: string
@@ -74,18 +84,16 @@ const router = Router()
  *                 type: string
  *               order_status:
  *                 type: string
- *               vnpay_tran_no:
- *                 type: string
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Orders/{id}:
+ * /orders/{id}:
  *   get:
  *     tags: [Orders]
- *     summary: Lấy Orders theo ID
+ *     summary: Lấy orders theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -97,7 +105,7 @@ router.post('/', authMiddleware, create)
  *           type: string
  *   put:
  *     tags: [Orders]
- *     summary: Cập nhật Orders
+ *     summary: Cập nhật orders
  *     responses:
  *       200:
  *         description: Thành công
@@ -114,17 +122,27 @@ router.post('/', authMiddleware, create)
  *           schema:
  *             type: object
  *             properties:
+ *               order_code:
+ *                 type: string
  *               user_id:
  *                 type: string
  *               address_id:
  *                 type: string
+ *               shipping_snapshot:
+ *                 type: object
+ *               subtotal:
+ *                 type: number
+ *               shipping_fee:
+ *                 type: number
+ *               discount_amount:
+ *                 type: number
+ *               points_discount:
+ *                 type: number
+ *               total_amount:
+ *                 type: number
  *               voucher_id:
  *                 type: string
- *               total_price:
- *                 type: integer
- *               discount_price:
- *                 type: integer
- *               final_price:
+ *               points_used:
  *                 type: integer
  *               payment_method:
  *                 type: string
@@ -132,11 +150,9 @@ router.post('/', authMiddleware, create)
  *                 type: string
  *               order_status:
  *                 type: string
- *               vnpay_tran_no:
- *                 type: string
  *   delete:
  *     tags: [Orders]
- *     summary: Xóa Orders
+ *     summary: Xóa orders
  *     responses:
  *       200:
  *         description: Thành công

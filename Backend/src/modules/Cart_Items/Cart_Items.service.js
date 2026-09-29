@@ -1,8 +1,8 @@
-import { Cart_ItemsRepository } from './Cart_Items.repository.js'
+import { CartItemsRepository } from './cart_items.repository.js'
 
-const repo = new Cart_ItemsRepository()
+const repo = new CartItemsRepository()
 
-export class Cart_ItemsService {
+export class CartItemsService {
   async getAll(query) {
     return repo.findAll(query)
   }
@@ -10,7 +10,7 @@ export class Cart_ItemsService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Cart_Items')
+      const err = new Error('Không tìm thấy cart_items')
       err.status = 404
       throw err
     }

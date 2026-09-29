@@ -1,7 +1,7 @@
-import { VouchersService } from './Vouchers.service.js'
+import { VouchersService } from './vouchers.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createVouchersSchema, updateVouchersSchema } from './Vouchers.validation.js'
+import { createVouchersSchema, updateVouchersSchema } from './vouchers.validation.js'
 
 const service = new VouchersService()
 

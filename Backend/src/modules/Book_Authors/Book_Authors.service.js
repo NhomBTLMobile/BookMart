@@ -1,8 +1,8 @@
-import { Book_AuthorsRepository } from './Book_Authors.repository.js'
+import { BookAuthorsRepository } from './book_authors.repository.js'
 
-const repo = new Book_AuthorsRepository()
+const repo = new BookAuthorsRepository()
 
-export class Book_AuthorsService {
+export class BookAuthorsService {
   async getAll(query) {
     return repo.findAll(query)
   }
@@ -10,7 +10,7 @@ export class Book_AuthorsService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Book_Authors')
+      const err = new Error('Không tìm thấy book_authors')
       err.status = 404
       throw err
     }

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Order_Items.controller.js'
+import { getAll, getById, create, update, remove } from './order_items.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -7,17 +7,17 @@ const router = Router()
 /**
  * @swagger
  * tags:
- *   name: Order_Items
- *   description: Quản lý Order_Items
+ *   name: OrderItems
+ *   description: Quản lý order_items
  */
 
 
 /**
  * @swagger
- * /Order_Items:
+ * /order_items:
  *   get:
- *     tags: [Order_Items]
- *     summary: Lấy danh sách Order_Items
+ *     tags: [OrderItems]
+ *     summary: Lấy danh sách order_items
  *     parameters:
  *       - in: query
  *         name: page
@@ -44,8 +44,8 @@ const router = Router()
  *       200:
  *         description: Thành công
  *   post:
- *     tags: [Order_Items]
- *     summary: Tạo Order_Items mới
+ *     tags: [OrderItems]
+ *     summary: Tạo order_items mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -60,20 +60,26 @@ const router = Router()
  *                 type: string
  *               book_id:
  *                 type: string
+ *               combo_id:
+ *                 type: string
+ *               item_name:
+ *                 type: string
+ *               unit_price:
+ *                 type: number
  *               quantity:
  *                 type: integer
- *               unit_price:
- *                 type: integer
+ *               total_price:
+ *                 type: number
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Order_Items/{id}:
+ * /order_items/{id}:
  *   get:
- *     tags: [Order_Items]
- *     summary: Lấy Order_Items theo ID
+ *     tags: [OrderItems]
+ *     summary: Lấy order_items theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -84,8 +90,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  *   put:
- *     tags: [Order_Items]
- *     summary: Cập nhật Order_Items
+ *     tags: [OrderItems]
+ *     summary: Cập nhật order_items
  *     responses:
  *       200:
  *         description: Thành công
@@ -106,13 +112,19 @@ router.post('/', authMiddleware, create)
  *                 type: string
  *               book_id:
  *                 type: string
+ *               combo_id:
+ *                 type: string
+ *               item_name:
+ *                 type: string
+ *               unit_price:
+ *                 type: number
  *               quantity:
  *                 type: integer
- *               unit_price:
- *                 type: integer
+ *               total_price:
+ *                 type: number
  *   delete:
- *     tags: [Order_Items]
- *     summary: Xóa Order_Items
+ *     tags: [OrderItems]
+ *     summary: Xóa order_items
  *     responses:
  *       200:
  *         description: Thành công

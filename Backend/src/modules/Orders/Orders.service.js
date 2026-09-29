@@ -1,4 +1,4 @@
-import { OrdersRepository } from './Orders.repository.js'
+import { OrdersRepository } from './orders.repository.js'
 
 const repo = new OrdersRepository()
 
@@ -10,7 +10,7 @@ export class OrdersService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Orders')
+      const err = new Error('Không tìm thấy orders')
       err.status = 404
       throw err
     }

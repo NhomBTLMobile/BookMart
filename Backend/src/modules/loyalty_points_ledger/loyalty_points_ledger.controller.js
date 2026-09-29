@@ -1,9 +1,9 @@
-import { CartsService } from './Carts.service.js'
+import { LoyaltyPointsLedgerService } from './loyalty_points_ledger.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createCartsSchema, updateCartsSchema } from './Carts.validation.js'
+import { createLoyaltyPointsLedgerSchema, updateLoyaltyPointsLedgerSchema } from './loyalty_points_ledger.validation.js'
 
-const service = new CartsService()
+const service = new LoyaltyPointsLedgerService()
 
 export const getAll = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const { error, value } = createCartsSchema.validate(req.body)
+    const { error, value } = createLoyaltyPointsLedgerSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.create(value)
     sendCreated(res, 'Tạo thành công', data)
@@ -32,7 +32,7 @@ export const create = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const { error, value } = updateCartsSchema.validate(req.body)
+    const { error, value } = updateLoyaltyPointsLedgerSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.update(req.params.id, value)
     sendSuccess(res, 'Cập nhật thành công', data)

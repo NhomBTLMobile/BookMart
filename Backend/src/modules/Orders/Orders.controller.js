@@ -1,7 +1,7 @@
-import { OrdersService } from './Orders.service.js'
+import { OrdersService } from './orders.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createOrdersSchema, updateOrdersSchema } from './Orders.validation.js'
+import { createOrdersSchema, updateOrdersSchema } from './orders.validation.js'
 
 const service = new OrdersService()
 

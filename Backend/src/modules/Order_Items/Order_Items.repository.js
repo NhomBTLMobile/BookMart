@@ -1,12 +1,15 @@
 import { Op } from 'sequelize'
-import Order_Items from './Order_Items.model.js'
+import OrderItems from './order_items.model.js'
 
-export class Order_ItemsRepository {
+export class OrderItemsRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
+    if (search) {
+      where['item_name'] = { [Op.iLike]: `%${search}%` }
+    }
 
     const sortField = sort || 'id'
-    const { count, rows } = await Order_Items.findAndCountAll({
+    const { count, rows } = await OrderItems.findAndCountAll({
       where,
       limit,
       offset,
@@ -17,21 +20,21 @@ export class Order_ItemsRepository {
   }
 
   async findById(id) {
-    return Order_Items.findByPk(id)
+    return OrderItems.findByPk(id)
   }
 
   async create(data) {
-    return Order_Items.create(data)
+    return OrderItems.create(data)
   }
 
   async update(id, data) {
-    const [affectedRows] = await Order_Items.update(data, { where: { id } })
+    const [affectedRows] = await OrderItems.update(data, { where: { id } })
     if (affectedRows === 0) return null
     return this.findById(id)
   }
 
   async delete(id) {
-    return Order_Items.destroy({ where: { id } })
+    return OrderItems.destroy({ where: { id } })
   }
 
 }

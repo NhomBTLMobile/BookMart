@@ -1,9 +1,9 @@
-import { Order_ItemsService } from './Order_Items.service.js'
+import { OrderItemsService } from './order_items.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createOrder_ItemsSchema, updateOrder_ItemsSchema } from './Order_Items.validation.js'
+import { createOrderItemsSchema, updateOrderItemsSchema } from './order_items.validation.js'
 
-const service = new Order_ItemsService()
+const service = new OrderItemsService()
 
 export const getAll = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const { error, value } = createOrder_ItemsSchema.validate(req.body)
+    const { error, value } = createOrderItemsSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.create(value)
     sendCreated(res, 'Tạo thành công', data)
@@ -32,7 +32,7 @@ export const create = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const { error, value } = updateOrder_ItemsSchema.validate(req.body)
+    const { error, value } = updateOrderItemsSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.update(req.params.id, value)
     sendSuccess(res, 'Cập nhật thành công', data)

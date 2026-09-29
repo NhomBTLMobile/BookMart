@@ -1,12 +1,12 @@
 import { Op } from 'sequelize'
-import Book_Categories from './Book_Categories.model.js'
+import BookCategories from './book_categories.model.js'
 
-export class Book_CategoriesRepository {
+export class BookCategoriesRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
 
     const sortField = sort || 'book_id'
-    const { count, rows } = await Book_Categories.findAndCountAll({
+    const { count, rows } = await BookCategories.findAndCountAll({
       where,
       limit,
       offset,
@@ -17,21 +17,21 @@ export class Book_CategoriesRepository {
   }
 
   async findById(id) {
-    return Book_Categories.findByPk(id)
+    return BookCategories.findByPk(id)
   }
 
   async create(data) {
-    return Book_Categories.create(data)
+    return BookCategories.create(data)
   }
 
   async update(id, data) {
-    const [affectedRows] = await Book_Categories.update(data, { where: { id } })
+    const [affectedRows] = await BookCategories.update(data, { where: { id } })
     if (affectedRows === 0) return null
     return this.findById(id)
   }
 
   async delete(id) {
-    return Book_Categories.destroy({ where: { id } })
+    return BookCategories.destroy({ where: { id } })
   }
 
 }

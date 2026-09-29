@@ -1,7 +1,7 @@
-import { BooksService } from './Books.service.js'
+import { BooksService } from './books.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createBooksSchema, updateBooksSchema } from './Books.validation.js'
+import { createBooksSchema, updateBooksSchema } from './books.validation.js'
 
 const service = new BooksService()
 

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Vouchers.controller.js'
+import { getAll, getById, create, update, remove } from './vouchers.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -8,16 +8,16 @@ const router = Router()
  * @swagger
  * tags:
  *   name: Vouchers
- *   description: Quản lý Vouchers
+ *   description: Quản lý vouchers
  */
 
 
 /**
  * @swagger
- * /Vouchers:
+ * /vouchers:
  *   get:
  *     tags: [Vouchers]
- *     summary: Lấy danh sách Vouchers
+ *     summary: Lấy danh sách vouchers
  *     parameters:
  *       - in: query
  *         name: page
@@ -45,7 +45,7 @@ const router = Router()
  *         description: Thành công
  *   post:
  *     tags: [Vouchers]
- *     summary: Tạo Vouchers mới
+ *     summary: Tạo vouchers mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -58,32 +58,32 @@ const router = Router()
  *             properties:
  *               code:
  *                 type: string
- *               discount_type:
+ *               type:
  *                 type: string
- *               discount_value:
- *                 type: integer
+ *               value:
+ *                 type: number
+ *               max_discount:
+ *                 type: number
  *               min_order_value:
- *                 type: integer
- *               max_discount_amount:
- *                 type: integer
+ *                 type: number
  *               usage_limit:
  *                 type: integer
  *               used_count:
  *                 type: integer
- *               start_date:
+ *               ends_at:
  *                 type: string
- *               end_date:
- *                 type: string
+ *               is_active:
+ *                 type: boolean
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Vouchers/{id}:
+ * /vouchers/{id}:
  *   get:
  *     tags: [Vouchers]
- *     summary: Lấy Vouchers theo ID
+ *     summary: Lấy vouchers theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -95,7 +95,7 @@ router.post('/', authMiddleware, create)
  *           type: string
  *   put:
  *     tags: [Vouchers]
- *     summary: Cập nhật Vouchers
+ *     summary: Cập nhật vouchers
  *     responses:
  *       200:
  *         description: Thành công
@@ -114,25 +114,25 @@ router.post('/', authMiddleware, create)
  *             properties:
  *               code:
  *                 type: string
- *               discount_type:
+ *               type:
  *                 type: string
- *               discount_value:
- *                 type: integer
+ *               value:
+ *                 type: number
+ *               max_discount:
+ *                 type: number
  *               min_order_value:
- *                 type: integer
- *               max_discount_amount:
- *                 type: integer
+ *                 type: number
  *               usage_limit:
  *                 type: integer
  *               used_count:
  *                 type: integer
- *               start_date:
+ *               ends_at:
  *                 type: string
- *               end_date:
- *                 type: string
+ *               is_active:
+ *                 type: boolean
  *   delete:
  *     tags: [Vouchers]
- *     summary: Xóa Vouchers
+ *     summary: Xóa vouchers
  *     responses:
  *       200:
  *         description: Thành công

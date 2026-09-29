@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './User_Addresses.controller.js'
+import { getAll, getById, create, update, remove } from './user_addresses.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -7,17 +7,17 @@ const router = Router()
 /**
  * @swagger
  * tags:
- *   name: User_Addresses
- *   description: Quản lý User_Addresses
+ *   name: UserAddresses
+ *   description: Quản lý user_addresses
  */
 
 
 /**
  * @swagger
- * /User_Addresses:
+ * /user_addresses:
  *   get:
- *     tags: [User_Addresses]
- *     summary: Lấy danh sách User_Addresses
+ *     tags: [UserAddresses]
+ *     summary: Lấy danh sách user_addresses
  *     parameters:
  *       - in: query
  *         name: page
@@ -44,8 +44,8 @@ const router = Router()
  *       200:
  *         description: Thành công
  *   post:
- *     tags: [User_Addresses]
- *     summary: Tạo User_Addresses mới
+ *     tags: [UserAddresses]
+ *     summary: Tạo user_addresses mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -58,11 +58,25 @@ const router = Router()
  *             properties:
  *               user_id:
  *                 type: string
- *               receiver_name:
+ *               label:
  *                 type: string
- *               phone_number:
+ *               recipient_name:
  *                 type: string
- *               address_detail:
+ *               phone:
+ *                 type: string
+ *               province_id:
+ *                 type: integer
+ *               province_name:
+ *                 type: string
+ *               district_id:
+ *                 type: integer
+ *               district_name:
+ *                 type: string
+ *               ward_code:
+ *                 type: string
+ *               ward_name:
+ *                 type: string
+ *               street_address:
  *                 type: string
  *               is_default:
  *                 type: boolean
@@ -72,10 +86,10 @@ router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /User_Addresses/{id}:
+ * /user_addresses/{id}:
  *   get:
- *     tags: [User_Addresses]
- *     summary: Lấy User_Addresses theo ID
+ *     tags: [UserAddresses]
+ *     summary: Lấy user_addresses theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -86,8 +100,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  *   put:
- *     tags: [User_Addresses]
- *     summary: Cập nhật User_Addresses
+ *     tags: [UserAddresses]
+ *     summary: Cập nhật user_addresses
  *     responses:
  *       200:
  *         description: Thành công
@@ -106,17 +120,31 @@ router.post('/', authMiddleware, create)
  *             properties:
  *               user_id:
  *                 type: string
- *               receiver_name:
+ *               label:
  *                 type: string
- *               phone_number:
+ *               recipient_name:
  *                 type: string
- *               address_detail:
+ *               phone:
+ *                 type: string
+ *               province_id:
+ *                 type: integer
+ *               province_name:
+ *                 type: string
+ *               district_id:
+ *                 type: integer
+ *               district_name:
+ *                 type: string
+ *               ward_code:
+ *                 type: string
+ *               ward_name:
+ *                 type: string
+ *               street_address:
  *                 type: string
  *               is_default:
  *                 type: boolean
  *   delete:
- *     tags: [User_Addresses]
- *     summary: Xóa User_Addresses
+ *     tags: [UserAddresses]
+ *     summary: Xóa user_addresses
  *     responses:
  *       200:
  *         description: Thành công

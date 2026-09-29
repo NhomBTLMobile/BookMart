@@ -1,8 +1,8 @@
-import { CartsRepository } from './Carts.repository.js'
+import { ComboBooksRepository } from './combo_books.repository.js'
 
-const repo = new CartsRepository()
+const repo = new ComboBooksRepository()
 
-export class CartsService {
+export class ComboBooksService {
   async getAll(query) {
     return repo.findAll(query)
   }
@@ -10,7 +10,7 @@ export class CartsService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Carts')
+      const err = new Error('Không tìm thấy combo_books')
       err.status = 404
       throw err
     }

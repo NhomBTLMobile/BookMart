@@ -1,12 +1,12 @@
 import { Op } from 'sequelize'
-import Carts from './Carts.model.js'
+import UserVouchers from './user_vouchers.model.js'
 
-export class CartsRepository {
+export class UserVouchersRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
 
     const sortField = sort || 'id'
-    const { count, rows } = await Carts.findAndCountAll({
+    const { count, rows } = await UserVouchers.findAndCountAll({
       where,
       limit,
       offset,
@@ -17,21 +17,21 @@ export class CartsRepository {
   }
 
   async findById(id) {
-    return Carts.findByPk(id)
+    return UserVouchers.findByPk(id)
   }
 
   async create(data) {
-    return Carts.create(data)
+    return UserVouchers.create(data)
   }
 
   async update(id, data) {
-    const [affectedRows] = await Carts.update(data, { where: { id } })
+    const [affectedRows] = await UserVouchers.update(data, { where: { id } })
     if (affectedRows === 0) return null
     return this.findById(id)
   }
 
   async delete(id) {
-    return Carts.destroy({ where: { id } })
+    return UserVouchers.destroy({ where: { id } })
   }
 
 }

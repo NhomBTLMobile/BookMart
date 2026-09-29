@@ -1,4 +1,4 @@
-import { ReviewsRepository } from './Reviews.repository.js'
+import { ReviewsRepository } from './reviews.repository.js'
 
 const repo = new ReviewsRepository()
 
@@ -10,7 +10,7 @@ export class ReviewsService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Reviews')
+      const err = new Error('Không tìm thấy reviews')
       err.status = 404
       throw err
     }

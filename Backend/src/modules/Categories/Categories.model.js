@@ -2,33 +2,38 @@ import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
 const Categories = sequelize.define(
-  'Categories',
+  'categories',
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
+      autoIncrement: true,
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: { len: [0, 100] },
     },
-    description: {
+    slug: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { len: [0, 120] },
+    },
+    icon_url: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    created_at: {
-      type: DataTypes.DATE,
+    sort_order: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
-    updated_at: {
-      type: DataTypes.DATE,
+    is_active: {
+      type: DataTypes.BOOLEAN,
       allowNull: true,
     },
   },
   {
-    tableName: 'Categories',
+    tableName: 'categories',
     timestamps: false,
     underscored: true,
   }

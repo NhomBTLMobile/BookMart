@@ -1,12 +1,15 @@
 import { Op } from 'sequelize'
-import Wishlists from './Wishlists.model.js'
+import Combos from './combos.model.js'
 
-export class WishlistsRepository {
+export class CombosRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
+    if (search) {
+      where['name'] = { [Op.iLike]: `%${search}%` }
+    }
 
-    const sortField = sort || 'user_id'
-    const { count, rows } = await Wishlists.findAndCountAll({
+    const sortField = sort || 'id'
+    const { count, rows } = await Combos.findAndCountAll({
       where,
       limit,
       offset,
@@ -17,21 +20,21 @@ export class WishlistsRepository {
   }
 
   async findById(id) {
-    return Wishlists.findByPk(id)
+    return Combos.findByPk(id)
   }
 
   async create(data) {
-    return Wishlists.create(data)
+    return Combos.create(data)
   }
 
   async update(id, data) {
-    const [affectedRows] = await Wishlists.update(data, { where: { id } })
+    const [affectedRows] = await Combos.update(data, { where: { id } })
     if (affectedRows === 0) return null
     return this.findById(id)
   }
 
   async delete(id) {
-    return Wishlists.destroy({ where: { id } })
+    return Combos.destroy({ where: { id } })
   }
 
 }

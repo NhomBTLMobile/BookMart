@@ -2,36 +2,57 @@ import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
 const Orders = sequelize.define(
-  'Orders',
+  'orders',
   {
     id: {
       type: DataTypes.UUID,
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,
     },
+    order_code: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { len: [0, 20] },
+    },
     user_id: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
     },
     address_id: {
       type: DataTypes.UUID,
+      allowNull: true,
+    },
+    shipping_snapshot: {
+      type: DataTypes.JSONB,
+      allowNull: false,
+    },
+    subtotal: {
+      type: DataTypes.DECIMAL,
+      allowNull: false,
+    },
+    shipping_fee: {
+      type: DataTypes.DECIMAL,
+      allowNull: false,
+    },
+    discount_amount: {
+      type: DataTypes.DECIMAL,
+      allowNull: true,
+    },
+    points_discount: {
+      type: DataTypes.DECIMAL,
+      allowNull: true,
+    },
+    total_amount: {
+      type: DataTypes.DECIMAL,
       allowNull: false,
     },
     voucher_id: {
       type: DataTypes.UUID,
       allowNull: true,
     },
-    total_price: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    discount_price: {
+    points_used: {
       type: DataTypes.INTEGER,
       allowNull: true,
-    },
-    final_price: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
     },
     payment_method: {
       type: DataTypes.STRING,
@@ -45,22 +66,13 @@ const Orders = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    vnpay_tran_no: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      validate: { len: [0, 255] },
-    },
     created_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    updated_at: {
       type: DataTypes.DATE,
       allowNull: true,
     },
   },
   {
-    tableName: 'Orders',
+    tableName: 'orders',
     timestamps: false,
     underscored: true,
   }

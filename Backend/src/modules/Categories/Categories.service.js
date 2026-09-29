@@ -1,4 +1,4 @@
-import { CategoriesRepository } from './Categories.repository.js'
+import { CategoriesRepository } from './categories.repository.js'
 
 const repo = new CategoriesRepository()
 
@@ -10,7 +10,7 @@ export class CategoriesService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Categories')
+      const err = new Error('Không tìm thấy categories')
       err.status = 404
       throw err
     }

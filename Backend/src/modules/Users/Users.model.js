@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
 const Users = sequelize.define(
-  'Users',
+  'users',
   {
     id: {
       type: DataTypes.UUID,
@@ -14,20 +14,19 @@ const Users = sequelize.define(
       allowNull: false,
       validate: { len: [0, 255] },
     },
-    password_hash: {
+    phone: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: { len: [0, 255] },
+      allowNull: true,
+      validate: { len: [0, 20] },
+    },
+    password_hash: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     full_name: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { len: [0, 100] },
-    },
-    phone_number: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      validate: { len: [0, 20] },
+      validate: { len: [0, 255] },
     },
     avatar_url: {
       type: DataTypes.TEXT,
@@ -35,6 +34,18 @@ const Users = sequelize.define(
     },
     role: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+    loyalty_points: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    user_vector: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+    },
+    is_verified: {
+      type: DataTypes.BOOLEAN,
       allowNull: true,
     },
     is_active: {
@@ -51,7 +62,7 @@ const Users = sequelize.define(
     },
   },
   {
-    tableName: 'Users',
+    tableName: 'users',
     timestamps: false,
     underscored: true,
   }

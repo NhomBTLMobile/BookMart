@@ -1,4 +1,4 @@
-import { UsersRepository } from './Users.repository.js'
+import { UsersRepository } from './users.repository.js'
 import bcrypt from 'bcryptjs'
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt.js'
 
@@ -12,7 +12,7 @@ export class UsersService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Users')
+      const err = new Error('Không tìm thấy users')
       err.status = 404
       throw err
     }

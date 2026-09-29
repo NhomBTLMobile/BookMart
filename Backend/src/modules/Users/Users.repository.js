@@ -1,5 +1,5 @@
 import { Op } from 'sequelize'
-import Users from './Users.model.js'
+import Users from './users.model.js'
 
 export class UsersRepository {
   async findAll({ limit, offset, sort, order, search }) {
@@ -8,13 +8,10 @@ export class UsersRepository {
       where['email'] = { [Op.iLike]: `%${search}%` }
     }
     if (search) {
-      where['password_hash'] = { [Op.iLike]: `%${search}%` }
+      where['phone'] = { [Op.iLike]: `%${search}%` }
     }
     if (search) {
       where['full_name'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['phone_number'] = { [Op.iLike]: `%${search}%` }
     }
 
     const sortField = sort || 'id'

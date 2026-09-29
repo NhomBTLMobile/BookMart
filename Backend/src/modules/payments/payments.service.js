@@ -1,8 +1,8 @@
-import { WishlistsRepository } from './Wishlists.repository.js'
+import { PaymentsRepository } from './payments.repository.js'
 
-const repo = new WishlistsRepository()
+const repo = new PaymentsRepository()
 
-export class WishlistsService {
+export class PaymentsService {
   async getAll(query) {
     return repo.findAll(query)
   }
@@ -10,7 +10,7 @@ export class WishlistsService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Wishlists')
+      const err = new Error('Không tìm thấy payments')
       err.status = 404
       throw err
     }

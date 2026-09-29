@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
-const User_Addresses = sequelize.define(
-  'User_Addresses',
+const UserAddresses = sequelize.define(
+  'user_addresses',
   {
     id: {
       type: DataTypes.UUID,
@@ -11,41 +11,65 @@ const User_Addresses = sequelize.define(
     },
     user_id: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
     },
-    receiver_name: {
+    label: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: { len: [0, 50] },
+    },
+    recipient_name: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { len: [0, 100] },
+      validate: { len: [0, 255] },
     },
-    phone_number: {
+    phone: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: { len: [0, 20] },
     },
-    address_detail: {
+    province_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    province_name: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { len: [0, 255] },
+      validate: { len: [0, 100] },
+    },
+    district_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    district_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { len: [0, 100] },
+    },
+    ward_code: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { len: [0, 20] },
+    },
+    ward_name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { len: [0, 100] },
+    },
+    street_address: {
+      type: DataTypes.TEXT,
+      allowNull: false,
     },
     is_default: {
       type: DataTypes.BOOLEAN,
       allowNull: true,
     },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
   },
   {
-    tableName: 'User_Addresses',
+    tableName: 'user_addresses',
     timestamps: false,
     underscored: true,
   }
 )
 
-export default User_Addresses
+export default UserAddresses

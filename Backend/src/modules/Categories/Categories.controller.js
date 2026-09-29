@@ -1,7 +1,7 @@
-import { CategoriesService } from './Categories.service.js'
+import { CategoriesService } from './categories.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createCategoriesSchema, updateCategoriesSchema } from './Categories.validation.js'
+import { createCategoriesSchema, updateCategoriesSchema } from './categories.validation.js'
 
 const service = new CategoriesService()
 

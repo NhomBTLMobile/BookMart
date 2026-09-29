@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Book_Authors.controller.js'
+import { getAll, getById, create, update, remove } from './book_authors.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -7,17 +7,17 @@ const router = Router()
 /**
  * @swagger
  * tags:
- *   name: Book_Authors
- *   description: Quản lý Book_Authors
+ *   name: BookAuthors
+ *   description: Quản lý book_authors
  */
 
 
 /**
  * @swagger
- * /Book_Authors:
+ * /book_authors:
  *   get:
- *     tags: [Book_Authors]
- *     summary: Lấy danh sách Book_Authors
+ *     tags: [BookAuthors]
+ *     summary: Lấy danh sách book_authors
  *     parameters:
  *       - in: query
  *         name: page
@@ -44,8 +44,8 @@ const router = Router()
  *       200:
  *         description: Thành công
  *   post:
- *     tags: [Book_Authors]
- *     summary: Tạo Book_Authors mới
+ *     tags: [BookAuthors]
+ *     summary: Tạo book_authors mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -56,16 +56,18 @@ const router = Router()
  *           schema:
  *             type: object
  *             properties:
+ *               role:
+ *                 type: string
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Book_Authors/{id}:
+ * /book_authors/{id}:
  *   get:
- *     tags: [Book_Authors]
- *     summary: Lấy Book_Authors theo ID
+ *     tags: [BookAuthors]
+ *     summary: Lấy book_authors theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -76,8 +78,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  *   put:
- *     tags: [Book_Authors]
- *     summary: Cập nhật Book_Authors
+ *     tags: [BookAuthors]
+ *     summary: Cập nhật book_authors
  *     responses:
  *       200:
  *         description: Thành công
@@ -94,9 +96,11 @@ router.post('/', authMiddleware, create)
  *           schema:
  *             type: object
  *             properties:
+ *               role:
+ *                 type: string
  *   delete:
- *     tags: [Book_Authors]
- *     summary: Xóa Book_Authors
+ *     tags: [BookAuthors]
+ *     summary: Xóa book_authors
  *     responses:
  *       200:
  *         description: Thành công

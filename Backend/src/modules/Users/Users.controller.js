@@ -1,7 +1,7 @@
-import { UsersService } from './Users.service.js'
+import { UsersService } from './users.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createUsersSchema, updateUsersSchema, loginSchema } from './Users.validation.js'
+import { createUsersSchema, updateUsersSchema, loginSchema } from './users.validation.js'
 
 const service = new UsersService()
 

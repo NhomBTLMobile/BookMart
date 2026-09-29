@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Authors.controller.js'
+import { getAll, getById, create, update, remove } from './authors.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -8,16 +8,16 @@ const router = Router()
  * @swagger
  * tags:
  *   name: Authors
- *   description: Quản lý Authors
+ *   description: Quản lý authors
  */
 
 
 /**
  * @swagger
- * /Authors:
+ * /authors:
  *   get:
  *     tags: [Authors]
- *     summary: Lấy danh sách Authors
+ *     summary: Lấy danh sách authors
  *     parameters:
  *       - in: query
  *         name: page
@@ -45,7 +45,7 @@ const router = Router()
  *         description: Thành công
  *   post:
  *     tags: [Authors]
- *     summary: Tạo Authors mới
+ *     summary: Tạo authors mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -58,6 +58,8 @@ const router = Router()
  *             properties:
  *               name:
  *                 type: string
+ *               slug:
+ *                 type: string
  *               bio:
  *                 type: string
  *               avatar_url:
@@ -68,10 +70,10 @@ router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Authors/{id}:
+ * /authors/{id}:
  *   get:
  *     tags: [Authors]
- *     summary: Lấy Authors theo ID
+ *     summary: Lấy authors theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -83,7 +85,7 @@ router.post('/', authMiddleware, create)
  *           type: string
  *   put:
  *     tags: [Authors]
- *     summary: Cập nhật Authors
+ *     summary: Cập nhật authors
  *     responses:
  *       200:
  *         description: Thành công
@@ -102,13 +104,15 @@ router.post('/', authMiddleware, create)
  *             properties:
  *               name:
  *                 type: string
+ *               slug:
+ *                 type: string
  *               bio:
  *                 type: string
  *               avatar_url:
  *                 type: string
  *   delete:
  *     tags: [Authors]
- *     summary: Xóa Authors
+ *     summary: Xóa authors
  *     responses:
  *       200:
  *         description: Thành công

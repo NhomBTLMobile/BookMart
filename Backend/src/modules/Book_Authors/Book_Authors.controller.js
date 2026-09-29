@@ -1,9 +1,9 @@
-import { Book_AuthorsService } from './Book_Authors.service.js'
+import { BookAuthorsService } from './book_authors.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createBook_AuthorsSchema, updateBook_AuthorsSchema } from './Book_Authors.validation.js'
+import { createBookAuthorsSchema, updateBookAuthorsSchema } from './book_authors.validation.js'
 
-const service = new Book_AuthorsService()
+const service = new BookAuthorsService()
 
 export const getAll = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const { error, value } = createBook_AuthorsSchema.validate(req.body)
+    const { error, value } = createBookAuthorsSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.create(value)
     sendCreated(res, 'Tạo thành công', data)
@@ -32,7 +32,7 @@ export const create = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const { error, value } = updateBook_AuthorsSchema.validate(req.body)
+    const { error, value } = updateBookAuthorsSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.update(req.params.id, value)
     sendSuccess(res, 'Cập nhật thành công', data)

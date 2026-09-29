@@ -1,5 +1,5 @@
 import { Op } from 'sequelize'
-import Books from './Books.model.js'
+import Books from './books.model.js'
 
 export class BooksRepository {
   async findAll({ limit, offset, sort, order, search }) {
@@ -8,7 +8,19 @@ export class BooksRepository {
       where['title'] = { [Op.iLike]: `%${search}%` }
     }
     if (search) {
-      where['publisher'] = { [Op.iLike]: `%${search}%` }
+      where['slug'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['isbn'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['barcode'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['warehouse_location'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['copyright_holder'] = { [Op.iLike]: `%${search}%` }
     }
 
     const sortField = sort || 'id'

@@ -2,44 +2,44 @@ import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
 const Reviews = sequelize.define(
-  'Reviews',
+  'reviews',
   {
     id: {
       type: DataTypes.UUID,
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,
     },
-    user_id: {
-      type: DataTypes.UUID,
-      allowNull: false,
-    },
     book_id: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
     },
-    order_id: {
+    user_id: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
+    },
+    order_item_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
     },
     rating: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.SMALLINT,
       allowNull: false,
     },
-    comment: {
+    body: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    is_verified: {
+      type: DataTypes.BOOLEAN,
       allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,
       allowNull: true,
     },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
   },
   {
-    tableName: 'Reviews',
+    tableName: 'reviews',
     timestamps: false,
     underscored: true,
   }

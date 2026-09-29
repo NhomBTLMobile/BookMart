@@ -1,9 +1,9 @@
-import { User_AddressesService } from './User_Addresses.service.js'
+import { UserAddressesService } from './user_addresses.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createUser_AddressesSchema, updateUser_AddressesSchema } from './User_Addresses.validation.js'
+import { createUserAddressesSchema, updateUserAddressesSchema } from './user_addresses.validation.js'
 
-const service = new User_AddressesService()
+const service = new UserAddressesService()
 
 export const getAll = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const { error, value } = createUser_AddressesSchema.validate(req.body)
+    const { error, value } = createUserAddressesSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.create(value)
     sendCreated(res, 'Tạo thành công', data)
@@ -32,7 +32,7 @@ export const create = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const { error, value } = updateUser_AddressesSchema.validate(req.body)
+    const { error, value } = updateUserAddressesSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.update(req.params.id, value)
     sendSuccess(res, 'Cập nhật thành công', data)

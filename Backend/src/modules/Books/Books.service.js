@@ -1,4 +1,4 @@
-import { BooksRepository } from './Books.repository.js'
+import { BooksRepository } from './books.repository.js'
 
 const repo = new BooksRepository()
 
@@ -10,7 +10,7 @@ export class BooksService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Books')
+      const err = new Error('Không tìm thấy books')
       err.status = 404
       throw err
     }

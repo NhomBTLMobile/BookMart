@@ -1,4 +1,4 @@
-import { VouchersRepository } from './Vouchers.repository.js'
+import { VouchersRepository } from './vouchers.repository.js'
 
 const repo = new VouchersRepository()
 
@@ -10,7 +10,7 @@ export class VouchersService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Vouchers')
+      const err = new Error('Không tìm thấy vouchers')
       err.status = 404
       throw err
     }

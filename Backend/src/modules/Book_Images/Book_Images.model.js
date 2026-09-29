@@ -1,40 +1,32 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
-const Book_Images = sequelize.define(
-  'Book_Images',
+const BookImages = sequelize.define(
+  'book_images',
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
+      autoIncrement: true,
     },
     book_id: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
     },
     image_url: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    is_primary: {
-      type: DataTypes.BOOLEAN,
-      allowNull: true,
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
+    sort_order: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
   },
   {
-    tableName: 'Book_Images',
+    tableName: 'book_images',
     timestamps: false,
     underscored: true,
   }
 )
 
-export default Book_Images
+export default BookImages

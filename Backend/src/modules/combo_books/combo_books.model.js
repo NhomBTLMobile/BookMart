@@ -1,10 +1,10 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
-const Wishlists = sequelize.define(
-  'Wishlists',
+const ComboBooks = sequelize.define(
+  'combo_books',
   {
-    user_id: {
+    combo_id: {
       type: DataTypes.UUID,
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,
@@ -14,16 +14,16 @@ const Wishlists = sequelize.define(
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,
     },
-    created_at: {
-      type: DataTypes.DATE,
+    quantity: {
+      type: DataTypes.SMALLINT,
       allowNull: true,
     },
   },
   {
-    tableName: 'Wishlists',
+    tableName: 'combo_books',
     timestamps: false,
     underscored: true,
   }
 )
 
-export default Wishlists
+export default ComboBooks

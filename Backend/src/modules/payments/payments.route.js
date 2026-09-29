@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Carts.controller.js'
+import { getAll, getById, create, update, remove } from './payments.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -7,17 +7,17 @@ const router = Router()
 /**
  * @swagger
  * tags:
- *   name: Carts
- *   description: Quản lý Carts
+ *   name: Payments
+ *   description: Quản lý payments
  */
 
 
 /**
  * @swagger
- * /Carts:
+ * /payments:
  *   get:
- *     tags: [Carts]
- *     summary: Lấy danh sách Carts
+ *     tags: [Payments]
+ *     summary: Lấy danh sách payments
  *     parameters:
  *       - in: query
  *         name: page
@@ -44,8 +44,8 @@ const router = Router()
  *       200:
  *         description: Thành công
  *   post:
- *     tags: [Carts]
- *     summary: Tạo Carts mới
+ *     tags: [Payments]
+ *     summary: Tạo payments mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -56,7 +56,21 @@ const router = Router()
  *           schema:
  *             type: object
  *             properties:
- *               user_id:
+ *               order_id:
+ *                 type: string
+ *               method:
+ *                 type: string
+ *               amount:
+ *                 type: number
+ *               status:
+ *                 type: string
+ *               gateway_txn_id:
+ *                 type: string
+ *               gateway_ref:
+ *                 type: string
+ *               gateway_response:
+ *                 type: object
+ *               paid_at:
  *                 type: string
  */
 router.get('/', authMiddleware, getAll)
@@ -64,10 +78,10 @@ router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Carts/{id}:
+ * /payments/{id}:
  *   get:
- *     tags: [Carts]
- *     summary: Lấy Carts theo ID
+ *     tags: [Payments]
+ *     summary: Lấy payments theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -78,8 +92,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  *   put:
- *     tags: [Carts]
- *     summary: Cập nhật Carts
+ *     tags: [Payments]
+ *     summary: Cập nhật payments
  *     responses:
  *       200:
  *         description: Thành công
@@ -96,11 +110,25 @@ router.post('/', authMiddleware, create)
  *           schema:
  *             type: object
  *             properties:
- *               user_id:
+ *               order_id:
+ *                 type: string
+ *               method:
+ *                 type: string
+ *               amount:
+ *                 type: number
+ *               status:
+ *                 type: string
+ *               gateway_txn_id:
+ *                 type: string
+ *               gateway_ref:
+ *                 type: string
+ *               gateway_response:
+ *                 type: object
+ *               paid_at:
  *                 type: string
  *   delete:
- *     tags: [Carts]
- *     summary: Xóa Carts
+ *     tags: [Payments]
+ *     summary: Xóa payments
  *     responses:
  *       200:
  *         description: Thành công

@@ -1,14 +1,18 @@
 import Joi from 'joi'
 
-export const createCart_ItemsSchema = Joi.object({
-  cart_id: Joi.string().uuid().required(),
-  book_id: Joi.string().uuid().required(),
-  quantity: Joi.number().integer().required(),
+export const createCartItemsSchema = Joi.object({
+  user_id: Joi.string().uuid().allow(null, ''),
+  book_id: Joi.string().uuid().allow(null, ''),
+  combo_id: Joi.string().uuid().allow(null, ''),
+  quantity: Joi.number().integer(),
+  added_at: Joi.date().allow(null, ''),
 })
 
-export const updateCart_ItemsSchema = Joi.object({
-  cart_id: Joi.string().uuid().allow(null, ''),
+export const updateCartItemsSchema = Joi.object({
+  user_id: Joi.string().uuid().allow(null, ''),
   book_id: Joi.string().uuid().allow(null, ''),
+  combo_id: Joi.string().uuid().allow(null, ''),
   quantity: Joi.number().integer().allow(null, ''),
+  added_at: Joi.date().allow(null, ''),
 }).min(1)
 

@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
-const Carts = sequelize.define(
-  'Carts',
+const UserOauthProviders = sequelize.define(
+  'user_oauth_providers',
   {
     id: {
       type: DataTypes.UUID,
@@ -11,22 +11,31 @@ const Carts = sequelize.define(
     },
     user_id: {
       type: DataTypes.UUID,
+      allowNull: true,
+    },
+    provider: {
+      type: DataTypes.STRING,
       allowNull: false,
+    },
+    provider_uid: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { len: [0, 255] },
+    },
+    access_token: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,
       allowNull: true,
     },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
   },
   {
-    tableName: 'Carts',
+    tableName: 'user_oauth_providers',
     timestamps: false,
     underscored: true,
   }
 )
 
-export default Carts
+export default UserOauthProviders

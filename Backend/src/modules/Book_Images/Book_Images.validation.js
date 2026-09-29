@@ -1,14 +1,14 @@
 import Joi from 'joi'
 
-export const createBook_ImagesSchema = Joi.object({
-  book_id: Joi.string().uuid().required(),
+export const createBookImagesSchema = Joi.object({
+  book_id: Joi.string().uuid().allow(null, ''),
   image_url: Joi.string().required(),
-  is_primary: Joi.boolean().allow(null, ''),
+  sort_order: Joi.number().integer().allow(null, ''),
 })
 
-export const updateBook_ImagesSchema = Joi.object({
+export const updateBookImagesSchema = Joi.object({
   book_id: Joi.string().uuid().allow(null, ''),
   image_url: Joi.string().allow(null, ''),
-  is_primary: Joi.boolean().allow(null, ''),
+  sort_order: Joi.number().integer().allow(null, ''),
 }).min(1)
 

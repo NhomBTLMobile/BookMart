@@ -1,9 +1,9 @@
-import { Book_CategoriesService } from './Book_Categories.service.js'
+import { BookCategoriesService } from './book_categories.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createBook_CategoriesSchema, updateBook_CategoriesSchema } from './Book_Categories.validation.js'
+import { createBookCategoriesSchema, updateBookCategoriesSchema } from './book_categories.validation.js'
 
-const service = new Book_CategoriesService()
+const service = new BookCategoriesService()
 
 export const getAll = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const { error, value } = createBook_CategoriesSchema.validate(req.body)
+    const { error, value } = createBookCategoriesSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.create(value)
     sendCreated(res, 'Tạo thành công', data)
@@ -32,7 +32,7 @@ export const create = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const { error, value } = updateBook_CategoriesSchema.validate(req.body)
+    const { error, value } = updateBookCategoriesSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.update(req.params.id, value)
     sendSuccess(res, 'Cập nhật thành công', data)

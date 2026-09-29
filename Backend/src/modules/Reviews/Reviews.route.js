@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Reviews.controller.js'
+import { getAll, getById, create, update, remove } from './reviews.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -8,16 +8,16 @@ const router = Router()
  * @swagger
  * tags:
  *   name: Reviews
- *   description: Quản lý Reviews
+ *   description: Quản lý reviews
  */
 
 
 /**
  * @swagger
- * /Reviews:
+ * /reviews:
  *   get:
  *     tags: [Reviews]
- *     summary: Lấy danh sách Reviews
+ *     summary: Lấy danh sách reviews
  *     parameters:
  *       - in: query
  *         name: page
@@ -45,7 +45,7 @@ const router = Router()
  *         description: Thành công
  *   post:
  *     tags: [Reviews]
- *     summary: Tạo Reviews mới
+ *     summary: Tạo reviews mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -56,26 +56,28 @@ const router = Router()
  *           schema:
  *             type: object
  *             properties:
- *               user_id:
- *                 type: string
  *               book_id:
  *                 type: string
- *               order_id:
+ *               user_id:
+ *                 type: string
+ *               order_item_id:
  *                 type: string
  *               rating:
  *                 type: integer
- *               comment:
+ *               body:
  *                 type: string
+ *               is_verified:
+ *                 type: boolean
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Reviews/{id}:
+ * /reviews/{id}:
  *   get:
  *     tags: [Reviews]
- *     summary: Lấy Reviews theo ID
+ *     summary: Lấy reviews theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -87,7 +89,7 @@ router.post('/', authMiddleware, create)
  *           type: string
  *   put:
  *     tags: [Reviews]
- *     summary: Cập nhật Reviews
+ *     summary: Cập nhật reviews
  *     responses:
  *       200:
  *         description: Thành công
@@ -104,19 +106,21 @@ router.post('/', authMiddleware, create)
  *           schema:
  *             type: object
  *             properties:
- *               user_id:
- *                 type: string
  *               book_id:
  *                 type: string
- *               order_id:
+ *               user_id:
+ *                 type: string
+ *               order_item_id:
  *                 type: string
  *               rating:
  *                 type: integer
- *               comment:
+ *               body:
  *                 type: string
+ *               is_verified:
+ *                 type: boolean
  *   delete:
  *     tags: [Reviews]
- *     summary: Xóa Reviews
+ *     summary: Xóa reviews
  *     responses:
  *       200:
  *         description: Thành công

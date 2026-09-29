@@ -1,5 +1,5 @@
 import { Op } from 'sequelize'
-import Vouchers from './Vouchers.model.js'
+import Vouchers from './vouchers.model.js'
 
 export class VouchersRepository {
   async findAll({ limit, offset, sort, order, search }) {

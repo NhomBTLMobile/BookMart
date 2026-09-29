@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove, login, refresh, getMe } from './Users.controller.js'
+import { getAll, getById, create, update, remove, login, refresh, getMe } from './users.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -8,12 +8,12 @@ const router = Router()
  * @swagger
  * tags:
  *   name: Users
- *   description: Quản lý Users
+ *   description: Quản lý users
  */
 
 /**
  * @swagger
- * /Users/login:
+ * /users/login:
  *   post:
  *     tags: [Users]
  *     summary: Đăng nhập
@@ -38,7 +38,7 @@ router.post('/login', login)
 
 /**
  * @swagger
- * /Users/refresh:
+ * /users/refresh:
  *   post:
  *     tags: [Users]
  *     summary: Làm mới Access Token
@@ -61,7 +61,7 @@ router.post('/refresh', refresh)
 
 /**
  * @swagger
- * /Users/me:
+ * /users/me:
  *   get:
  *     tags: [Users]
  *     summary: Lấy thông tin bản thân
@@ -73,10 +73,10 @@ router.get('/me', authMiddleware, getMe)
 
 /**
  * @swagger
- * /Users:
+ * /users:
  *   get:
  *     tags: [Users]
- *     summary: Lấy danh sách Users
+ *     summary: Lấy danh sách users
  *     parameters:
  *       - in: query
  *         name: page
@@ -104,7 +104,7 @@ router.get('/me', authMiddleware, getMe)
  *         description: Thành công
  *   post:
  *     tags: [Users]
- *     summary: Tạo Users mới
+ *     summary: Tạo users mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -117,16 +117,22 @@ router.get('/me', authMiddleware, getMe)
  *             properties:
  *               email:
  *                 type: string
+ *               phone:
+ *                 type: string
  *               password_hash:
  *                 type: string
  *               full_name:
- *                 type: string
- *               phone_number:
  *                 type: string
  *               avatar_url:
  *                 type: string
  *               role:
  *                 type: string
+ *               loyalty_points:
+ *                 type: integer
+ *               user_vector:
+ *                 type: object
+ *               is_verified:
+ *                 type: boolean
  *               is_active:
  *                 type: boolean
  */
@@ -135,10 +141,10 @@ router.post('/', create)
 
 /**
  * @swagger
- * /Users/{id}:
+ * /users/{id}:
  *   get:
  *     tags: [Users]
- *     summary: Lấy Users theo ID
+ *     summary: Lấy users theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -150,7 +156,7 @@ router.post('/', create)
  *           type: string
  *   put:
  *     tags: [Users]
- *     summary: Cập nhật Users
+ *     summary: Cập nhật users
  *     responses:
  *       200:
  *         description: Thành công
@@ -169,21 +175,27 @@ router.post('/', create)
  *             properties:
  *               email:
  *                 type: string
+ *               phone:
+ *                 type: string
  *               password_hash:
  *                 type: string
  *               full_name:
- *                 type: string
- *               phone_number:
  *                 type: string
  *               avatar_url:
  *                 type: string
  *               role:
  *                 type: string
+ *               loyalty_points:
+ *                 type: integer
+ *               user_vector:
+ *                 type: object
+ *               is_verified:
+ *                 type: boolean
  *               is_active:
  *                 type: boolean
  *   delete:
  *     tags: [Users]
- *     summary: Xóa Users
+ *     summary: Xóa users
  *     responses:
  *       200:
  *         description: Thành công

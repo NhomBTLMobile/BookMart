@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Categories.controller.js'
+import { getAll, getById, create, update, remove } from './categories.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -8,16 +8,16 @@ const router = Router()
  * @swagger
  * tags:
  *   name: Categories
- *   description: Quản lý Categories
+ *   description: Quản lý categories
  */
 
 
 /**
  * @swagger
- * /Categories:
+ * /categories:
  *   get:
  *     tags: [Categories]
- *     summary: Lấy danh sách Categories
+ *     summary: Lấy danh sách categories
  *     parameters:
  *       - in: query
  *         name: page
@@ -45,7 +45,7 @@ const router = Router()
  *         description: Thành công
  *   post:
  *     tags: [Categories]
- *     summary: Tạo Categories mới
+ *     summary: Tạo categories mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -58,18 +58,24 @@ const router = Router()
  *             properties:
  *               name:
  *                 type: string
- *               description:
+ *               slug:
  *                 type: string
+ *               icon_url:
+ *                 type: string
+ *               sort_order:
+ *                 type: integer
+ *               is_active:
+ *                 type: boolean
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Categories/{id}:
+ * /categories/{id}:
  *   get:
  *     tags: [Categories]
- *     summary: Lấy Categories theo ID
+ *     summary: Lấy categories theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -81,7 +87,7 @@ router.post('/', authMiddleware, create)
  *           type: string
  *   put:
  *     tags: [Categories]
- *     summary: Cập nhật Categories
+ *     summary: Cập nhật categories
  *     responses:
  *       200:
  *         description: Thành công
@@ -100,11 +106,17 @@ router.post('/', authMiddleware, create)
  *             properties:
  *               name:
  *                 type: string
- *               description:
+ *               slug:
  *                 type: string
+ *               icon_url:
+ *                 type: string
+ *               sort_order:
+ *                 type: integer
+ *               is_active:
+ *                 type: boolean
  *   delete:
  *     tags: [Categories]
- *     summary: Xóa Categories
+ *     summary: Xóa categories
  *     responses:
  *       200:
  *         description: Thành công

@@ -1,8 +1,8 @@
-import { Book_ImagesRepository } from './Book_Images.repository.js'
+import { BookImagesRepository } from './book_images.repository.js'
 
-const repo = new Book_ImagesRepository()
+const repo = new BookImagesRepository()
 
-export class Book_ImagesService {
+export class BookImagesService {
   async getAll(query) {
     return repo.findAll(query)
   }
@@ -10,7 +10,7 @@ export class Book_ImagesService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Book_Images')
+      const err = new Error('Không tìm thấy book_images')
       err.status = 404
       throw err
     }

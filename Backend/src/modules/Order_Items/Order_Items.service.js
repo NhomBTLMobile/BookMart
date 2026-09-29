@@ -1,8 +1,8 @@
-import { Order_ItemsRepository } from './Order_Items.repository.js'
+import { OrderItemsRepository } from './order_items.repository.js'
 
-const repo = new Order_ItemsRepository()
+const repo = new OrderItemsRepository()
 
-export class Order_ItemsService {
+export class OrderItemsService {
   async getAll(query) {
     return repo.findAll(query)
   }
@@ -10,7 +10,7 @@ export class Order_ItemsService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Order_Items')
+      const err = new Error('Không tìm thấy order_items')
       err.status = 404
       throw err
     }

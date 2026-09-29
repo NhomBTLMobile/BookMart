@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Book_Images.controller.js'
+import { getAll, getById, create, update, remove } from './book_images.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -7,17 +7,17 @@ const router = Router()
 /**
  * @swagger
  * tags:
- *   name: Book_Images
- *   description: Quản lý Book_Images
+ *   name: BookImages
+ *   description: Quản lý book_images
  */
 
 
 /**
  * @swagger
- * /Book_Images:
+ * /book_images:
  *   get:
- *     tags: [Book_Images]
- *     summary: Lấy danh sách Book_Images
+ *     tags: [BookImages]
+ *     summary: Lấy danh sách book_images
  *     parameters:
  *       - in: query
  *         name: page
@@ -44,8 +44,8 @@ const router = Router()
  *       200:
  *         description: Thành công
  *   post:
- *     tags: [Book_Images]
- *     summary: Tạo Book_Images mới
+ *     tags: [BookImages]
+ *     summary: Tạo book_images mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -60,18 +60,18 @@ const router = Router()
  *                 type: string
  *               image_url:
  *                 type: string
- *               is_primary:
- *                 type: boolean
+ *               sort_order:
+ *                 type: integer
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Book_Images/{id}:
+ * /book_images/{id}:
  *   get:
- *     tags: [Book_Images]
- *     summary: Lấy Book_Images theo ID
+ *     tags: [BookImages]
+ *     summary: Lấy book_images theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -82,8 +82,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  *   put:
- *     tags: [Book_Images]
- *     summary: Cập nhật Book_Images
+ *     tags: [BookImages]
+ *     summary: Cập nhật book_images
  *     responses:
  *       200:
  *         description: Thành công
@@ -104,11 +104,11 @@ router.post('/', authMiddleware, create)
  *                 type: string
  *               image_url:
  *                 type: string
- *               is_primary:
- *                 type: boolean
+ *               sort_order:
+ *                 type: integer
  *   delete:
- *     tags: [Book_Images]
- *     summary: Xóa Book_Images
+ *     tags: [BookImages]
+ *     summary: Xóa book_images
  *     responses:
  *       200:
  *         description: Thành công

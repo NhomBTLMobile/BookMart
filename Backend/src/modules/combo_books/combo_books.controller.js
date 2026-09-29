@@ -1,9 +1,9 @@
-import { WishlistsService } from './Wishlists.service.js'
+import { ComboBooksService } from './combo_books.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createWishlistsSchema, updateWishlistsSchema } from './Wishlists.validation.js'
+import { createComboBooksSchema, updateComboBooksSchema } from './combo_books.validation.js'
 
-const service = new WishlistsService()
+const service = new ComboBooksService()
 
 export const getAll = async (req, res, next) => {
   try {
@@ -23,7 +23,7 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const { error, value } = createWishlistsSchema.validate(req.body)
+    const { error, value } = createComboBooksSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.create(value)
     sendCreated(res, 'Tạo thành công', data)
@@ -32,7 +32,7 @@ export const create = async (req, res, next) => {
 
 export const update = async (req, res, next) => {
   try {
-    const { error, value } = updateWishlistsSchema.validate(req.body)
+    const { error, value } = updateComboBooksSchema.validate(req.body)
     if (error) return sendError(res, error.details[0].message, 400)
     const data = await service.update(req.params.id, value)
     sendSuccess(res, 'Cập nhật thành công', data)

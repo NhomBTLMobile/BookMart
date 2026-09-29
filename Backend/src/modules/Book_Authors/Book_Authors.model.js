@@ -1,8 +1,8 @@
 import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
-const Book_Authors = sequelize.define(
-  'Book_Authors',
+const BookAuthors = sequelize.define(
+  'book_authors',
   {
     book_id: {
       type: DataTypes.UUID,
@@ -10,16 +10,19 @@ const Book_Authors = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
     },
     author_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
+    },
+    role: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {
-    tableName: 'Book_Authors',
+    tableName: 'book_authors',
     timestamps: false,
     underscored: true,
   }
 )
 
-export default Book_Authors
+export default BookAuthors

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './Book_Categories.controller.js'
+import { getAll, getById, create, update, remove } from './book_categories.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -7,17 +7,17 @@ const router = Router()
 /**
  * @swagger
  * tags:
- *   name: Book_Categories
- *   description: Quản lý Book_Categories
+ *   name: BookCategories
+ *   description: Quản lý book_categories
  */
 
 
 /**
  * @swagger
- * /Book_Categories:
+ * /book_categories:
  *   get:
- *     tags: [Book_Categories]
- *     summary: Lấy danh sách Book_Categories
+ *     tags: [BookCategories]
+ *     summary: Lấy danh sách book_categories
  *     parameters:
  *       - in: query
  *         name: page
@@ -44,8 +44,8 @@ const router = Router()
  *       200:
  *         description: Thành công
  *   post:
- *     tags: [Book_Categories]
- *     summary: Tạo Book_Categories mới
+ *     tags: [BookCategories]
+ *     summary: Tạo book_categories mới
  *     responses:
  *       201:
  *         description: Đã tạo thành công
@@ -56,16 +56,18 @@ const router = Router()
  *           schema:
  *             type: object
  *             properties:
+ *               is_primary:
+ *                 type: boolean
  */
 router.get('/', authMiddleware, getAll)
 router.post('/', authMiddleware, create)
 
 /**
  * @swagger
- * /Book_Categories/{id}:
+ * /book_categories/{id}:
  *   get:
- *     tags: [Book_Categories]
- *     summary: Lấy Book_Categories theo ID
+ *     tags: [BookCategories]
+ *     summary: Lấy book_categories theo ID
  *     responses:
  *       200:
  *         description: Thành công
@@ -76,8 +78,8 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  *   put:
- *     tags: [Book_Categories]
- *     summary: Cập nhật Book_Categories
+ *     tags: [BookCategories]
+ *     summary: Cập nhật book_categories
  *     responses:
  *       200:
  *         description: Thành công
@@ -94,9 +96,11 @@ router.post('/', authMiddleware, create)
  *           schema:
  *             type: object
  *             properties:
+ *               is_primary:
+ *                 type: boolean
  *   delete:
- *     tags: [Book_Categories]
- *     summary: Xóa Book_Categories
+ *     tags: [BookCategories]
+ *     summary: Xóa book_categories
  *     responses:
  *       200:
  *         description: Thành công

@@ -1,4 +1,4 @@
-import { AuthorsRepository } from './Authors.repository.js'
+import { AuthorsRepository } from './authors.repository.js'
 
 const repo = new AuthorsRepository()
 
@@ -10,7 +10,7 @@ export class AuthorsService {
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {
-      const err = new Error('Không tìm thấy Authors')
+      const err = new Error('Không tìm thấy authors')
       err.status = 404
       throw err
     }

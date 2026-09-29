@@ -2,17 +2,22 @@ import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
 const Authors = sequelize.define(
-  'Authors',
+  'authors',
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      defaultValue: DataTypes.UUIDV4,
+      autoIncrement: true,
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { len: [0, 100] },
+      validate: { len: [0, 255] },
+    },
+    slug: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: { len: [0, 255] },
     },
     bio: {
       type: DataTypes.TEXT,
@@ -22,17 +27,9 @@ const Authors = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
   },
   {
-    tableName: 'Authors',
+    tableName: 'authors',
     timestamps: false,
     underscored: true,
   }

@@ -1,5 +1,5 @@
 import { Op } from 'sequelize'
-import Reviews from './Reviews.model.js'
+import Reviews from './reviews.model.js'
 
 export class ReviewsRepository {
   async findAll({ limit, offset, sort, order, search }) {

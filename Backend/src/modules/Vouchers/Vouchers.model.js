@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize'
 import { sequelize } from '../../config/database.js'
 
 const Vouchers = sequelize.define(
-  'Vouchers',
+  'vouchers',
   {
     id: {
       type: DataTypes.UUID,
@@ -14,20 +14,20 @@ const Vouchers = sequelize.define(
       allowNull: false,
       validate: { len: [0, 50] },
     },
-    discount_type: {
+    type: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    discount_value: {
-      type: DataTypes.INTEGER,
+    value: {
+      type: DataTypes.DECIMAL,
       allowNull: false,
     },
-    min_order_value: {
-      type: DataTypes.INTEGER,
+    max_discount: {
+      type: DataTypes.DECIMAL,
       allowNull: true,
     },
-    max_discount_amount: {
-      type: DataTypes.INTEGER,
+    min_order_value: {
+      type: DataTypes.DECIMAL,
       allowNull: true,
     },
     usage_limit: {
@@ -38,25 +38,17 @@ const Vouchers = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    start_date: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    end_date: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    created_at: {
+    ends_at: {
       type: DataTypes.DATE,
       allowNull: true,
     },
-    updated_at: {
-      type: DataTypes.DATE,
+    is_active: {
+      type: DataTypes.BOOLEAN,
       allowNull: true,
     },
   },
   {
-    tableName: 'Vouchers',
+    tableName: 'vouchers',
     timestamps: false,
     underscored: true,
   }

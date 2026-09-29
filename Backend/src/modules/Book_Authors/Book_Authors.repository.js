@@ -1,12 +1,12 @@
 import { Op } from 'sequelize'
-import Book_Authors from './Book_Authors.model.js'
+import BookAuthors from './book_authors.model.js'
 
-export class Book_AuthorsRepository {
+export class BookAuthorsRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
 
     const sortField = sort || 'book_id'
-    const { count, rows } = await Book_Authors.findAndCountAll({
+    const { count, rows } = await BookAuthors.findAndCountAll({
       where,
       limit,
       offset,
@@ -17,21 +17,21 @@ export class Book_AuthorsRepository {
   }
 
   async findById(id) {
-    return Book_Authors.findByPk(id)
+    return BookAuthors.findByPk(id)
   }
 
   async create(data) {
-    return Book_Authors.create(data)
+    return BookAuthors.create(data)
   }
 
   async update(id, data) {
-    const [affectedRows] = await Book_Authors.update(data, { where: { id } })
+    const [affectedRows] = await BookAuthors.update(data, { where: { id } })
     if (affectedRows === 0) return null
     return this.findById(id)
   }
 
   async delete(id) {
-    return Book_Authors.destroy({ where: { id } })
+    return BookAuthors.destroy({ where: { id } })
   }
 
 }

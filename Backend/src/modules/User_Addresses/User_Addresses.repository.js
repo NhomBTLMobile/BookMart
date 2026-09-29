@@ -1,21 +1,33 @@
 import { Op } from 'sequelize'
-import User_Addresses from './User_Addresses.model.js'
+import UserAddresses from './user_addresses.model.js'
 
-export class User_AddressesRepository {
+export class UserAddressesRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
     if (search) {
-      where['receiver_name'] = { [Op.iLike]: `%${search}%` }
+      where['label'] = { [Op.iLike]: `%${search}%` }
     }
     if (search) {
-      where['phone_number'] = { [Op.iLike]: `%${search}%` }
+      where['recipient_name'] = { [Op.iLike]: `%${search}%` }
     }
     if (search) {
-      where['address_detail'] = { [Op.iLike]: `%${search}%` }
+      where['phone'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['province_name'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['district_name'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['ward_code'] = { [Op.iLike]: `%${search}%` }
+    }
+    if (search) {
+      where['ward_name'] = { [Op.iLike]: `%${search}%` }
     }
 
     const sortField = sort || 'id'
-    const { count, rows } = await User_Addresses.findAndCountAll({
+    const { count, rows } = await UserAddresses.findAndCountAll({
       where,
       limit,
       offset,
@@ -26,21 +38,21 @@ export class User_AddressesRepository {
   }
 
   async findById(id) {
-    return User_Addresses.findByPk(id)
+    return UserAddresses.findByPk(id)
   }
 
   async create(data) {
-    return User_Addresses.create(data)
+    return UserAddresses.create(data)
   }
 
   async update(id, data) {
-    const [affectedRows] = await User_Addresses.update(data, { where: { id } })
+    const [affectedRows] = await UserAddresses.update(data, { where: { id } })
     if (affectedRows === 0) return null
     return this.findById(id)
   }
 
   async delete(id) {
-    return User_Addresses.destroy({ where: { id } })
+    return UserAddresses.destroy({ where: { id } })
   }
 
 }

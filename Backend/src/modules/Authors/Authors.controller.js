@@ -1,7 +1,7 @@
-import { AuthorsService } from './Authors.service.js'
+import { AuthorsService } from './authors.service.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
-import { createAuthorsSchema, updateAuthorsSchema } from './Authors.validation.js'
+import { createAuthorsSchema, updateAuthorsSchema } from './authors.validation.js'
 
 const service = new AuthorsService()
 
