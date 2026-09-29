@@ -242,7 +242,10 @@ export default function CheckoutScreen() {
       `Tổng thanh toán: ${fmt(total)}\nPhương thức: ${PAYMENT_OPTIONS.find(p => p.id === selectedPayment)?.label}`,
       [
         { text: 'Quay lại', style: 'cancel' },
-        { text: 'Đặt hàng', onPress: () => setShowSuccess(true) },
+        { 
+          text: 'Đặt hàng', 
+          onPress: () => router.replace({ pathname: '/order-success', params: { orderId, total: total.toString() } }) 
+        },
       ]
     );
   };
@@ -427,16 +430,6 @@ export default function CheckoutScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ── Success Modal ── */}
-      <SuccessModal
-        visible={showSuccess}
-        orderId={orderId}
-        total={total}
-        onClose={() => {
-          setShowSuccess(false);
-          router.replace('/(tabs)');
-        }}
-      />
     </View>
   );
 }

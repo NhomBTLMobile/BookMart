@@ -364,7 +364,11 @@ export default function BookDetailsScreen() {
           <Ionicons name="cart-outline" size={24} color={COLORS.text} />
           <Text style={styles.cartBtnText}>Giỏ hàng</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.buyBtn} activeOpacity={0.85}>
+        <TouchableOpacity 
+          style={styles.buyBtn} 
+          activeOpacity={0.85}
+          onPress={() => router.push('/checkout')}
+        >
           <Text style={styles.buyBtnText}>Mua ngay</Text>
         </TouchableOpacity>
       </View>
