@@ -5,7 +5,7 @@ import {
   Button,
   Input,
   Space,
-  Modal,
+  Drawer,
   Form,
   Select,
   Tag,
@@ -14,6 +14,10 @@ import {
   Typography,
   InputNumber,
   DatePicker,
+  Row,
+  Col,
+  Switch,
+  Divider,
 } from "antd";
 import {
   PlusOutlined,
@@ -21,40 +25,47 @@ import {
   DeleteOutlined,
   SearchOutlined,
   GiftOutlined,
+  CheckCircleOutlined,
+  StopOutlined,
 } from "@ant-design/icons";
 import { App } from "antd";
 import dayjs from "dayjs";
 import { useCrud } from "../../hooks/useCrud";
 import { vouchersApi } from "../../api/services";
+import { useAuth } from "../../context/AuthContext";
 
-const { Text } = Typography;
-const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n);
+const { Text, Title } = Typography;
+const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n || 0);
 
 const INIT = {
   code: "",
-  discount_type: "PERCENT",
-  discount_value: null,
+  type: "percentage",
+  value: null,
   min_order_value: 0,
-  max_discount_amount: null,
+  max_discount: null,
   usage_limit: null,
-  date_range: null,
+  ends_at: null,
+  is_active: true,
 };
 
 const voucherStatus = (v) => {
+  if (!v.is_active) return { label: "Ngừng hoạt động", color: "error" };
   const now = new Date();
-  if (new Date(v.end_date) < now) return { label: "Hết hạn", color: "error" };
-  if (new Date(v.start_date) > now)
-    return { label: "Chưa bắt đầu", color: "warning" };
-  return { label: "Đang hoạt động", color: "success" };
+  if (v.ends_at && new Date(v.ends_at) < now) return { label: "Hết hạn", color: "error" };
+  return { label: "Đang hoạt động", color: "#059669" };
 };
 
 export default function VouchersPage() {
+  const { isDark, user: currentUser } = useAuth();
   const { message } = App.useApp();
   const crud = useCrud(vouchersApi);
   const [form] = Form.useForm();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // Watch for dynamic rendering in Form
+  const typeValue = Form.useWatch('type', form);
 
   const openCreate = () => {
     setEditing(null);
@@ -66,15 +77,13 @@ export default function VouchersPage() {
     setEditing(rec);
     form.setFieldsValue({
       code: rec.code,
-      discount_type: rec.discount_type,
-      discount_value: rec.discount_value,
+      type: rec.type?.toLowerCase() === "fixed" ? "fixed" : "percentage",
+      value: rec.value,
       min_order_value: rec.min_order_value,
-      max_discount_amount: rec.max_discount_amount,
+      max_discount: rec.max_discount,
       usage_limit: rec.usage_limit,
-      date_range:
-        rec.start_date && rec.end_date
-          ? [dayjs(rec.start_date), dayjs(rec.end_date)]
-          : null,
+      ends_at: rec.ends_at ? dayjs(rec.ends_at) : null,
+      is_active: rec.is_active !== false,
     });
     setOpen(true);
   };
@@ -83,22 +92,22 @@ export default function VouchersPage() {
     try {
       const values = await form.validateFields();
       setSaving(true);
-      const [start, end] = values.date_range || [];
       const payload = {
         code: values.code,
-        discount_type: values.discount_type,
-        discount_value: values.discount_value,
-        min_order_value: values.min_order_value ?? 0,
-        max_discount_amount: values.max_discount_amount ?? null,
-        usage_limit: values.usage_limit ?? null,
-        start_date: start?.toISOString(),
-        end_date: end?.toISOString(),
+        type: values.type,
+        value: values.value,
+        min_order_value: values.min_order_value || 0,
+        max_discount: values.type === 'percentage' ? (values.max_discount || null) : null,
+        usage_limit: values.usage_limit || null,
+        ends_at: values.ends_at ? values.ends_at.toISOString() : null,
+        is_active: values.is_active,
       };
       if (editing) await crud.update(editing.id, payload);
       else await crud.create(payload);
       setOpen(false);
+      message.success(editing ? "Cập nhật mã giảm giá thành công" : "Tạo mã giảm giá thành công");
     } catch (err) {
-      if (err?.response) message.error(err.response.data?.message || "Lỗi");
+      if (err?.response) message.error(err.response.data?.message || "Có lỗi xảy ra");
     } finally {
       setSaving(false);
     }
@@ -112,20 +121,20 @@ export default function VouchersPage() {
         <Space>
           <div
             style={{
-              width: 30,
-              height: 30,
-              borderRadius: 6,
+              width: 32,
+              height: 32,
+              borderRadius: 8,
               flexShrink: 0,
-              background: "rgba(114,46,209,0.1)",
-              border: "1px solid rgba(114,46,209,0.25)",
+              background: "rgba(5, 150, 105, 0.1)",
+              border: "1px solid rgba(5, 150, 105, 0.25)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <GiftOutlined style={{ color: "#722ed1", fontSize: 14 }} />
+            <GiftOutlined style={{ color: "#059669", fontSize: 16 }} />
           </div>
-          <Text code strong style={{ fontSize: 13, letterSpacing: 1 }}>
+          <Text code strong style={{ fontSize: 13, letterSpacing: 1, color: '#059669', background: 'transparent', border: 'none' }}>
             {v}
           </Text>
         </Space>
@@ -133,20 +142,20 @@ export default function VouchersPage() {
     },
     {
       title: "Loại",
-      dataIndex: "discount_type",
+      dataIndex: "type",
       render: (v) => (
-        <Tag color={v === "PERCENT" ? "blue" : "green"}>
-          {v === "PERCENT" ? "Phần trăm" : "Số tiền"}
+        <Tag color={String(v).toLowerCase() === "percentage" ? "blue" : "purple"} style={{ borderRadius: 12, fontWeight: 500 }}>
+          {String(v).toLowerCase() === "percentage" ? "Phần trăm" : "Số tiền"}
         </Tag>
       ),
     },
     {
-      title: "Giá trị giảm",
+      title: "Mức giảm",
       render: (_, rec) => (
-        <Text strong style={{ color: "#689f38" }}>
-          {rec.discount_type === "PERCENT"
-            ? `${rec.discount_value}%`
-            : `₫ ${fmt(rec.discount_value)}`}
+        <Text strong style={{ color: "#059669" }}>
+          {String(rec.type).toLowerCase() === "percentage"
+            ? `${rec.value}%`
+            : `₫ ${fmt(rec.value)}`}
         </Text>
       ),
     },
@@ -156,26 +165,26 @@ export default function VouchersPage() {
       render: (v) => (v > 0 ? `₫ ${fmt(v)}` : <Text type="secondary">—</Text>),
     },
     {
-      title: "Đã dùng",
+      title: "Sử dụng",
       render: (_, rec) => (
-        <Text>
-          {rec.used_count || 0} /{" "}
-          {rec.usage_limit ?? <Text type="secondary">∞</Text>}
-        </Text>
+        <Space direction="vertical" size={0}>
+          <Text strong>{rec.used_count || 0} <Text type="secondary" style={{ fontWeight: 400 }}>đã dùng</Text></Text>
+          {rec.usage_limit && <Text type="secondary" style={{ fontSize: 11 }}>Tối đa: {fmt(rec.usage_limit)}</Text>}
+        </Space>
       ),
     },
     {
       title: "Hạn dùng",
-      dataIndex: "end_date",
+      dataIndex: "ends_at",
       render: (v) => (
-        <Text type="secondary">{new Date(v).toLocaleDateString("vi-VN")}</Text>
+        v ? <Text type="secondary">{new Date(v).toLocaleDateString("vi-VN")}</Text> : <Text type="secondary">Không giới hạn</Text>
       ),
     },
     {
       title: "Trạng thái",
       render: (_, rec) => {
         const s = voucherStatus(rec);
-        return <Tag color={s.color}>{s.label}</Tag>;
+        return <Tag color={s.color} style={{ borderRadius: 12 }}>{s.label}</Tag>;
       },
     },
     {
@@ -185,20 +194,25 @@ export default function VouchersPage() {
         <Space size={4}>
           <Tooltip title="Chỉnh sửa">
             <Button
-              icon={<EditOutlined />}
-              size="small"
+              type="text"
+              icon={<EditOutlined style={{ color: '#059669' }} />}
               onClick={() => openEdit(rec)}
             />
           </Tooltip>
-          <Popconfirm
-            title="Xóa voucher này?"
-            okText="Xóa"
-            okButtonProps={{ danger: true }}
-            cancelText="Hủy"
-            onConfirm={() => crud.remove(rec.id)}
-          >
-            <Button icon={<DeleteOutlined />} size="small" danger />
-          </Popconfirm>
+          {currentUser?.role === "ADMIN" && (
+            <Popconfirm
+              title="Xóa mã giảm giá này?"
+              description="Hành động này không thể hoàn tác."
+              okText="Xóa"
+              okButtonProps={{ danger: true }}
+              cancelText="Hủy"
+              onConfirm={() => crud.remove(rec.id)}
+            >
+              <Tooltip title="Xóa">
+                <Button type="text" danger icon={<DeleteOutlined />} />
+              </Tooltip>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -206,35 +220,35 @@ export default function VouchersPage() {
 
   return (
     <>
-      <div className="page-header-row">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <Typography.Title level={4} style={{ margin: 0 }}>
-            Vouchers
-          </Typography.Title>
-          <Text type="secondary">Quản lý mã giảm giá</Text>
+          <Title level={3} style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>
+            Quản lý Mã giảm giá
+          </Title>
+          <Text type="secondary">Tạo và phân phối Voucher cho khách hàng</Text>
         </div>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={openCreate}
-          id="create-voucher-btn"
+          style={{ background: '#059669', height: 40, borderRadius: 8, fontWeight: 500 }}
         >
-          Tạo voucher
+          Tạo mã giảm giá
         </Button>
       </div>
 
-      <Card variant="outlined" style={{ borderRadius: 12 }}>
-        <div style={{ marginBottom: 16 }}>
+      <Card variant="outlined" style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }} styles={{ body: { padding: 20 } }}>
+        <div style={{ marginBottom: 20 }}>
           <Input
-            prefix={<SearchOutlined />}
-            placeholder="Tìm mã voucher..."
+            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+            placeholder="Tìm theo mã voucher..."
             value={crud.search}
             onChange={(e) => crud.handleSearch(e.target.value)}
-            style={{ width: 280 }}
+            style={{ width: 320, borderRadius: 8, height: 40 }}
             allowClear
           />
         </div>
-        <Table scroll={{ x: 'max-content' }}
+        <Table scroll={{ x: 1000 }}
           dataSource={crud.data}
           columns={columns}
           rowKey="id"
@@ -246,117 +260,158 @@ export default function VouchersPage() {
             total: crud.meta?.total,
             onChange: crud.setPage,
             showSizeChanger: false,
-            showTotal: null,
+            position: ['bottomCenter']
           }}
         />
       </Card>
 
-      <Modal
-        open={open}
-        title={editing ? "Chỉnh sửa Voucher" : "Tạo Voucher mới"}
-        onOk={handleOk}
-        onCancel={() => setOpen(false)}
-        okText={editing ? "Lưu" : "Tạo"}
-        cancelText="Hủy"
-        confirmLoading={saving}
+      <Drawer
+        title={<span style={{ fontFamily: "'Inter', sans-serif", fontSize: 20 }}>{editing ? "Chỉnh sửa Mã giảm giá" : "Tạo Mã giảm giá mới"}</span>}
         width={560}
-        destroyOnHide
+        onClose={() => setOpen(false)}
+        open={open}
+        styles={{ body: { paddingBottom: 80, background: isDark ? '#18181B' : '#F9FAFB' } }}
+        extra={
+          <Space>
+            <Button onClick={() => setOpen(false)}>Hủy</Button>
+            <Button onClick={handleOk} type="primary" loading={saving} style={{ background: '#059669' }}>
+              {editing ? "Lưu thay đổi" : "Tạo mới"}
+            </Button>
+          </Space>
+        }
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-          <Form.Item
-            label="Mã voucher"
-            name="code"
-            rules={[{ required: true }]}
-          >
-            <Input
-              placeholder="SUMMER20"
-              style={{
-                fontFamily: "monospace",
-                fontWeight: 700,
-                letterSpacing: 2,
-                textTransform: "uppercase",
-              }}
-              onChange={(e) =>
-                form.setFieldValue("code", e.target.value.toUpperCase())
-              }
-            />
-          </Form.Item>
-          <Space style={{ width: "100%" }} size={12}>
+        <Form form={form} layout="vertical" requiredMark={false}>
+          
+          <Card variant="outlined" title={<span style={{ color: '#059669' }}>Thông tin cơ bản</span>} style={{ borderRadius: 12, marginBottom: 16, background: isDark ? '#27272A' : '#ffffff', border: `1px solid ${isDark ? '#3F3F46' : '#E5E7EB'}` }}>
             <Form.Item
-              label="Loại giảm"
-              name="discount_type"
-              style={{ flex: 1, marginBottom: 0 }}
+              label={<span style={{ fontWeight: 500 }}>Mã voucher</span>}
+              name="code"
+              rules={[{ required: true, message: 'Vui lòng nhập mã' }]}
+              extra="Ví dụ: SUMMER2026, FREESHIP"
             >
-              <Select
-                options={[
-                  { label: "Phần trăm (%)", value: "PERCENT" },
-                  { label: "Số tiền (₫)", value: "AMOUNT" },
-                ]}
+              <Input
+                size="large"
+                placeholder="NHAP_MA_VOUCHER"
+                style={{
+                  fontFamily: "monospace",
+                  fontWeight: 700,
+                  letterSpacing: 2,
+                  textTransform: "uppercase",
+                  borderRadius: 8
+                }}
+                onChange={(e) =>
+                  form.setFieldValue("code", e.target.value.toUpperCase())
+                }
               />
             </Form.Item>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 500 }}>Loại giảm giá</span>}
+                  name="type"
+                >
+                  <Select
+                    options={[
+                      { label: "Theo phần trăm (%)", value: "percentage" },
+                      { label: "Theo số tiền (₫)", value: "fixed" },
+                    ]}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 500 }}>Giá trị giảm</span>}
+                  name="value"
+                  rules={[{ required: true, message: 'Nhập giá trị' }]}
+                >
+                  <InputNumber 
+                    style={{ width: "100%" }} 
+                    min={0} 
+                    max={typeValue === 'percentage' ? 100 : undefined}
+                    placeholder={typeValue === 'percentage' ? "Ví dụ: 15" : "Ví dụ: 50000"} 
+                    addonAfter={typeValue === 'percentage' ? "%" : "₫"}
+                    formatter={typeValue === 'fixed' ? (v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : undefined}
+                    parser={typeValue === 'fixed' ? (v) => v.replace(/\$\s?|(,*)/g, "") : undefined}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Card>
+
+          <Card variant="outlined" title={<span style={{ color: '#059669' }}>Điều kiện sử dụng</span>} style={{ borderRadius: 12, marginBottom: 16, background: isDark ? '#27272A' : '#ffffff', border: `1px solid ${isDark ? '#3F3F46' : '#E5E7EB'}` }}>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 500 }}>Đơn tối thiểu (₫)</span>}
+                  name="min_order_value"
+                >
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    min={0}
+                    formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    parser={(v) => v.replace(/\$\s?|(,*)/g, "")}
+                    placeholder="200,000"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 500 }}>Giảm tối đa (₫)</span>}
+                  name="max_discount"
+                >
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    min={0}
+                    disabled={typeValue === 'fixed'}
+                    formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    parser={(v) => v.replace(/\$\s?|(,*)/g, "")}
+                    placeholder={typeValue === 'fixed' ? "Không áp dụng" : "Không giới hạn"}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Divider style={{ margin: '8px 0 24px 0' }} />
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 500 }}>Giới hạn lượt dùng</span>}
+                  name="usage_limit"
+                >
+                  <InputNumber
+                    style={{ width: "100%" }}
+                    min={0}
+                    placeholder="Không giới hạn"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label={<span style={{ fontWeight: 500 }}>Hạn sử dụng</span>}
+                  name="ends_at"
+                >
+                  <DatePicker
+                    showTime
+                    style={{ width: "100%" }}
+                    format="DD/MM/YYYY HH:mm"
+                    placeholder="Không giới hạn"
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+
             <Form.Item
-              label="Giá trị giảm"
-              name="discount_value"
-              rules={[{ required: true }]}
-              style={{ flex: 1, marginBottom: 0 }}
+              name="is_active"
+              valuePropName="checked"
+              style={{ margin: 0, marginTop: 8 }}
             >
-              <InputNumber style={{ width: "100%" }} min={0} placeholder="20" />
+              <Switch checkedChildren="Cho phép sử dụng" unCheckedChildren="Tạm dừng" />
             </Form.Item>
-          </Space>
-          <Space style={{ width: "100%", marginTop: 16 }} size={12}>
-            <Form.Item
-              label="Đơn tối thiểu (₫)"
-              name="min_order_value"
-              style={{ flex: 1, marginBottom: 0 }}
-            >
-              <InputNumber
-                style={{ width: "100%" }}
-                min={0}
-                formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                placeholder="200,000"
-              />
-            </Form.Item>
-            <Form.Item
-              label="Giảm tối đa (₫)"
-              name="max_discount_amount"
-              style={{ flex: 1, marginBottom: 0 }}
-            >
-              <InputNumber
-                style={{ width: "100%" }}
-                min={0}
-                formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                placeholder="Không giới hạn"
-              />
-            </Form.Item>
-          </Space>
-          <Space style={{ width: "100%", marginTop: 16 }} size={12}>
-            <Form.Item
-              label="Giới hạn lượt dùng"
-              name="usage_limit"
-              style={{ flex: 1, marginBottom: 0 }}
-            >
-              <InputNumber
-                style={{ width: "100%" }}
-                min={0}
-                placeholder="Không giới hạn"
-              />
-            </Form.Item>
-          </Space>
-          <Form.Item
-            label="Thời gian hiệu lực"
-            name="date_range"
-            rules={[{ required: true, message: "Chọn thời gian" }]}
-            style={{ marginTop: 16 }}
-          >
-            <DatePicker.RangePicker
-              showTime
-              style={{ width: "100%" }}
-              format="DD/MM/YYYY HH:mm"
-            />
-          </Form.Item>
+          </Card>
         </Form>
-      </Modal>
+      </Drawer>
     </>
   );
 }
-

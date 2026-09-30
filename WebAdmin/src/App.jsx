@@ -4,6 +4,7 @@ import viVN from 'antd/locale/vi_VN'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import MainLayout from './components/Layout/MainLayout'
+import ErrorBoundary from './components/ErrorBoundary'
 
 import LoginPage      from './pages/Login/LoginPage'
 import DashboardPage  from './pages/Dashboard/DashboardPage'
@@ -17,12 +18,10 @@ import ReviewsPage    from './pages/Reviews/ReviewsPage'
 
 const getThemeTokens = (isDark) => {
   const common = {
-    colorPrimary: '#689f38', // Darker banana-leaf green (Yellow-Green)
-    colorInfo: '#689f38',
-    colorSuccess: '#689f38',
-    colorWarning: '#D07646', 
-    colorError: '#EF4444',   
-    colorLink: '#689f38', 
+    colorInfo: '#1677ff',
+    colorSuccess: '#52c41a',
+    colorWarning: '#faad14', 
+    colorError: '#ff4d4f',   
     borderRadius: 8,
     borderRadiusLG: 12,
     fontFamily: `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`,
@@ -31,17 +30,27 @@ const getThemeTokens = (isDark) => {
   if (isDark) {
     return {
       ...common,
-      colorPrimary: '#8bc34a', // Brighter banana-leaf green for dark mode
+      colorPrimary: '#34D399', 
+      colorBgLayout: '#18181B',
+      colorBgContainer: '#27272A',
+      colorBgElevated: '#27272A',
+      colorTextBase: '#F3F4F6',
+      colorTextSecondary: '#A1A1AA',
+      colorBorder: '#3F3F46',
+      colorBorderSecondary: '#3F3F46'
     };
   }
 
   return {
     ...common,
-    colorBgLayout: '#F4F7F6', // Clean light gray-green for app background
-    colorBgContainer: '#FFFFFF', // Pure white for cards/tables
+    colorPrimary: '#059669', 
+    colorBgLayout: '#F9FAFB',
+    colorBgContainer: '#FFFFFF',
     colorBgElevated: '#FFFFFF',
-    colorTextBase: '#1F2922', // Very dark slate for text
-    colorTextSecondary: '#627164', // Muted slate for secondary text
+    colorTextBase: '#1F2937',
+    colorTextSecondary: '#475569',
+    colorBorder: '#E5E7EB',
+    colorBorderSecondary: '#F1F5F9'
   };
 }
 
@@ -83,8 +92,8 @@ function ThemedApp() {
             subMenuItemBorderRadius: 8,
           },
           Layout: {
-            siderBg: isDark ? '#141414' : '#FFFFFF',
-            headerBg: isDark ? '#141414' : '#FFFFFF',
+            siderBg: isDark ? '#18181B' : '#FFFFFF',
+            headerBg: isDark ? '#18181B' : '#FFFFFF',
           },
           Table: {
             borderRadius: 12,
@@ -106,7 +115,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ThemedApp />
+        <ErrorBoundary>
+          <ThemedApp />
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   )

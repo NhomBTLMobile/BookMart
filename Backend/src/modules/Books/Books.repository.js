@@ -5,22 +5,14 @@ export class BooksRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
     if (search) {
-      where['title'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['slug'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['isbn'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['barcode'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['warehouse_location'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['copyright_holder'] = { [Op.iLike]: `%${search}%` }
+      where[Op.or] = [
+        { title: { [Op.iLike]: `%${search}%` } },
+        { slug: { [Op.iLike]: `%${search}%` } },
+        { isbn: { [Op.iLike]: `%${search}%` } },
+        { barcode: { [Op.iLike]: `%${search}%` } },
+        { warehouse_location: { [Op.iLike]: `%${search}%` } },
+        { copyright_holder: { [Op.iLike]: `%${search}%` } }
+      ]
     }
 
     const sortField = sort || 'id'

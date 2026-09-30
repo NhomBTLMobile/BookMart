@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin size="large" tip="Đang tải..." />
+        <Spin size="large" description="Đang tải..." />
       </div>
     )
   }
@@ -18,9 +18,13 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />
+  const userRole = user.role?.toUpperCase() || ''
+  const isAllowed = allowedRoles ? allowedRoles.some(r => r.toUpperCase() === userRole) : true
+
+  if (!isAllowed) {
+    return <Navigate to="/login" replace />
   }
 
   return children
 }
+
