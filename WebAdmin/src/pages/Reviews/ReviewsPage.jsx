@@ -5,31 +5,37 @@ import {
   Button,
   Input,
   Space,
-  Modal,
+  Drawer,
   Tag,
   Tooltip,
   Popconfirm,
   Typography,
   Rate,
+  Row,
+  Col,
+  Divider,
 } from "antd";
 import {
-  DeleteOutlined,
   SearchOutlined,
   EyeOutlined,
-  MessageOutlined,
+  DeleteOutlined,
+  CheckCircleOutlined,
+  UserOutlined,
+  BookOutlined
 } from "@ant-design/icons";
 import { App } from "antd";
 import { useCrud } from "../../hooks/useCrud";
 import { reviewsApi } from "../../api/services";
 import { useAuth } from "../../context/AuthContext";
 
-const { Text, Paragraph } = Typography;
+const { Text, Title, Paragraph } = Typography;
 
 const ratingColor = (r) =>
   r >= 4 ? "#059669" : r === 3 ? "#faad14" : "#ff4d4f";
 
 export default function ReviewsPage() {
-  const { user } = useAuth();
+  const { user, isDark } = useAuth();
+  const { message } = App.useApp();
   const crud = useCrud(reviewsApi);
   const [viewRec, setViewRec] = useState(null);
 
@@ -37,22 +43,22 @@ export default function ReviewsPage() {
     {
       title: "Đánh giá",
       dataIndex: "rating",
-      width: 160,
+      width: 170,
       render: (v) => (
-        <Space>
+        <Space size={10}>
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               borderRadius: 8,
-              background: ratingColor(v) + "18",
+              background: ratingColor(v) + "15",
               border: `1px solid ${ratingColor(v)}33`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               fontWeight: 800,
               color: ratingColor(v),
-              fontSize: 14,
+              fontSize: 15,
             }}
           >
             {v}
@@ -63,11 +69,11 @@ export default function ReviewsPage() {
     },
     {
       title: "Nhận xét",
-      dataIndex: "comment",
+      dataIndex: "body",
       ellipsis: true,
       render: (v) =>
         v ? (
-          <Text type="secondary">{v}</Text>
+          <Text>{v}</Text>
         ) : (
           <Text type="secondary" italic>
             Không có nhận xét
@@ -75,13 +81,16 @@ export default function ReviewsPage() {
         ),
     },
     {
-      title: "Người dùng",
-      dataIndex: "user_id",
+      title: "Xác thực",
+      dataIndex: "is_verified",
       width: 130,
+      align: "center",
       render: (v) => (
-        <Text code style={{ fontSize: 12 }}>
-          {v?.slice(-8).toUpperCase()}
-        </Text>
+        v ? (
+          <Tag icon={<CheckCircleOutlined />} color="#059669" style={{ borderRadius: 12 }}>Đã mua hàng</Tag>
+        ) : (
+          <Tag color="default" style={{ borderRadius: 12 }}>Chưa xác thực</Tag>
+        )
       ),
     },
     {
@@ -89,18 +98,20 @@ export default function ReviewsPage() {
       dataIndex: "created_at",
       width: 130,
       render: (v) => (
-        <Text type="secondary">{new Date(v).toLocaleDateString("vi-VN")}</Text>
+        <Text type="secondary">{v ? new Date(v).toLocaleDateString("vi-VN") : '—'}</Text>
       ),
     },
     {
+      title: "Thao tác",
       key: "actions",
       width: 90,
+      align: 'center',
       render: (_, rec) => (
         <Space size={4}>
           <Tooltip title="Xem chi tiết">
             <Button
-              icon={<EyeOutlined />}
-              size="small"
+              type="text"
+              icon={<EyeOutlined style={{ color: '#059669' }} />}
               onClick={() => setViewRec(rec)}
             />
           </Tooltip>
@@ -113,7 +124,7 @@ export default function ReviewsPage() {
               onConfirm={() => crud.remove(rec.id)}
             >
               <Tooltip title="Xóa">
-                <Button icon={<DeleteOutlined />} size="small" danger />
+                <Button type="text" danger icon={<DeleteOutlined />} />
               </Tooltip>
             </Popconfirm>
           )}
@@ -124,29 +135,29 @@ export default function ReviewsPage() {
 
   return (
     <>
-      <div className="page-header-row">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <Typography.Title level={4} style={{ margin: 0 }}>
-            Đánh giá
-          </Typography.Title>
+          <Title level={3} style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>
+            Quản lý Đánh giá
+          </Title>
           <Text type="secondary">
-            Quản lý và kiểm duyệt đánh giá của khách hàng
+            Kiểm duyệt bình luận và đánh giá của khách hàng
           </Text>
         </div>
       </div>
 
-      <Card variant="outlined" style={{ borderRadius: 12 }}>
-        <div style={{ marginBottom: 16 }}>
+      <Card variant="outlined" style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }} styles={{ body: { padding: 20 } }}>
+        <div style={{ marginBottom: 20, display: 'flex', gap: 16 }}>
           <Input
-            prefix={<SearchOutlined />}
-            placeholder="Tìm đánh giá..."
+            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+            placeholder="Tìm theo nội dung đánh giá..."
             value={crud.search}
             onChange={(e) => crud.handleSearch(e.target.value)}
-            style={{ width: 280 }}
+            style={{ width: 320, borderRadius: 8, height: 40 }}
             allowClear
           />
         </div>
-        <Table scroll={{ x: 'max-content' }}
+        <Table scroll={{ x: 800 }}
           dataSource={crud.data}
           columns={columns}
           rowKey="id"
@@ -158,85 +169,127 @@ export default function ReviewsPage() {
             total: crud.meta?.total,
             onChange: crud.setPage,
             showSizeChanger: false,
-            showTotal: null,
+            position: ['bottomCenter']
           }}
         />
       </Card>
 
-      <Modal
+      <Drawer
+        title={<span style={{ fontFamily: "'Inter', sans-serif", fontSize: 20 }}>Chi tiết Đánh giá</span>}
+        width={500}
+        onClose={() => setViewRec(null)}
         open={!!viewRec}
-        title="Chi tiết đánh giá"
-        footer={null}
-        onCancel={() => setViewRec(null)}
-        width={480}
+        styles={{ body: { paddingBottom: 80, background: isDark ? '#18181B' : '#F9FAFB' } }}
       >
         {viewRec && (
-          <Space
-            direction="vertical"
-            size={16}
-            style={{ width: "100%", marginTop: 16 }}
-          >
-            <Space>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 10,
-                  background: ratingColor(viewRec.rating) + "18",
-                  border: `1px solid ${ratingColor(viewRec.rating)}33`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 800,
-                  fontSize: 18,
-                  color: ratingColor(viewRec.rating),
-                }}
-              >
-                {viewRec.rating}
+          <div>
+            <Card variant="outlined" style={{ borderRadius: 12, marginBottom: 16, background: isDark ? '#27272A' : '#ffffff', border: `1px solid ${isDark ? '#3F3F46' : '#E5E7EB'}` }}>
+              <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                <div
+                  style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: 16,
+                    background: ratingColor(viewRec.rating) + "18",
+                    border: `1px solid ${ratingColor(viewRec.rating)}33`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 800,
+                    fontSize: 32,
+                    color: ratingColor(viewRec.rating),
+                    margin: '0 auto 12px'
+                  }}
+                >
+                  {viewRec.rating}
+                </div>
+                <Rate disabled value={viewRec.rating} style={{ fontSize: 20 }} />
+                <div style={{ marginTop: 8 }}>
+                  {viewRec.is_verified ? (
+                    <Tag icon={<CheckCircleOutlined />} color="#059669" style={{ borderRadius: 12 }}>Đã mua hàng</Tag>
+                  ) : (
+                    <Tag color="default" style={{ borderRadius: 12 }}>Chưa xác thực mua hàng</Tag>
+                  )}
+                </div>
               </div>
-              <Rate disabled value={viewRec.rating} />
-              <Text type="secondary">/ 5 sao</Text>
-            </Space>
-
-            <div>
-              <Text
-                type="secondary"
-                style={{
-                  fontSize: 12,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                }}
-              >
-                Nhận xét
+              
+              <Divider style={{ margin: '16px 0', borderColor: isDark ? '#3F3F46' : '#E5E7EB' }} />
+              
+              <Text type="secondary" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, display: 'block', marginBottom: 8 }}>
+                Nội dung nhận xét
               </Text>
-              <Card size="small" style={{ marginTop: 6 }}>
-                {viewRec.comment ? (
-                  <Paragraph style={{ margin: 0 }}>{viewRec.comment}</Paragraph>
+              <div style={{ background: isDark ? '#18181B' : '#F3F4F6', padding: 16, borderRadius: 8 }}>
+                {viewRec.body ? (
+                  <Paragraph style={{ margin: 0, fontSize: 15 }}>{viewRec.body}</Paragraph>
                 ) : (
                   <Text type="secondary" italic>
-                    Không có nhận xét
+                    Khách hàng không để lại nội dung nhận xét.
                   </Text>
                 )}
-              </Card>
-            </div>
+              </div>
+            </Card>
 
-            <Space direction="vertical" size={4} style={{ width: "100%" }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                <strong>ID Người dùng:</strong>{" "}
-                <Text code>{viewRec.user_id}</Text>
-              </Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                <strong>ID Sách:</strong> <Text code>{viewRec.book_id}</Text>
-              </Text>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                <strong>Ngày đánh giá:</strong>{" "}
-                {new Date(viewRec.created_at).toLocaleString("vi-VN")}
-              </Text>
-            </Space>
-          </Space>
+            <Card variant="outlined" title={<span style={{ color: '#059669' }}>Thông tin tham chiếu</span>} size="small" style={{ borderRadius: 12, background: isDark ? '#27272A' : '#ffffff', border: `1px solid ${isDark ? '#3F3F46' : '#E5E7EB'}` }}>
+              <Space direction="vertical" size={12} style={{ width: "100%" }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <UserOutlined style={{ color: '#94a3b8', marginTop: 4 }} />
+                  <div>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Người dùng</Text>
+                    {viewRec.user_name ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        {viewRec.user_avatar_url ? (
+                          <img src={viewRec.user_avatar_url} alt="" style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#059669', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 'bold' }}>
+                            {viewRec.user_name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <Text strong style={{ fontSize: 13, display: 'block' }}>{viewRec.user_name}</Text>
+                          {viewRec.user_email && <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>{viewRec.user_email}</Text>}
+                        </div>
+                      </div>
+                    ) : (
+                      <Text code>{viewRec.user_id || 'N/A'}</Text>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <BookOutlined style={{ color: '#94a3b8', marginTop: 4 }} />
+                  <div style={{ flex: 1 }}>
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Sản phẩm</Text>
+                    {viewRec.book_title ? (
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 4 }}>
+                        {viewRec.book_image_url ? (
+                          <img src={viewRec.book_image_url} alt="" style={{ width: 32, height: 44, borderRadius: 4, objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: 32, height: 44, borderRadius: 4, background: '#E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <BookOutlined style={{ color: '#9CA3AF' }} />
+                          </div>
+                        )}
+                        <Text strong style={{ fontSize: 13, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {viewRec.book_title}
+                        </Text>
+                      </div>
+                    ) : (
+                      <Text code>{viewRec.book_id || 'N/A'}</Text>
+                    )}
+                  </div>
+                </div>
+                {viewRec.order_item_id && (
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <CheckCircleOutlined style={{ color: '#94a3b8', marginTop: 4 }} />
+                    <div>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Mã tham chiếu đơn hàng</Text>
+                      <Text code>{viewRec.order_item_id}</Text>
+                    </div>
+                  </div>
+                )}
+              </Space>
+            </Card>
+          </div>
         )}
-      </Modal>
+      </Drawer>
     </>
   );
 }
-

@@ -250,7 +250,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <Card variant="outlined" style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }} bodyStyle={{ padding: 20 }}>
+      <Card variant="outlined" style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }} styles={{ body: { padding: 20 } }}>
         <div style={{ marginBottom: 20 }}>
           <Input
             prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
@@ -283,7 +283,7 @@ export default function OrdersPage() {
         width={700}
         onClose={() => setViewRec(null)}
         open={!!viewRec}
-        bodyStyle={{ paddingBottom: 80, background: isDark ? '#18181B' : '#F9FAFB' }}
+        styles={{ body: { paddingBottom: 80, background: isDark ? '#18181B' : '#F9FAFB' } }}
       >
         {viewRec && (
           <div>

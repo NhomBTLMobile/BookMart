@@ -5,13 +5,11 @@ export class UsersRepository {
   async findAll({ limit, offset, sort, order, search }) {
     const where = {}
     if (search) {
-      where['email'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['phone'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['full_name'] = { [Op.iLike]: `%${search}%` }
+      where[Op.or] = [
+        { email: { [Op.iLike]: `%${search}%` } },
+        { phone: { [Op.iLike]: `%${search}%` } },
+        { full_name: { [Op.iLike]: `%${search}%` } }
+      ]
     }
 
     const sortField = sort || 'id'

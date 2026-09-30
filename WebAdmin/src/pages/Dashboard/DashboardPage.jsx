@@ -297,7 +297,7 @@ export default function DashboardPage() {
                 boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.2)' : '0 4px 12px rgba(0,0,0,0.03)',
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               }}
-              bodyStyle={{ padding: 18 }}
+              styles={{ body: { padding: 18 } }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 {/* CHỮ BÊN TRÁI */}

@@ -8,7 +8,7 @@ export class OrdersRepository {
     const replacements = {}
 
     if (search) {
-      whereClause = 'WHERE o.order_code ILIKE :search'
+      whereClause = 'WHERE o.order_code ILIKE :search OR u.full_name ILIKE :search OR u.phone ILIKE :search'
       replacements.search = `%${search}%`
     }
 
@@ -18,6 +18,7 @@ export class OrdersRepository {
     const [countResult] = await sequelize.query(`
       SELECT COUNT(*) as count 
       FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
       ${whereClause}
     `, { replacements })
 
