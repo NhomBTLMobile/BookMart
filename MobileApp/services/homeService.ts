@@ -27,5 +27,12 @@ export const homeService = {
       const response = await api.get('/categories');
       return response.data;
     } catch { return { success: false, data: [] }; }
+  },
+  
+  getAllBooks: async (page = 1, limit = 10) => {
+    try {
+      const response = await api.get(`/books?page=${page}&limit=${limit}`);
+      return response.data;
+    } catch { return { success: false, data: [] }; }
   }
 };

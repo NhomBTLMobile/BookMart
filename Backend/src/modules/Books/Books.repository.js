@@ -29,6 +29,8 @@ export class BooksRepository {
       limit,
       offset,
       order: [[sortField, order || 'DESC']],
+      include: this.getSummaryIncludes(),
+      distinct: true
     })
 
     return { total: count, data: rows }

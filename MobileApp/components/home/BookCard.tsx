@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.text,
     lineHeight: 20,
+    height: 40,
   },
 
   author: {
