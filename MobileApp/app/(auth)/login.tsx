@@ -17,6 +17,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert
 } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
@@ -25,6 +26,7 @@ import AuthInput from '@/components/auth/AuthInput';
 import PrimaryButton from '@/components/auth/PrimaryButton';
 import SocialButton from '@/components/auth/SocialButton';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS } from '@/constants/colors';
+import { authService } from '../../services/authService';
 
 // ─── Validators ──────────────────────────────────────────────
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
@@ -47,6 +49,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleEmailChange = (text: string) => {
     setEmail(text);
@@ -57,18 +60,23 @@ export default function LoginScreen() {
     setPasswordError(validatePassword(text));
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const eErr = validateEmail(email);
     const pErr = validatePassword(password);
     setEmailError(eErr);
     setPasswordError(pErr);
     if (eErr || pErr) return;
 
-    if (email === 'test@gmail.com' && password === '123456') {
+    try {
+      setIsLoading(true);
+      await authService.login(email, password);
       router.replace('/(tabs)');
-    } else {
-      setEmailError('Email hoặc mật khẩu không chính xác');
-      setPasswordError('Email hoặc mật khẩu không chính xác');
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'Email hoặc mật khẩu không chính xác';
+      setEmailError(msg);
+      setPasswordError(msg);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -127,7 +135,7 @@ export default function LoginScreen() {
             <Text style={styles.forgotText}>Quên mật khẩu?</Text>
           </TouchableOpacity>
 
-          <PrimaryButton title="Đăng nhập" onPress={handleLogin} />
+          <PrimaryButton title="Đăng nhập" onPress={handleLogin} loading={isLoading} />
         </View>
 
         {/* ── DIVIDER ── */}
@@ -138,7 +146,9 @@ export default function LoginScreen() {
         </View>
 
         {/* ── SOCIAL PROOF ── */}
-        <SocialButton title="Google" onPress={() => console.log('Google login')} />
+        <SocialButton title="Google" onPress={() => {
+          Alert.alert("Tính năng Đăng nhập Google", "Cần cấu hình Google Client ID trong Firebase/Google Cloud Console để sử dụng. Vui lòng thêm sau.");
+        }} />
 
         {/* ── REGISTER LINK ── */}
         <View style={styles.registerRow}>

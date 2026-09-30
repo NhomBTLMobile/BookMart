@@ -26,6 +26,8 @@ import AuthInput from '@/components/auth/AuthInput';
 import PrimaryButton from '@/components/auth/PrimaryButton';
 import SocialButton from '@/components/auth/SocialButton';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS } from '@/constants/colors';
+import { authService } from '../../services/authService';
+import { Alert } from 'react-native';
 
 // ─── Validators ──────────────────────────────────────────────
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
@@ -53,6 +55,7 @@ export default function RegisterScreen() {
   const [phoneError, setPhoneError]                   = useState('');
   const [passwordError, setPasswordError]             = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [isLoading, setIsLoading]                     = useState(false);
 
   // ── Handlers: validate real-time khi gõ ──────────────────
   const handleFullNameChange = (t: string) => { setFullName(t); setFullNameError(validateFullName(t)); };
@@ -66,7 +69,7 @@ export default function RegisterScreen() {
   const handleConfirmChange  = (t: string) => { setConfirmPassword(t); setConfirmPasswordError(validateConfirm(t, password)); };
 
   // ── Submit ────────────────────────────────────────────────
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const fnErr = validateFullName(fullName);
     const eErr  = validateEmail(email);
     const phErr = validatePhone(phoneNumber);
@@ -80,8 +83,24 @@ export default function RegisterScreen() {
     setConfirmPasswordError(cpErr);
 
     if (fnErr || eErr || phErr || pErr || cpErr) return;
-    console.log('Đăng ký:', fullName, email, phoneNumber);
-    // TODO: gọi API
+    
+    try {
+      setIsLoading(true);
+      await authService.register({
+        email,
+        password,
+        full_name: fullName,
+        phone: phoneNumber
+      });
+      Alert.alert('Thành công', 'Đăng ký tài khoản thành công', [
+        { text: 'OK', onPress: () => router.replace('/(tabs)') }
+      ]);
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại';
+      Alert.alert('Lỗi đăng ký', msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -167,7 +186,7 @@ export default function RegisterScreen() {
         </View>
 
         {/* ── CTA ── */}
-        <PrimaryButton title="Tạo tài khoản" onPress={handleRegister} />
+        <PrimaryButton title="Tạo tài khoản" onPress={handleRegister} loading={isLoading} />
 
         {/* ── DIVIDER ── */}
         <View style={styles.dividerRow}>
@@ -177,7 +196,9 @@ export default function RegisterScreen() {
         </View>
 
         {/* ── SOCIAL PROOF ── */}
-        <SocialButton title="Google" onPress={() => console.log('Google register')} />
+        <SocialButton title="Google" onPress={() => {
+          Alert.alert("Tính năng Đăng ký Google", "Cần cấu hình Google Client ID trong Firebase/Google Cloud Console để sử dụng. Vui lòng thêm sau.");
+        }} />
 
         {/* ── LOGIN LINK ── */}
         <View style={styles.loginRow}>

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   Animated,
@@ -21,10 +21,66 @@ import SearchBar from '@/components/home/SearchBar';
 
 import { COLORS } from '@/constants/colors';
 
+import { homeService } from '@/services/homeService';
+import * as SecureStore from 'expo-secure-store';
+
 export default function HomeScreen() {
 
   const [search, setSearch] = useState('');
   const [cartCount, setCartCount] = useState(0);
+
+  const [featuredBooks, setFeaturedBooks] = useState<any[]>([]);
+  const [newBooks, setNewBooks] = useState<any[]>([]);
+  const [bestsellers, setBestsellers] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('Khách');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [featuredRes, newRes, bestsellersRes, categoriesRes] = await Promise.all([
+          homeService.getFeaturedBooks(5),
+          homeService.getNewBooks(5),
+          homeService.getBestsellers(5),
+          homeService.getCategories()
+        ]);
+        
+        if (featuredRes.success) setFeaturedBooks(featuredRes.data);
+        if (newRes.success) setNewBooks(newRes.data);
+        if (bestsellersRes.success) setBestsellers(bestsellersRes.data);
+        if (categoriesRes.success) setCategories(categoriesRes.data);
+      } catch (error) {
+        console.log('Error fetching home data', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    const fetchUser = async () => {
+      const userStr = await SecureStore.getItemAsync('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setUserName(user.full_name || 'Bạn');
+      }
+    };
+    fetchData();
+    fetchUser();
+  }, []);
+
+  const formatPrice = (price: string | number) => {
+    const num = typeof price === 'string' ? parseInt(price) : price;
+    return new Intl.NumberFormat('vi-VN').format(num) + 'đ';
+  };
+
+  const getPlaceholderImage = (index: number) => {
+    const placeholders = [
+      require('../../assets/images/book1.jpg'),
+      require('../../assets/images/book2.jpg'),
+      require('../../assets/images/book3.jpg'),
+      require('../../assets/images/book4.jpg'),
+    ];
+    return placeholders[index % placeholders.length];
+  };
 
   // ── Fly-to-cart animation ─────────────────────────────────
   const cartIconRef  = useRef<View>(null);
@@ -107,7 +163,7 @@ export default function HomeScreen() {
             </Text>
 
             <Text style={styles.name}>
-              Thanh Đào 👋
+              {userName} 👋
             </Text>
           </View>
 
@@ -168,26 +224,19 @@ export default function HomeScreen() {
             onPress={() => console.log('Xem tất cả')}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <BookCard
-              image={require('../../assets/images/book3.jpg')}
-              title="Tôi thấy hoa vàng trên cỏ xanh"
-              author="Nguyễn Nhật Ánh"
-              price="65.000đ"
-              rating={4.7}
-              onPress={() => router.push('/book/3')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
-            <BookCard
-              image={require('../../assets/images/book1.jpg')}
-              title="Đắc Nhân Tâm"
-              author="Dale Carnegie"
-              price="89.000đ"
-              rating={4.8}
-              onPress={() => router.push('/book/1')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
+            {newBooks.map((book, index) => (
+              <BookCard
+                key={book.id}
+                image={getPlaceholderImage(index + 2)}
+                title={book.title}
+                author={book.author?.name || 'Đang cập nhật'}
+                price={formatPrice(book.sale_price)}
+                rating={parseFloat(book.avg_rating) || 5.0}
+                onPress={() => router.push(`/book/${book.id}`)}
+                onAddToCart={addToCart}
+                onCartPress={triggerFlyToCart}
+              />
+            ))}
           </ScrollView>
         </View>
 
@@ -205,12 +254,13 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           style={styles.horizontalScroll}
         >
-
-          <CategoryCard icon="book-outline"        title="Văn học" />
-          <CategoryCard icon="trending-up-outline" title="Kinh tế" />
-          <CategoryCard icon="bulb-outline"        title="Kỹ năng sống" />
-          <CategoryCard icon="happy-outline"       title="Thiếu nhi" />
-          <CategoryCard icon="school-outline"      title="Sách học tập" />
+          {categories.map((cat, i) => (
+            <CategoryCard
+              key={cat.id || i}
+              icon={cat.icon_url || 'book-outline'}
+              title={cat.name}
+            />
+          ))}
 
         </ScrollView>
 
@@ -221,39 +271,20 @@ export default function HomeScreen() {
             onPress={() => console.log('Xem tất cả')}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <BookCard
-              image={require('../../assets/images/book2.jpg')}
-              title="Nhà Giả Kim"
-              author="Paulo Coelho"
-              price="55.000đ"
-              rating={4.9}
-              discount="-25%"
-              onPress={() => router.push('/book/2')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
-            <BookCard
-              image={require('../../assets/images/book4.jpg')}
-              title="Tuổi trẻ đáng giá bao nhiêu"
-              author="Rosie Nguyễn"
-              price="49.000đ"
-              rating={4.8}
-              discount="-38%"
-              onPress={() => router.push('/book/4')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
-            <BookCard
-              image={require('../../assets/images/book1.jpg')}
-              title="Đắc Nhân Tâm"
-              author="Dale Carnegie"
-              price="70.000đ"
-              rating={4.8}
-              discount="-21%"
-              onPress={() => router.push('/book/1')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
+            {featuredBooks.map((book, index) => (
+              <BookCard
+                key={book.id}
+                image={getPlaceholderImage(index)}
+                title={book.title}
+                author={book.author?.name || 'Đang cập nhật'}
+                price={formatPrice(book.sale_price)}
+                rating={parseFloat(book.avg_rating) || 4.9}
+                discount={`-${Math.round((1 - (book.sale_price / book.original_price)) * 100)}%`}
+                onPress={() => router.push(`/book/${book.id}`)}
+                onAddToCart={addToCart}
+                onCartPress={triggerFlyToCart}
+              />
+            ))}
           </ScrollView>
         </View>
 
@@ -266,58 +297,26 @@ export default function HomeScreen() {
           />
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-
-            <BookCard
-              image={require('../../assets/images/book1.jpg')}
-              title="Đắc Nhân Tâm"
-              author="Dale Carnegie"
-              price="89.000đ"
-              rating={4.8}
-              onPress={() => router.push('/book/1')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
-
-            <BookCard
-              image={require('../../assets/images/book2.jpg')}
-              title="Nhà Giả Kim"
-              author="Paulo Coelho"
-              price="75.000đ"
-              rating={4.9}
-              onPress={() => router.push('/book/2')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
-
-            <BookCard
-              image={require('../../assets/images/book3.jpg')}
-              title="Tôi thấy hoa vàng trên cỏ xanh"
-              author="Nguyễn Nhật Ánh"
-              price="65.000đ"
-              rating={4.7}
-              onPress={() => router.push('/book/3')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
-
-            <BookCard
-              image={require('../../assets/images/book4.jpg')}
-              title="Tuổi trẻ đáng giá bao nhiêu"
-              author="Rosie Nguyễn"
-              price="79.000đ"
-              rating={4.8}
-              onPress={() => router.push('/book/4')}
-              onAddToCart={addToCart}
-              onCartPress={triggerFlyToCart}
-            />
-
+            {bestsellers.map((book, index) => (
+              <BookCard
+                key={book.id}
+                image={getPlaceholderImage(index + 1)}
+                title={book.title}
+                author={book.author?.name || 'Đang cập nhật'}
+                price={formatPrice(book.sale_price)}
+                rating={parseFloat(book.avg_rating) || 4.8}
+                onPress={() => router.push(`/book/${book.id}`)}
+                onAddToCart={addToCart}
+                onCartPress={triggerFlyToCart}
+              />
+            ))}
           </ScrollView>
         </View>
 
         {/* RECOMMENDED (Cocktail Party Effect) */}
         <View style={styles.section}>
           <SectionHeader
-            title="Dành riêng cho Thanh Đào"
+            title={`Dành riêng cho ${userName}`}
             onPress={() => console.log('Xem thêm')}
           />
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
