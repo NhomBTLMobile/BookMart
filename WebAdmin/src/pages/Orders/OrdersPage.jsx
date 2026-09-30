@@ -1,31 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Card,
   Table,
   Button,
   Input,
   Space,
-  Modal,
+  Drawer,
   Form,
   Select,
   Tag,
   Tooltip,
   Popconfirm,
   Typography,
-  Descriptions,
   Divider,
   Row,
   Col,
+  Badge,
 } from "antd";
 import {
-  EditOutlined,
-  DeleteOutlined,
   SearchOutlined,
   EyeOutlined,
-  PrinterOutlined,
+  DeleteOutlined,
   UserOutlined,
   PhoneOutlined,
-  MailOutlined
+  MailOutlined,
+  EnvironmentOutlined,
+  DollarOutlined,
+  SaveOutlined
 } from "@ant-design/icons";
 import { App } from "antd";
 import { useCrud } from "../../hooks/useCrud";
@@ -44,60 +45,56 @@ const ORDER_STATUS_OPTIONS = [
   { label: "Đã hủy", value: "cancelled", color: "#EF4444" },
 ];
 
-const PAYMENT_STATUS = {
-  unpaid: { label: "Chưa thanh toán", color: "warning" },
-  paid: { label: "Đã thanh toán", color: "#059669" },
-  refunded: { label: "Hoàn tiền", color: "default" },
-};
+const PAYMENT_STATUS_OPTIONS = [
+  { label: "Chưa thanh toán", value: "unpaid", color: "warning" },
+  { label: "Đã thanh toán", value: "paid", color: "#059669" },
+  { label: "Hoàn tiền", value: "refunded", color: "default" },
+];
 
-const statusColor = (v) => {
-  const st = ORDER_STATUS_OPTIONS.find((o) => o.value === String(v).toLowerCase());
-  return st ? st.color : "default";
-};
-
-const statusLabel = (v) => {
-  const st = ORDER_STATUS_OPTIONS.find((o) => o.value === String(v).toLowerCase());
-  return st ? st.label : v;
+const getStatus = (val, options) => {
+  const v = String(val).toLowerCase();
+  return options.find(o => o.value === v) || { label: val, color: "default" };
 };
 
 export default function OrdersPage() {
   const { user, isDark } = useAuth();
   const { message } = App.useApp();
   const crud = useCrud(ordersApi);
-  const [editForm] = Form.useForm();
+  const [form] = Form.useForm();
+  
   const [viewRec, setViewRec] = useState(null);
-  const [editRec, setEditRec] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  const openEdit = (rec) => {
-    setEditRec(rec);
-    editForm.setFieldsValue({ order_status: rec.order_status?.toLowerCase() });
-  };
-
-  const handleSave = async () => {
-    const values = await editForm.validateFields();
-    setSaving(true);
-    try {
-      await crud.update(editRec.id, values);
-      setEditRec(null);
-      message.success("Cập nhật trạng thái đơn hàng thành công");
-    } catch (err) {
-      message.error(err.response?.data?.message || "Lỗi cập nhật");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const loadOrderDetail = async (id) => {
+  const openDetail = async (id) => {
     try {
       const res = await ordersApi.getById(id);
       if (res.data?.success) {
-        setViewRec(res.data.data);
+        const order = res.data.data;
+        setViewRec(order);
+        form.setFieldsValue({
+          order_status: order.order_status?.toLowerCase(),
+          payment_status: order.payment_status?.toLowerCase(),
+        });
       }
     } catch (err) {
       message.error("Lỗi khi tải chi tiết đơn hàng");
     }
-  }
+  };
+
+  const handleSaveStatus = async () => {
+    try {
+      const values = await form.validateFields();
+      setSaving(true);
+      await crud.update(viewRec.id, values);
+      message.success("Cập nhật trạng thái thành công");
+      // Cập nhật lại state viewRec để UI phản hồi ngay
+      setViewRec(prev => ({ ...prev, ...values }));
+    } catch (err) {
+      if (err?.response) message.error(err.response.data?.message || "Lỗi cập nhật");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const columns = [
     {
@@ -105,7 +102,7 @@ export default function OrdersPage() {
       dataIndex: "order_code",
       width: 140,
       render: (v) => (
-        <Text code style={{ fontSize: 13, fontWeight: 600, color: '#059669' }}>
+        <Text code style={{ fontSize: 13, fontWeight: 700, color: '#059669', background: 'rgba(5, 150, 105, 0.1)' }}>
           #{v || "BM-ORDER"}
         </Text>
       ),
@@ -115,7 +112,7 @@ export default function OrdersPage() {
       dataIndex: "customer_name",
       render: (v, rec) => (
         <div>
-          <Text strong style={{ display: 'block' }}>{v || "Khách vãng lai"}</Text>
+          <Text strong style={{ display: 'block', color: isDark ? '#f3f4f6' : '#1f2937' }}>{v || "Khách vãng lai"}</Text>
           {rec.customer_phone && <Text type="secondary" style={{ fontSize: 12 }}>{rec.customer_phone}</Text>}
         </div>
       ),
@@ -125,7 +122,7 @@ export default function OrdersPage() {
       dataIndex: "total_amount",
       align: 'right',
       render: (v) => (
-        <Text strong style={{ color: "#059669", fontSize: 14 }}>
+        <Text strong style={{ fontSize: 14 }}>
           ₫ {fmt(v)}
         </Text>
       ),
@@ -145,8 +142,7 @@ export default function OrdersPage() {
       dataIndex: "payment_status",
       align: 'center',
       render: (v) => {
-        const key = String(v).toLowerCase();
-        const s = PAYMENT_STATUS[key] || { label: v, color: "default" };
+        const s = getStatus(v, PAYMENT_STATUS_OPTIONS);
         return <Tag color={s.color} style={{ borderRadius: 12 }}>{s.label}</Tag>;
       },
     },
@@ -154,37 +150,33 @@ export default function OrdersPage() {
       title: "Trạng thái",
       dataIndex: "order_status",
       align: 'center',
-      render: (v) => <Tag color={statusColor(v)} style={{ borderRadius: 12 }}>{statusLabel(v)}</Tag>,
+      render: (v) => {
+        const s = getStatus(v, ORDER_STATUS_OPTIONS);
+        return <Badge color={s.color} text={<span style={{ fontWeight: 500 }}>{s.label}</span>} />;
+      },
     },
     {
       title: "Ngày tạo",
       dataIndex: "created_at",
       align: 'center',
       render: (v) => (
-        <Text type="secondary" style={{ fontSize: 12 }}>{new Date(v).toLocaleDateString("vi-VN")}</Text>
+        <Text type="secondary" style={{ fontSize: 12 }}>{v ? new Date(v).toLocaleDateString("vi-VN") : '—'}</Text>
       ),
     },
     {
       title: "Thao tác",
       key: "actions",
-      width: 120,
+      width: 90,
       align: 'center',
       render: (_, rec) => (
         <Space size={4}>
-          <Tooltip title="Xem chi tiết">
+          <Tooltip title="Chi tiết & Xử lý">
             <Button
               type="primary"
-              ghost
               icon={<EyeOutlined />}
               size="small"
-              onClick={() => loadOrderDetail(rec.id)}
-            />
-          </Tooltip>
-          <Tooltip title="Cập nhật trạng thái">
-            <Button
-              icon={<EditOutlined />}
-              size="small"
-              onClick={() => openEdit(rec)}
+              onClick={() => openDetail(rec.id)}
+              style={{ background: '#059669' }}
             />
           </Tooltip>
           {user?.role === "ADMIN" && (
@@ -195,7 +187,7 @@ export default function OrdersPage() {
               cancelText="Hủy"
               onConfirm={() => crud.remove(rec.id)}
             >
-              <Button icon={<DeleteOutlined />} size="small" danger />
+              <Button icon={<DeleteOutlined />} size="small" danger type="text" />
             </Popconfirm>
           )}
         </Space>
@@ -207,7 +199,7 @@ export default function OrdersPage() {
     {
       title: 'STT',
       key: 'stt',
-      width: 60,
+      width: 50,
       align: 'center',
       render: (_, __, index) => index + 1,
     },
@@ -223,7 +215,7 @@ export default function OrdersPage() {
       render: v => `₫ ${fmt(v)}`
     },
     {
-      title: 'Số lượng',
+      title: 'SL',
       dataIndex: 'quantity',
       align: 'center',
       render: v => <Text strong>{v}</Text>
@@ -232,7 +224,7 @@ export default function OrdersPage() {
       title: 'Thành tiền',
       dataIndex: 'total_price',
       align: 'right',
-      render: v => <Text strong style={{ color: isDark ? '#fff' : '#0f172a' }}>₫ {fmt(v)}</Text>
+      render: v => <Text strong>₫ {fmt(v)}</Text>
     }
   ];
 
@@ -249,27 +241,27 @@ export default function OrdersPage() {
 
   return (
     <>
-      <div className="page-header-row">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <Title level={4} style={{ margin: 0 }}>
+          <Title level={3} style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>
             Quản lý Đơn hàng
           </Title>
-          <Text type="secondary">Quản lý, duyệt đơn và theo dõi trạng thái giao hàng</Text>
+          <Text type="secondary">Theo dõi, duyệt đơn và cập nhật trạng thái vận chuyển</Text>
         </div>
       </div>
 
-      <Card variant="outlined" style={{ borderRadius: 12 }}>
-        <div style={{ marginBottom: 16 }}>
+      <Card variant="outlined" style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }} bodyStyle={{ padding: 20 }}>
+        <div style={{ marginBottom: 20 }}>
           <Input
-            prefix={<SearchOutlined />}
+            prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
             placeholder="Tìm theo mã đơn hàng..."
             value={crud.search}
             onChange={(e) => crud.handleSearch(e.target.value)}
-            style={{ width: 280 }}
+            style={{ width: 320, borderRadius: 8, height: 40 }}
             allowClear
           />
         </div>
-        <Table scroll={{ x: 'max-content' }}
+        <Table scroll={{ x: 900 }}
           dataSource={crud.data}
           columns={columns}
           rowKey="id"
@@ -281,44 +273,83 @@ export default function OrdersPage() {
             total: crud.meta?.total,
             onChange: crud.setPage,
             showSizeChanger: false,
-            showTotal: null,
+            position: ['bottomCenter']
           }}
         />
       </Card>
 
-      {/* View Detail Modal */}
-      <Modal
+      <Drawer
+        title={<span style={{ fontFamily: "'Inter', sans-serif", fontSize: 20 }}>Chi tiết Đơn hàng {viewRec && <Text code style={{ color: '#059669', background: 'rgba(5, 150, 105, 0.1)', border: 'none' }}>#{viewRec.order_code}</Text>}</span>}
+        width={700}
+        onClose={() => setViewRec(null)}
         open={!!viewRec}
-        title={<Title level={5} style={{ margin: 0 }}>Chi tiết Đơn hàng {viewRec && <Text code>#{viewRec.order_code}</Text>}</Title>}
-        footer={[
-          <Button key="close" onClick={() => setViewRec(null)}>Đóng</Button>,
-          <Button key="edit" type="primary" onClick={() => { setViewRec(null); openEdit(viewRec); }}>
-            Cập nhật trạng thái
-          </Button>
-        ]}
-        onCancel={() => setViewRec(null)}
-        width={800}
-        destroyOnClose
-        style={{ top: 20 }}
+        bodyStyle={{ paddingBottom: 80, background: isDark ? '#18181B' : '#F9FAFB' }}
       >
         {viewRec && (
-          <div style={{ marginTop: 16 }}>
+          <div>
+            {/* Control Panel: Trạng thái */}
+            <Card size="small" variant="outlined" style={{ marginBottom: 16, borderRadius: 12, border: `1px solid ${isDark ? '#3F3F46' : '#E5E7EB'}`, background: isDark ? '#27272A' : '#ffffff' }}>
+              <Form form={form} layout="vertical">
+                <Row gutter={16} align="bottom">
+                  <Col span={9}>
+                    <Form.Item label="Tiến độ đơn hàng" name="order_status" style={{ margin: 0 }}>
+                      <Select
+                        options={ORDER_STATUS_OPTIONS.map((o) => ({
+                          label: <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Badge color={o.color} /> {o.label}</div>,
+                          value: o.value,
+                        }))}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={9}>
+                    <Form.Item label="Thanh toán" name="payment_status" style={{ margin: 0 }}>
+                      <Select
+                        options={PAYMENT_STATUS_OPTIONS.map((o) => ({
+                          label: <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Badge color={o.color} /> {o.label}</div>,
+                          value: o.value,
+                        }))}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={6}>
+                    <Button type="primary" icon={<SaveOutlined />} onClick={handleSaveStatus} loading={saving} style={{ background: '#059669', width: '100%' }}>
+                      Cập nhật
+                    </Button>
+                  </Col>
+                </Row>
+              </Form>
+            </Card>
+
+            {/* Thông tin */}
             <Row gutter={[16, 16]}>
               <Col xs={24} md={12}>
-                <Card size="small" title="Thông tin khách hàng" variant="outlined" style={{ height: '100%', background: isDark ? '#27272A' : '#ffffff' }}>
+                <Card size="small" title={<span style={{ color: '#059669' }}><UserOutlined /> Khách hàng</span>} variant="outlined" style={{ height: '100%', borderRadius: 12, border: `1px solid ${isDark ? '#3F3F46' : '#E5E7EB'}`, background: isDark ? '#27272A' : '#ffffff' }}>
                   <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                    <div><UserOutlined /> <Text strong>{viewRec.customer_name || 'Khách vãng lai'}</Text></div>
-                    {viewRec.customer_phone && <div><PhoneOutlined /> <Text type="secondary">{viewRec.customer_phone}</Text></div>}
-                    {viewRec.customer_email && <div><MailOutlined /> <Text type="secondary">{viewRec.customer_email}</Text></div>}
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Text type="secondary">Tên:</Text>
+                      <Text strong>{viewRec.customer_name || 'Khách vãng lai'}</Text>
+                    </div>
+                    {viewRec.customer_phone && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Text type="secondary">SĐT:</Text>
+                        <Text>{viewRec.customer_phone}</Text>
+                      </div>
+                    )}
+                    {viewRec.customer_email && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Text type="secondary">Email:</Text>
+                        <Text>{viewRec.customer_email}</Text>
+                      </div>
+                    )}
                   </Space>
                 </Card>
               </Col>
               <Col xs={24} md={12}>
-                <Card size="small" title="Thông tin giao hàng" variant="outlined" style={{ height: '100%', background: isDark ? '#27272A' : '#ffffff' }}>
+                <Card size="small" title={<span style={{ color: '#059669' }}><EnvironmentOutlined /> Giao hàng</span>} variant="outlined" style={{ height: '100%', borderRadius: 12, border: `1px solid ${isDark ? '#3F3F46' : '#E5E7EB'}`, background: isDark ? '#27272A' : '#ffffff' }}>
                   {addressInfo ? (
                     <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                      <div><Text strong>{addressInfo.full_name || viewRec.customer_name}</Text> - <Text type="secondary">{addressInfo.phone || viewRec.customer_phone}</Text></div>
-                      <div><Text type="secondary">{addressInfo.full_address || addressInfo.street_address}</Text></div>
+                      <div><Text strong>{addressInfo.full_name || addressInfo.name || viewRec.customer_name}</Text> - <Text type="secondary">{addressInfo.phone || viewRec.customer_phone}</Text></div>
+                      <div><Text type="secondary">{addressInfo.full_address || addressInfo.address || addressInfo.street_address}</Text></div>
                     </Space>
                   ) : (
                     <Text type="secondary">Sử dụng địa chỉ đăng ký</Text>
@@ -327,75 +358,52 @@ export default function OrdersPage() {
               </Col>
             </Row>
 
-            <Divider orientation="left">Sản phẩm đã đặt</Divider>
-            <Table
-              dataSource={viewRec.items || []}
-              columns={itemColumns}
-              rowKey="id"
-              pagination={false}
-              size="small"
-              bordered
-            />
+            {/* Chi tiết đơn */}
+            <Card size="small" variant="outlined" style={{ marginTop: 16, borderRadius: 12, border: `1px solid ${isDark ? '#3F3F46' : '#E5E7EB'}`, background: isDark ? '#27272A' : '#ffffff' }}>
+              <Title level={5} style={{ margin: '0 0 12px 0' }}><DollarOutlined style={{ color: '#059669' }} /> Chi tiết sản phẩm</Title>
+              <Table
+                dataSource={viewRec.items || []}
+                columns={itemColumns}
+                rowKey="id"
+                pagination={false}
+                size="small"
+              />
 
-            <Row justify="end" style={{ marginTop: 16 }}>
-              <Col xs={24} sm={16} md={10}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text type="secondary">Tạm tính:</Text>
-                  <Text>₫ {fmt(viewRec.subtotal || viewRec.total_amount)}</Text>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text type="secondary">Phí vận chuyển:</Text>
-                  <Text>₫ {fmt(viewRec.shipping_fee || 0)}</Text>
-                </div>
-                {Number(viewRec.discount_amount) > 0 && (
+              <Row justify="end" style={{ marginTop: 24, paddingRight: 12 }}>
+                <Col xs={24} sm={16} md={12}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <Text type="secondary">Giảm giá:</Text>
-                    <Text type="danger">- ₫ {fmt(viewRec.discount_amount)}</Text>
+                    <Text type="secondary">Tạm tính:</Text>
+                    <Text>₫ {fmt(viewRec.subtotal)}</Text>
                   </div>
-                )}
-                <Divider style={{ margin: '8px 0' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Text strong>Tổng cộng:</Text>
-                  <Text strong style={{ color: '#059669', fontSize: 16 }}>₫ {fmt(viewRec.total_amount)}</Text>
-                </div>
-              </Col>
-            </Row>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <Text type="secondary">Phí vận chuyển:</Text>
+                    <Text>₫ {fmt(viewRec.shipping_fee)}</Text>
+                  </div>
+                  
+                  {Number(viewRec.discount_amount) > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text type="secondary">Mã giảm giá:</Text>
+                      <Text style={{ color: '#EF4444' }}>- ₫ {fmt(viewRec.discount_amount)}</Text>
+                    </div>
+                  )}
+                  {Number(viewRec.points_discount) > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <Text type="secondary">Dùng điểm thưởng ({viewRec.points_used} điểm):</Text>
+                      <Text style={{ color: '#EF4444' }}>- ₫ {fmt(viewRec.points_discount)}</Text>
+                    </div>
+                  )}
+                  
+                  <Divider style={{ margin: '12px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text strong style={{ fontSize: 16 }}>TỔNG CỘNG:</Text>
+                    <Text strong style={{ color: '#059669', fontSize: 20 }}>₫ {fmt(viewRec.total_amount)}</Text>
+                  </div>
+                </Col>
+              </Row>
+            </Card>
           </div>
         )}
-      </Modal>
-
-      {/* Edit Status Modal */}
-      <Modal
-        open={!!editRec}
-        title="Cập nhật trạng thái đơn hàng"
-        onOk={handleSave}
-        onCancel={() => setEditRec(null)}
-        okText="Lưu thay đổi"
-        cancelText="Hủy"
-        confirmLoading={saving}
-        destroyOnHide
-      >
-        {editRec && (
-          <Form form={editForm} layout="vertical" style={{ marginTop: 16 }}>
-            <div style={{ marginBottom: 16 }}>
-              Mã đơn hàng: <Text code>#{editRec.order_code}</Text>
-            </div>
-            <Form.Item
-              label="Trạng thái đơn hàng"
-              name="order_status"
-              rules={[{ required: true, message: "Vui lòng chọn trạng thái!" }]}
-            >
-              <Select
-                options={ORDER_STATUS_OPTIONS.map((o) => ({
-                  label: <Tag color={o.color}>{o.label}</Tag>,
-                  value: o.value,
-                }))}
-              />
-            </Form.Item>
-          </Form>
-        )}
-      </Modal>
+      </Drawer>
     </>
   );
 }
-

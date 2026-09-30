@@ -117,7 +117,7 @@ export default function DashboardPage() {
       title: 'Thanh toán',
       dataIndex: 'total_amount',
       align: 'right',
-      render: v => <Text strong style={{ color: '#059669', fontSize: 14 }}>₫ {fmt(v)}</Text>,
+      render: v => <Text strong style={{ fontSize: 14 }}>₫ {fmt(v)}</Text>,
     },
     {
       title: 'Phương thức',
@@ -205,7 +205,7 @@ export default function DashboardPage() {
       title: 'Giá bán',
       dataIndex: 'sale_price',
       align: 'right',
-      render: v => <Text strong style={{ color: '#059669' }}>₫ {fmt(v)}</Text>,
+      render: v => <Text strong>₫ {fmt(v)}</Text>,
     },
     {
       title: 'Đã bán',
@@ -532,7 +532,7 @@ export default function DashboardPage() {
                       <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.item_name}</td>
                       <td style={{ padding: '10px 12px', textAlign: 'right' }}>₫ {fmt(item.unit_price)}</td>
                       <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700 }}>{item.quantity}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: isDark ? '#fff' : '#0f172a' }}>₫ {fmt(item.total_price)}</td>
+                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700 }}>₫ {fmt(item.total_price)}</td>
                     </tr>
                   ))
                 ) : (
