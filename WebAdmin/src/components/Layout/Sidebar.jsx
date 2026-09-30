@@ -122,12 +122,13 @@ export default function Sidebar({ isMobile, onClose }) {
         .toUpperCase()
     : "U";
 
-  const menuItems = filterItems(ALL_ITEMS, user?.role || "");
+  const menuItems = filterItems(ALL_ITEMS, user?.role?.toUpperCase() || "");
 
+  const roleKey = user?.role?.toUpperCase();
   const roleTag = {
-    ADMIN: { color: "#689f38", text: "Admin" },
+    ADMIN: { color: "#059669", text: "Admin" },
     STAFF: { color: "blue", text: "Staff" },
-  }[user?.role] || { color: "default", text: user?.role };
+  }[roleKey] || { color: "default", text: user?.role };
 
   return (
     <Sider
@@ -140,6 +141,7 @@ export default function Sidebar({ isMobile, onClose }) {
         left: 0,
         display: "flex",
         flexDirection: "column",
+        background: isDark ? "#18181B" : "#ffffff",
         borderRight: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
       }}
     >
@@ -155,7 +157,11 @@ export default function Sidebar({ isMobile, onClose }) {
           userSelect: "none",
         }}
       >
-        <img src="/logo.png" alt="BookMart" style={{ height: 42 }} />
+        <img
+          src="/bookmart_logo_full.png"
+          alt="BookMart"
+          style={{ height: 56, objectFit: "contain", borderRadius: 10 }}
+        />
         <div style={{ display: "flex", flexDirection: "column" }}>
           <h3
             style={{
@@ -203,7 +209,7 @@ export default function Sidebar({ isMobile, onClose }) {
       {/* User footer */}
       <div className="sidebar-user-footer">
         <Avatar
-          src={user.avatar_url || undefined}
+          src={user?.avatar_url || undefined}
           size={36}
           style={{
             backgroundColor: "#999999",

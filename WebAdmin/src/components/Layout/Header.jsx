@@ -38,7 +38,7 @@ export default function AppHeader({ isMobile, mobileMenuOpen, setMobileMenuOpen 
         top: 0,
         zIndex: 100,
         borderBottom: '1px solid rgba(128,128,128,0.1)',
-        background: isDark ? '#141414' : '#fff',
+        background: isDark ? '#18181B' : '#fff',
       }}
     >
       {isMobile && (
@@ -59,7 +59,7 @@ export default function AppHeader({ isMobile, mobileMenuOpen, setMobileMenuOpen 
           <Switch
             checked={isDark}
             size="small"
-            style={{ background: isDark ? '#689f38' : undefined }}
+            style={{ background: isDark ? '#059669' : undefined }}
           />
           <MoonOutlined style={{ fontSize: 15, color: isDark ? '#c084fc' : undefined }} />
         </Space>

@@ -21,7 +21,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  if (user) return <Navigate to="/" replace />;
+  if (user && ["ADMIN", "STAFF"].includes(user.role?.toUpperCase())) {
+    return <Navigate to="/" replace />;
+  }
 
   const pageBg = isDark ? "#111b15" : "#eef3eeff";
   const cardBg = isDark ? "#1a261f" : "#f1f5eb";
@@ -34,7 +36,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const u = await login(email, password);
-      if (!["ADMIN", "STAFF"].includes(u.role)) {
+      if (!["ADMIN", "STAFF"].includes(u.role?.toUpperCase())) {
         setError("Tài khoản này không có quyền truy cập trang quản trị.");
         return;
       }
@@ -152,7 +154,7 @@ export default function LoginPage() {
             alt="Illustration"
             style={{
               maxWidth: "100%",
-              maxHeight: "85vh",
+              maxHeight: "65vh",
               objectFit: "contain",
               filter: "drop-shadow(0 20px 40px rgba(0, 0, 0, 0.05))",
             }}
@@ -175,9 +177,9 @@ export default function LoginPage() {
           >
             <div style={{ marginBottom: 32, textAlign: "center" }}>
               <img
-                src="/logo.png"
+                src="/bookmart_logo.png"
                 alt="BookMart Logo"
-                style={{ height: 80, marginBottom: 16 }}
+                style={{ height: 86, marginBottom: 16, objectFit: "contain" }}
               />
               <Title
                 level={4}
@@ -304,7 +306,7 @@ export default function LoginPage() {
                   style={{
                     height: 46,
                     borderRadius: 24, // Capsule shape
-                    background: "#689f38", // Solid green matching image button, but lighter
+                    background: "#059669", // Solid green matching image button, but lighter
                     fontWeight: 600,
                     boxShadow: "0 8px 20px rgba(104, 159, 56, 0.3)",
                   }}
@@ -333,4 +335,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

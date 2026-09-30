@@ -26,7 +26,7 @@ import { useAuth } from "../../context/AuthContext";
 const { Text, Paragraph } = Typography;
 
 const ratingColor = (r) =>
-  r >= 4 ? "#689f38" : r === 3 ? "#faad14" : "#ff4d4f";
+  r >= 4 ? "#059669" : r === 3 ? "#faad14" : "#ff4d4f";
 
 export default function ReviewsPage() {
   const { user } = useAuth();

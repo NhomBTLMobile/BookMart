@@ -21,9 +21,11 @@ import userOauthProvidersRouter from '../modules/user_oauth_providers/user_oauth
 import userVouchersRouter from '../modules/user_vouchers/user_vouchers.route.js'
 import usersRouter from '../modules/users/users.route.js'
 import vouchersRouter from '../modules/vouchers/vouchers.route.js'
+import dashboardRouter from '../modules/dashboard/dashboard.route.js'
 
 const router = Router()
 
+router.use('/dashboard', dashboardRouter)
 router.use('/authors', authorsRouter)
 router.use('/book_authors', bookAuthorsRouter)
 router.use('/book_categories', bookCategoriesRouter)

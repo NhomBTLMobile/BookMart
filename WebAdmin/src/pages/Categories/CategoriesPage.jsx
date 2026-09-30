@@ -28,7 +28,7 @@ const { Text } = Typography;
 const INIT = { name: "", description: "" };
 
 const PALETTE = [
-  "#689f38",
+  "#059669",
   "#1677ff",
   "#722ed1",
   "#fa8c16",

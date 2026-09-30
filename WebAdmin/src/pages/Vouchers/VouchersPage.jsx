@@ -143,7 +143,7 @@ export default function VouchersPage() {
     {
       title: "Giá trị giảm",
       render: (_, rec) => (
-        <Text strong style={{ color: "#689f38" }}>
+        <Text strong style={{ color: "#059669" }}>
           {rec.discount_type === "PERCENT"
             ? `${rec.discount_value}%`
             : `₫ ${fmt(rec.discount_value)}`}
