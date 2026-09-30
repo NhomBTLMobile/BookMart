@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, BackHandler } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { Animated, BackHandler, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SHADOW, SPACING } from '../constants/colors';
 
 // ─── Lợi ích UX của trang độc lập ──────────────────────────────────────────
@@ -40,7 +40,7 @@ export default function OrderSuccessScreen() {
     <View style={styles.container}>
       {/* ── Content ── */}
       <Animated.View style={[styles.content, { opacity: opacityAnim, transform: [{ translateY: slideUpAnim }] }]}>
-        
+
         {/* Icon Success with Scale Animation */}
         <Animated.View style={[styles.iconWrap, { transform: [{ scale: scaleAnim }] }]}>
           <View style={styles.iconRing}>
@@ -78,18 +78,18 @@ export default function OrderSuccessScreen() {
 
       {/* ── Footer Actions ── */}
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={styles.primaryBtn} 
+        <TouchableOpacity
+          style={styles.primaryBtn}
           activeOpacity={0.8}
           onPress={() => router.replace('/(tabs)')}
         >
           <Text style={styles.primaryBtnText}>Tiếp tục mua sắm</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.secondaryBtn} 
+        <TouchableOpacity
+          style={styles.secondaryBtn}
           activeOpacity={0.7}
-          onPress={() => router.replace(`/order/${orderId}`)}
+          onPress={() => router.replace({ pathname: '/order/[id]', params: { id: orderId } })}
         >
           <Ionicons name="receipt-outline" size={18} color={COLORS.primaryDark} />
           <Text style={styles.secondaryBtnText}>Xem chi tiết đơn hàng</Text>
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     paddingTop: SPACING['3xl'],
   },
-  
+
   iconWrap: {
     width: 140,
     height: 140,
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...SHADOW.md,
   },
-  
+
   title: {
     fontSize: FONT_SIZE['2xl'],
     fontWeight: FONT_WEIGHT.extrabold,

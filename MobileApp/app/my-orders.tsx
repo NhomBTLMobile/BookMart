@@ -101,7 +101,7 @@ export default function MyOrdersScreen() {
       <TouchableOpacity 
         style={styles.orderCard}
         activeOpacity={0.7}
-        onPress={() => router.push(`/order/${item.id}`)}
+        onPress={() => router.push(`/order/${item.id}` as any)}
       >
         {/* Header: Status & Order ID */}
         <View style={styles.cardHeader}>
