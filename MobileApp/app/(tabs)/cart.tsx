@@ -143,19 +143,14 @@ function CartItemRow({
   );
 }
 
+import { useCart } from '../../context/CartContext';
+
 // ─── Main Screen ─────────────────────────────────────────────
 export default function CartScreen() {
-  const [items, setItems] = useState<CartItem[]>(INITIAL_ITEMS);
+  const { items, increaseQuantity, decreaseQuantity, removeFromCart } = useCart();
 
-  const increase = (id: string) =>
-    setItems((prev) =>
-      prev.map((it) => it.id === id ? { ...it, quantity: it.quantity + 1 } : it)
-    );
-
-  const decrease = (id: string) =>
-    setItems((prev) =>
-      prev.map((it) => it.id === id && it.quantity > 1 ? { ...it, quantity: it.quantity - 1 } : it)
-    );
+  const increase = (id: string) => increaseQuantity(id);
+  const decrease = (id: string) => decreaseQuantity(id);
 
   const remove = (id: string) => {
     Alert.alert(
@@ -166,7 +161,7 @@ export default function CartScreen() {
         {
           text: 'Xóa',
           style: 'destructive',
-          onPress: () => setItems((prev) => prev.filter((it) => it.id !== id)),
+          onPress: () => removeFromCart(id),
         },
       ]
     );

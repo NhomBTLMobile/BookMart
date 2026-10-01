@@ -26,11 +26,12 @@ import { COLORS } from '@/constants/colors';
 
 import { homeService } from '@/services/homeService';
 import * as SecureStore from 'expo-secure-store';
+import { useCart } from '@/context/CartContext';
 
 export default function HomeScreen() {
 
   const [search, setSearch] = useState('');
-  const [cartCount, setCartCount] = useState(0);
+  const { cartCount, addToCart: addContextCart } = useCart();
 
   const [featuredBooks, setFeaturedBooks] = useState<any[]>([]);
   const [newBooks, setNewBooks] = useState<any[]>([]);
@@ -133,7 +134,8 @@ export default function HomeScreen() {
     source: any; width: number; height: number;
   } | null>(null);
 
-  const addToCart = () => setCartCount(c => c + 1);
+  // We map the addToCart from context instead
+  // const addToCart = () => setCartCount(c => c + 1);
 
   const triggerFlyToCart = (bookNode: View | null, imageSource: any) => {
     if (!bookNode || !cartIconRef.current) return;
@@ -192,9 +194,9 @@ export default function HomeScreen() {
             source={{ uri: userAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random&color=fff&size=128` }}
             style={styles.avatar}
           />
-          <View>
+          <View style={styles.userInfoText}>
             <Text style={styles.hello}>Xin chào,</Text>
-            <Text style={styles.name}>{userName} 👋</Text>
+            <Text style={styles.name} numberOfLines={1} ellipsizeMode="tail">{userName} 👋</Text>
           </View>
         </View>
 
@@ -244,7 +246,15 @@ export default function HomeScreen() {
                 rating={parseFloat(book.avg_rating) || 5.0}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
-                onAddToCart={addToCart}
+                onAddToCart={() => addContextCart({
+                  id: book.id,
+                  title: book.title,
+                  author: book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật',
+                  price: book.sale_price,
+                  originalPrice: book.original_price,
+                  image: getImageSource(book, index + 2),
+                  quantity: 1
+                })}
                 onCartPress={triggerFlyToCart}
               />
             ))}
@@ -258,7 +268,12 @@ export default function HomeScreen() {
           <SectionHeader title="Danh mục" />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
             {categories.map((cat, i) => (
-              <CategoryCard key={cat.id || i} icon={cat.icon_url || 'book-outline'} title={cat.name} />
+              <CategoryCard 
+                key={cat.id || i} 
+                icon={cat.icon_url || 'book-outline'} 
+                title={cat.name} 
+                onPress={() => router.push('/(tabs)/categories')}
+              />
             ))}
           </ScrollView>
         </>
@@ -279,7 +294,15 @@ export default function HomeScreen() {
                 rating={parseFloat(book.avg_rating) || 4.9}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
-                onAddToCart={addToCart}
+                onAddToCart={() => addContextCart({
+                  id: book.id,
+                  title: book.title,
+                  author: book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật',
+                  price: book.sale_price,
+                  originalPrice: book.original_price,
+                  image: getImageSource(book, index),
+                  quantity: 1
+                })}
                 onCartPress={triggerFlyToCart}
               />
             ))}
@@ -302,7 +325,15 @@ export default function HomeScreen() {
                 rating={parseFloat(book.avg_rating) || 4.8}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
-                onAddToCart={addToCart}
+                onAddToCart={() => addContextCart({
+                  id: book.id,
+                  title: book.title,
+                  author: book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật',
+                  price: book.sale_price,
+                  originalPrice: book.original_price,
+                  image: getImageSource(book, index + 1),
+                  quantity: 1
+                })}
                 onCartPress={triggerFlyToCart}
               />
             ))}
@@ -346,7 +377,15 @@ export default function HomeScreen() {
         rating={parseFloat(item.avg_rating) || 5.0}
         discount={parseFloat(item.original_price) > parseFloat(item.sale_price) ? `-${Math.round((1 - (parseFloat(item.sale_price) / parseFloat(item.original_price))) * 100)}%` : undefined}
         onPress={() => router.push(`/book/${item.id}`)}
-        onAddToCart={addToCart}
+        onAddToCart={() => addContextCart({
+          id: item.id,
+          title: item.title,
+          author: item.authors && item.authors.length > 0 ? item.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật',
+          price: item.sale_price,
+          originalPrice: item.original_price,
+          image: getImageSource(item, index),
+          quantity: 1
+        })}
         onCartPress={triggerFlyToCart}
       />
     </View>
@@ -419,9 +458,14 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   userInfo: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginRight: 10,
+  },
+  userInfoText: {
+    flex: 1,
   },
   avatar: {
     width: 45,
@@ -436,7 +480,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   name: {
-    fontSize: 23,
+    fontSize: 18,
     fontWeight: '800',
     color: COLORS.text,
     marginTop: 2,

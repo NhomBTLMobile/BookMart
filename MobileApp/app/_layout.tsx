@@ -2,6 +2,7 @@ import { Stack, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { authService } from '../services/authService';
 import { View, ActivityIndicator } from 'react-native';
+import { CartProvider } from '../context/CartContext';
 
 export default function RootLayout() {
   const [isChecking, setIsChecking] = useState(true);
@@ -31,10 +32,12 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-    </Stack>
+    <CartProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    </CartProvider>
   );
 }

@@ -1,7 +1,7 @@
 // CATEGORIES SCREEN — đồng bộ Design System
 // Màu đơn sắc: chỉ dùng brand xanh lá, 2 mức nền nhạt → không rối mắt
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -9,10 +9,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS, SHADOW } from '@/constants/colors';
+import { homeService } from '@/services/homeService';
 
 // ─── Types & Data ────────────────────────────────────────────
 type Category = {
@@ -23,57 +25,6 @@ type Category = {
   featured?: boolean;
 };
 
-type CategoryGroup = {
-  groupId: string;
-  groupName: string;
-  items: Category[];
-};
-
-const CATEGORY_GROUPS: CategoryGroup[] = [
-  {
-    groupId: 'popular',
-    groupName: '🔥 Phổ biến nhất',
-    items: [
-      { id: '1',  title: 'Văn học',      icon: 'book-outline',        bookCount: 248, featured: true },
-      { id: '2',  title: 'Kinh tế',      icon: 'trending-up-outline', bookCount: 186, featured: true },
-      { id: '3',  title: 'Kỹ năng sống', icon: 'bulb-outline',        bookCount: 312, featured: true },
-      { id: '4',  title: 'Thiếu nhi',    icon: 'happy-outline',       bookCount: 174 },
-    ],
-  },
-  {
-    groupId: 'academic',
-    groupName: '🎓 Học thuật & Nghề nghiệp',
-    items: [
-      { id: '5',  title: 'Sách giáo khoa', icon: 'school-outline',   bookCount: 421 },
-      { id: '6',  title: 'Công nghệ',      icon: 'laptop-outline',   bookCount: 137 },
-      { id: '7',  title: 'Khoa học',       icon: 'flask-outline',    bookCount: 98  },
-      { id: '8',  title: 'Ngoại ngữ',      icon: 'language-outline', bookCount: 203 },
-    ],
-  },
-  {
-    groupId: 'lifestyle',
-    groupName: '🌱 Sức khỏe & Đời sống',
-    items: [
-      { id: '9',  title: 'Sức khỏe', icon: 'heart-outline',      bookCount: 115 },
-      { id: '10', title: 'Nấu ăn',   icon: 'restaurant-outline', bookCount: 89  },
-      { id: '11', title: 'Du lịch',  icon: 'airplane-outline',   bookCount: 74  },
-      { id: '12', title: 'Thể thao', icon: 'barbell-outline',    bookCount: 62  },
-    ],
-  },
-  {
-    groupId: 'arts',
-    groupName: '🎨 Nghệ thuật & Giải trí',
-    items: [
-      { id: '13', title: 'Truyện tranh', icon: 'images-outline',        bookCount: 356 },
-      { id: '14', title: 'Âm nhạc',      icon: 'musical-notes-outline', bookCount: 54  },
-      { id: '15', title: 'Điện ảnh',     icon: 'film-outline',          bookCount: 43  },
-      { id: '16', title: 'Triết học',    icon: 'telescope-outline',     bookCount: 77  },
-    ],
-  },
-];
-
-const ALL_CATEGORIES = CATEGORY_GROUPS.flatMap((g) => g.items);
-
 // ─── CategoryGridItem ────────────────────────────────────────
 function CategoryGridItem({ item, onPress }: { item: Category; onPress: () => void }) {
   return (
@@ -82,7 +33,6 @@ function CategoryGridItem({ item, onPress }: { item: Category; onPress: () => vo
       onPress={onPress}
       activeOpacity={0.8}
     >
-      {/* Von Restorff Effect — badge Hot chỉ cho mục nổi bật */}
       {item.featured && (
         <View style={styles.hotBadge}>
           <Text style={styles.hotText}>Hot</Text>
@@ -104,12 +54,37 @@ function CategoryGridItem({ item, onPress }: { item: Category; onPress: () => vo
 // ─── Screen ──────────────────────────────────────────────────
 export default function CategoriesScreen() {
   const [search, setSearch] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await homeService.getCategories();
+        if (res.success && res.data) {
+          const formattedData = res.data.map((cat: any) => ({
+            id: cat.id || Math.random().toString(),
+            title: cat.name,
+            icon: cat.icon_url || 'book-outline',
+            bookCount: cat.book_count || 0,
+            featured: cat.is_featured || false,
+          }));
+          setCategories(formattedData);
+        }
+      } catch (error) {
+        console.log('Error fetching categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const filtered = search.trim()
-    ? ALL_CATEGORIES.filter((c) =>
+    ? categories.filter((c) =>
         c.title.toLowerCase().includes(search.toLowerCase())
       )
-    : null;
+    : categories;
 
   return (
     <View style={styles.container}>
@@ -121,7 +96,7 @@ export default function CategoriesScreen() {
         {/* ── Header ── */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Danh mục</Text>
-          <Text style={styles.headerSub}>Khám phá {ALL_CATEGORIES.length} thể loại sách</Text>
+          <Text style={styles.headerSub}>Khám phá {categories.length} thể loại sách</Text>
         </View>
 
         {/* ── Search (Cognitive Load Reduction) ── */}
@@ -142,13 +117,18 @@ export default function CategoriesScreen() {
         </View>
 
         {/* ── Nội dung ── */}
-        {filtered ? (
+        {loading ? (
+          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 50 }} />
+        ) : (
           <View>
-            <Text style={styles.resultLabel}>
-              {filtered.length > 0
-                ? `Tìm thấy ${filtered.length} danh mục`
-                : 'Không tìm thấy danh mục phù hợp'}
-            </Text>
+            {search.trim().length > 0 && (
+              <Text style={styles.resultLabel}>
+                {filtered.length > 0
+                  ? `Tìm thấy ${filtered.length} danh mục`
+                  : 'Không tìm thấy danh mục phù hợp'}
+              </Text>
+            )}
+            
             <View style={styles.grid}>
               {filtered.map((item) => (
                 <CategoryGridItem
@@ -159,26 +139,6 @@ export default function CategoriesScreen() {
               ))}
             </View>
           </View>
-        ) : (
-          CATEGORY_GROUPS.map((group) => (
-            <View key={group.groupId} style={styles.group}>
-              <View style={styles.groupHeader}>
-                <Text style={styles.groupTitle}>{group.groupName}</Text>
-                <TouchableOpacity>
-                  <Text style={styles.groupSeeAll}>Tất cả</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.grid}>
-                {group.items.map((item) => (
-                  <CategoryGridItem
-                    key={item.id}
-                    item={item}
-                    onPress={() => console.log(item.title)}
-                  />
-                ))}
-              </View>
-            </View>
-          ))
         )}
       </ScrollView>
     </View>

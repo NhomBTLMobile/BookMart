@@ -14,7 +14,8 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Alert
 } from 'react-native';
 import BookCard from '../../components/home/BookCard';
 import { COLORS } from '../../constants/colors';
@@ -45,9 +46,12 @@ import { bookService } from '../../services/bookService';
 import { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 
+import { useCart } from '../../context/CartContext';
+
 // ─── Component chính ─────────────────────────────────────────────────────────
 export default function BookDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { addToCart } = useCart();
   
   const [book, setBook] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -378,7 +382,18 @@ export default function BookDetailsScreen() {
         Von Restorff Effect: Nút "Mua ngay" màu đậm nổi bật tuyệt đối.
       */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.cartBtn} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.cartBtn} activeOpacity={0.85} onPress={() => {
+          addToCart({
+            id: book.id,
+            title: book.title,
+            author: authorName,
+            price: book.sale_price,
+            originalPrice: book.original_price,
+            image: coverImage,
+            quantity: 1
+          });
+          Alert.alert('Thành công', 'Đã thêm sách vào giỏ hàng');
+        }}>
           <Ionicons name="cart-outline" size={24} color={COLORS.text} />
           <Text style={styles.cartBtnText}>Giỏ hàng</Text>
         </TouchableOpacity>

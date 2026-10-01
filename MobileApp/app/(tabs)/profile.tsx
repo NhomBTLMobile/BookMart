@@ -7,26 +7,21 @@
 // • Loss Aversion     — "Đăng xuất" để cuối cùng, màu đỏ nhạt → người dùng ngần ngại nhấn
 // ─────────────────────────────────────────────
 
+import React, { useState, useCallback } from 'react';
 import {
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Alert,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
+import { authService } from '@/services/authService';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS, SHADOW } from '@/constants/colors';
-
-// ─── Dữ liệu mock ────────────────────────────────────────────
-const USER = {
-  name: 'Thanh Đào',
-  email: 'thanhdao@gmail.com',
-  avatar: 'TD',   // chữ tắt, dùng nếu chưa có ảnh thật
-  orders: 12,
-  wishlist: 28,
-  points: 1_450,
-};
 
 type MenuItem = {
   id: string;
@@ -86,6 +81,61 @@ function MenuItem({ item, onPress }: { item: MenuItem; onPress: () => void }) {
 
 // ─── Screen ──────────────────────────────────────────────────
 export default function ProfileScreen() {
+  const [user, setUser] = useState({
+    name: 'Khách',
+    email: '',
+    avatar: '',
+    avatarText: '?',
+    orders: 0,
+    wishlist: 0,
+    points: 0,
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUser = async () => {
+        try {
+          const userStr = await SecureStore.getItemAsync('user');
+          if (userStr) {
+            const parsedUser = JSON.parse(userStr);
+            const fullName = parsedUser.full_name || parsedUser.username || 'Bạn';
+            const initials = fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+            setUser({
+              name: fullName,
+              email: parsedUser.email || '',
+              avatar: parsedUser.avatar_url || '',
+              avatarText: initials,
+              orders: parsedUser.orders || 0,
+              wishlist: parsedUser.wishlist || 0,
+              points: parsedUser.points || 0,
+            });
+          }
+        } catch (e) {
+          console.error('Error fetching user for profile:', e);
+        }
+      };
+      fetchUser();
+    }, [])
+  );
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        { 
+          text: 'Đăng xuất', 
+          style: 'destructive',
+          onPress: async () => {
+            await authService.logout();
+            router.replace('/(auth)');
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -95,27 +145,31 @@ export default function ProfileScreen() {
         {/* ── HEADER / Avatar ── */}
         <View style={styles.profileCard}>
           {/* Avatar chữ tắt — Endowment Effect */}
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{USER.avatar}</Text>
+          <View style={[styles.avatar, user.avatar ? { padding: 0 } : {}]}>
+            {user.avatar ? (
+              <Image source={{ uri: user.avatar }} style={{ width: '100%', height: '100%', borderRadius: 40 }} />
+            ) : (
+              <Text style={styles.avatarText}>{user.avatarText}</Text>
+            )}
           </View>
-          <Text style={styles.userName}>{USER.name}</Text>
-          <Text style={styles.userEmail}>{USER.email}</Text>
+          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userEmail}>{user.email}</Text>
 
           {/* ── Stats — Social Proof ── */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statNum}>{USER.orders}</Text>
+              <Text style={styles.statNum}>{user.orders}</Text>
               <Text style={styles.statLabel}>Đơn hàng</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNum}>{USER.wishlist}</Text>
+              <Text style={styles.statNum}>{user.wishlist}</Text>
               <Text style={styles.statLabel}>Yêu thích</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={[styles.statNum, { color: COLORS.warning }]}>
-                {USER.points.toLocaleString()}
+                {user.points.toLocaleString()}
               </Text>
               <Text style={styles.statLabel}>Điểm thưởng</Text>
             </View>
@@ -132,6 +186,7 @@ export default function ProfileScreen() {
                   item={item} 
                   onPress={() => {
                     if (item.id === 'orders') router.push('/my-orders');
+                    else if (item.id === 'logout') handleLogout();
                     else console.log(item.id);
                   }} 
                 />
