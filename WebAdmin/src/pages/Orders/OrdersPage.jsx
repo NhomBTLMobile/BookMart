@@ -204,6 +204,9 @@ export default function OrdersPage() {
                 label: <span style={{ color: opt.color, fontWeight: 500 }}>{opt.label}</span>
               })),
               onClick: async (e) => {
+                if (['cancelled', 'delivered'].includes(currentKey) && e.key !== currentKey) {
+                   return message.warning("Không thể đổi trạng thái của đơn đã hoàn thành hoặc đã hủy!");
+                }
                 try {
                   await ordersApi.update(rec.id, { order_status: e.key });
                   message.success("Cập nhật trạng thái thành công");
@@ -215,7 +218,7 @@ export default function OrdersPage() {
             }}
             trigger={['click']}
           >
-            <div style={{ cursor: 'pointer', display: 'inline-block' }}>
+            <div style={{ cursor: ['cancelled', 'delivered'].includes(currentKey) ? 'not-allowed' : 'pointer', display: 'inline-block' }}>
               <Badge color={currentStatus.color} text={<span style={{ fontWeight: 500 }}>{currentStatus.label} <DownOutlined style={{ fontSize: 10, marginLeft: 2 }}/></span>} />
             </div>
           </Dropdown>
@@ -396,12 +399,18 @@ export default function OrdersPage() {
                 {viewRec.order_status?.toLowerCase() === 'confirmed' && (
                   <Row style={{ marginTop: 12 }}>
                     <Col span={24}>
-                      <Button type="primary" icon={<SendOutlined />} style={{ background: '#f59e0b', width: '100%' }} onClick={() => {
-                        ghnForm.setFieldsValue({ weight: 500, length: 20, width: 20, height: 10 });
-                        setGhnModalOpen(true);
-                      }}>
-                        Tạo Đơn Giao Hàng Nhanh (GHN)
-                      </Button>
+                      {viewRec.payment_method?.toLowerCase() === 'vnpay' && viewRec.payment_status?.toLowerCase() !== 'paid' ? (
+                        <div style={{ color: '#ef4444', textAlign: 'center', padding: '8px', border: '1px dashed #ef4444', borderRadius: '8px' }}>
+                          ⚠️ Đơn hàng VNPay này chưa được thanh toán. Không thể tạo vận đơn giao hàng!
+                        </div>
+                      ) : (
+                        <Button type="primary" icon={<SendOutlined />} style={{ background: '#f59e0b', width: '100%' }} onClick={() => {
+                          ghnForm.setFieldsValue({ weight: 500, length: 20, width: 20, height: 10 });
+                          setGhnModalOpen(true);
+                        }} disabled={!!viewRec.tracking_code}>
+                          Tạo Đơn Giao Hàng Nhanh (GHN)
+                        </Button>
+                      )}
                     </Col>
                   </Row>
                 )}
@@ -438,6 +447,12 @@ export default function OrdersPage() {
                     <Space direction="vertical" size="small" style={{ width: '100%' }}>
                       <div><Text strong>{addressInfo.full_name || addressInfo.name || viewRec.customer_name}</Text> - <Text type="secondary">{addressInfo.phone || viewRec.customer_phone}</Text></div>
                       <div><Text type="secondary">{addressInfo.full_address || addressInfo.address || addressInfo.street_address}</Text></div>
+                      {viewRec.tracking_code && (
+                        <div style={{ marginTop: 8, padding: '8px', background: 'rgba(5, 150, 105, 0.05)', borderRadius: 8, border: '1px dashed #059669' }}>
+                          <Text type="secondary">Mã vận đơn GHN: </Text>
+                          <Text strong copyable style={{ color: '#059669' }}>{viewRec.tracking_code}</Text>
+                        </div>
+                      )}
                     </Space>
                   ) : (
                     <Text type="secondary">Sử dụng địa chỉ đăng ký</Text>
