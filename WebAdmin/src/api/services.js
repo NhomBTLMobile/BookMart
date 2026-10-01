@@ -89,3 +89,12 @@ export const publishersApi = {
   remove:  (id)     => api.delete(`/publishers/${id}`),
 }
 
+// ── Combos ─────────────────────────────────────────────────────
+export const combosApi = {
+  getAll:  (params) => api.get('/combos',      { params: buildParams(params) }),
+  getById: (id)     => api.get(`/combos/${id}`),
+  create:  (data)   => api.post('/combos',     data),
+  update:  (id, data) => api.put(`/combos/${id}`, data),
+  remove:  (id)     => api.delete(`/combos/${id}`),
+}
+

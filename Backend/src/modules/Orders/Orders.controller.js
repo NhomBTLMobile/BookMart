@@ -55,6 +55,7 @@ export const createGHN = async (req, res, next) => {
 
 export const ghnWebhook = async (req, res, next) => {
   try {
+    console.log("🔔 [WEBHOOK] Nhận tín hiệu từ GHN:", req.body.OrderCode, "-", req.body.Status);
     await service.handleGHNWebhook(req.body);
     // Luôn trả về 200 để xác nhận đã nhận Webhook thành công với GHN
     res.status(200).send('OK');

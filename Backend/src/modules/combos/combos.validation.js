@@ -8,6 +8,10 @@ export const createCombosSchema = Joi.object({
   stock_qty: Joi.number().integer().allow(null, ''),
   is_active: Joi.boolean().allow(null, ''),
   ends_at: Joi.date().allow(null, ''),
+  books: Joi.array().items(Joi.object({
+    book_id: Joi.string().required(),
+    quantity: Joi.number().integer().min(1).required()
+  })).allow(null, '')
 })
 
 export const updateCombosSchema = Joi.object({
@@ -18,5 +22,9 @@ export const updateCombosSchema = Joi.object({
   stock_qty: Joi.number().integer().allow(null, ''),
   is_active: Joi.boolean().allow(null, ''),
   ends_at: Joi.date().allow(null, ''),
+  books: Joi.array().items(Joi.object({
+    book_id: Joi.string().required(),
+    quantity: Joi.number().integer().min(1).required()
+  })).allow(null, '')
 }).min(1)
 

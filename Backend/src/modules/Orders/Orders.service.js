@@ -43,6 +43,11 @@ export class OrdersService {
       const err = new Error("Chỉ có thể tạo đơn GHN cho đơn hàng đã xác nhận"); err.status = 400; throw err;
     }
 
+    const existingShipping = await shippingRepo.findByOrderId(orderId);
+    if (existingShipping) {
+      const err = new Error("Đơn hàng này đã được đẩy sang GHN, không thể tạo lại!"); err.status = 400; throw err;
+    }
+
     const { weight, length, width, height } = shippingInfo;
     
     // Parse shipping snapshot

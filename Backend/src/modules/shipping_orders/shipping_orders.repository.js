@@ -33,6 +33,10 @@ export class ShippingOrdersRepository {
     return ShippingOrders.findOne({ where: { tracking_code: trackingCode } });
   }
 
+  async findByOrderId(orderId) {
+    return ShippingOrders.findOne({ where: { order_id: orderId } });
+  }
+
   async create(data) {
     return ShippingOrders.create(data)
   }

@@ -15,6 +15,7 @@ import CategoriesPage from './pages/Categories/CategoriesPage'
 import OrdersPage     from './pages/Orders/OrdersPage'
 import VouchersPage   from './pages/Vouchers/VouchersPage'
 import ReviewsPage    from './pages/Reviews/ReviewsPage'
+import CombosPage     from './pages/Combos/CombosPage'
 
 const getThemeTokens = (isDark) => {
   const common = {
@@ -63,6 +64,7 @@ function AdminRoutes() {
           <Route path="/books"      element={<BooksPage />} />
           <Route path="/authors"    element={<AuthorsPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/combos"     element={<CombosPage />} />
           <Route path="/orders"     element={<OrdersPage />} />
           <Route path="/reviews"    element={<ReviewsPage />} />
           <Route path="/users"    element={

@@ -50,6 +50,12 @@ const ALL_ITEMS = [
         icon: <TagOutlined />,
         roles: ["ADMIN", "STAFF"],
       },
+      {
+        key: "/combos",
+        label: "Combo Flash Sale",
+        icon: <GiftOutlined />,
+        roles: ["ADMIN", "STAFF"],
+      },
     ],
   },
   {
