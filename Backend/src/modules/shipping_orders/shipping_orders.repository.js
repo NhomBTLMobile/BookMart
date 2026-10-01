@@ -29,6 +29,10 @@ export class ShippingOrdersRepository {
     return ShippingOrders.findByPk(id)
   }
 
+  async findByTrackingCode(trackingCode) {
+    return ShippingOrders.findOne({ where: { tracking_code: trackingCode } });
+  }
+
   async create(data) {
     return ShippingOrders.create(data)
   }

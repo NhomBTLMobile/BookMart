@@ -39,7 +39,7 @@ const fmt = (n) => new Intl.NumberFormat("vi-VN").format(n || 0);
 
 const INIT = {
   code: "",
-  type: "percentage",
+  type: "percent",
   value: null,
   min_order_value: 0,
   max_discount: null,
@@ -77,7 +77,7 @@ export default function VouchersPage() {
     setEditing(rec);
     form.setFieldsValue({
       code: rec.code,
-      type: rec.type?.toLowerCase() === "fixed" ? "fixed" : "percentage",
+      type: rec.type?.toLowerCase() === "fixed" ? "fixed" : rec.type?.toLowerCase() === "freeship" ? "freeship" : "percent",
       value: rec.value,
       min_order_value: rec.min_order_value,
       max_discount: rec.max_discount,
@@ -97,7 +97,7 @@ export default function VouchersPage() {
         type: values.type,
         value: values.value,
         min_order_value: values.min_order_value || 0,
-        max_discount: values.type === 'percentage' ? (values.max_discount || null) : null,
+        max_discount: values.type === 'percent' ? (values.max_discount || null) : null,
         usage_limit: values.usage_limit || null,
         ends_at: values.ends_at ? values.ends_at.toISOString() : null,
         is_active: values.is_active,
@@ -144,8 +144,8 @@ export default function VouchersPage() {
       title: "Loại",
       dataIndex: "type",
       render: (v) => (
-        <Tag color={String(v).toLowerCase() === "percentage" ? "blue" : "purple"} style={{ borderRadius: 12, fontWeight: 500 }}>
-          {String(v).toLowerCase() === "percentage" ? "Phần trăm" : "Số tiền"}
+        <Tag color={String(v).toLowerCase() === "percent" ? "blue" : String(v).toLowerCase() === "freeship" ? "cyan" : "purple"} style={{ borderRadius: 12, fontWeight: 500 }}>
+          {String(v).toLowerCase() === "percent" ? "Phần trăm" : String(v).toLowerCase() === "freeship" ? "Freeship" : "Số tiền"}
         </Tag>
       ),
     },
@@ -153,9 +153,9 @@ export default function VouchersPage() {
       title: "Mức giảm",
       render: (_, rec) => (
         <Text strong style={{ color: "#059669" }}>
-          {String(rec.type).toLowerCase() === "percentage"
+          {String(rec.type).toLowerCase() === "percent"
             ? `${rec.value}%`
-            : `₫ ${fmt(rec.value)}`}
+            : String(rec.type).toLowerCase() === "freeship" ? `Giảm ₫ ${fmt(rec.value)} phí ship` : `₫ ${fmt(rec.value)}`}
         </Text>
       ),
     },
@@ -313,8 +313,9 @@ export default function VouchersPage() {
                 >
                   <Select
                     options={[
-                      { label: "Theo phần trăm (%)", value: "percentage" },
+                      { label: "Theo phần trăm (%)", value: "percent" },
                       { label: "Theo số tiền (₫)", value: "fixed" },
+                      { label: "Miễn phí vận chuyển", value: "freeship" },
                     ]}
                   />
                 </Form.Item>
@@ -328,11 +329,11 @@ export default function VouchersPage() {
                   <InputNumber 
                     style={{ width: "100%" }} 
                     min={0} 
-                    max={typeValue === 'percentage' ? 100 : undefined}
-                    placeholder={typeValue === 'percentage' ? "Ví dụ: 15" : "Ví dụ: 50000"} 
-                    addonAfter={typeValue === 'percentage' ? "%" : "₫"}
-                    formatter={typeValue === 'fixed' ? (v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : undefined}
-                    parser={typeValue === 'fixed' ? (v) => v.replace(/\$\s?|(,*)/g, "") : undefined}
+                    max={typeValue === 'percent' ? 100 : undefined}
+                    placeholder={typeValue === 'percent' ? "Ví dụ: 15" : "Ví dụ: 50000"} 
+                    addonAfter={typeValue === 'percent' ? "%" : "₫"}
+                    formatter={typeValue === 'fixed' || typeValue === 'freeship' ? (v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",") : undefined}
+                    parser={typeValue === 'fixed' || typeValue === 'freeship' ? (v) => v.replace(/\$\s?|(,*)/g, "") : undefined}
                   />
                 </Form.Item>
               </Col>

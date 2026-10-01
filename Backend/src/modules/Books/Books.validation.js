@@ -22,6 +22,9 @@ export const createBooksSchema = Joi.object({
   avg_rating: Joi.number().allow(null, ''),
   review_count: Joi.number().integer().allow(null, ''),
   is_active: Joi.boolean().allow(null, ''),
+  author_ids: Joi.array().items(Joi.number().integer()).allow(null, ''),
+  category_ids: Joi.array().items(Joi.number().integer()).allow(null, ''),
+  image_url: Joi.string().allow(null, ''),
 })
 
 export const updateBooksSchema = Joi.object({
@@ -46,5 +49,8 @@ export const updateBooksSchema = Joi.object({
   avg_rating: Joi.number().allow(null, ''),
   review_count: Joi.number().integer().allow(null, ''),
   is_active: Joi.boolean().allow(null, ''),
+  author_ids: Joi.array().items(Joi.number().integer()).allow(null, ''),
+  category_ids: Joi.array().items(Joi.number().integer()).allow(null, ''),
+  image_url: Joi.string().allow(null, ''),
 }).min(1)
 

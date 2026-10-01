@@ -53,6 +53,7 @@ export const ordersApi = {
   create:  (data)   => api.post('/orders',     data),
   update:  (id, data) => api.put(`/orders/${id}`, data),
   remove:  (id)     => api.delete(`/orders/${id}`),
+  createGHN: (id, data) => api.post(`/orders/${id}/ghn-create`, data),
 }
 
 // ── Vouchers ───────────────────────────────────────────────────
@@ -77,5 +78,14 @@ export const dashboardApi = {
   getRevenueChart:() => api.get('/dashboard/revenue-chart'),
   getTopBooks:    () => api.get('/dashboard/top-books'),
   getRecentOrders:() => api.get('/dashboard/recent-orders'),
+}
+
+// ── Publishers ─────────────────────────────────────────────────
+export const publishersApi = {
+  getAll:  (params) => api.get('/publishers',      { params: buildParams(params) }),
+  getById: (id)     => api.get(`/publishers/${id}`),
+  create:  (data)   => api.post('/publishers',     data),
+  update:  (id, data) => api.put(`/publishers/${id}`, data),
+  remove:  (id)     => api.delete(`/publishers/${id}`),
 }
 

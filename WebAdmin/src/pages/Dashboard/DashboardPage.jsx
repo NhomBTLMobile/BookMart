@@ -1,19 +1,21 @@
 import { useEffect, useState, useRef } from 'react'
 import {
-  Row, Col, Card, Table, Tag, Typography, Skeleton, Button, Modal, Space, Divider, Tooltip, Badge
+  Row, Col, Card, Table, Tag, Typography, Skeleton, Button, Modal, Space, Divider, Tooltip, Badge, Dropdown, App
 } from 'antd'
 import {
   DollarOutlined, ShoppingCartOutlined, BookOutlined, TeamOutlined,
   PrinterOutlined, EyeOutlined, FileTextOutlined,
-  CheckCircleOutlined, ClockCircleOutlined, SyncOutlined, CloseCircleOutlined,
+  CheckCircleOutlined, ClockCircleOutlined, SyncOutlined, CloseCircleOutlined, DownOutlined, SendOutlined,
   GlobalOutlined, PhoneOutlined, MailOutlined, HomeOutlined
 } from '@ant-design/icons'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts'
-import { dashboardApi } from '../../api/services'
+import { dashboardApi, ordersApi } from '../../api/services'
 import { useAuth } from '../../context/AuthContext'
+import InvoiceModal from '../../components/Invoice/InvoiceModal'
+import GhnModal from '../../components/Invoice/GhnModal'
 
 const { Title, Text } = Typography
 
@@ -31,7 +33,9 @@ const PIE_COLORS = ['#059669', '#34D399', '#C7EABB', '#E8F5BD', '#faad14', '#ff4
 const fmt = n => new Intl.NumberFormat('vi-VN').format(Number(n) || 0)
 
 export default function DashboardPage() {
+  const { message } = App.useApp()
   const { user, isDark } = useAuth()
+  const isStaff = user?.role?.toUpperCase() === 'STAFF'
 
   const [stats, setStats] = useState({ totalRevenue: 0, totalOrders: 0, totalBooksSold: 0, newUsers: 0 })
   const [revenueChart, setRevenueChart] = useState([])
@@ -43,8 +47,15 @@ export default function DashboardPage() {
   // Invoice Modal State
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false)
+  const [ghnModalOpen, setGhnModalOpen] = useState(false)
 
-  const printRef = useRef(null)
+  const reloadData = () => {
+    dashboardApi.getRecentOrders().then(ro => {
+      if (ro.data?.success && Array.isArray(ro.data.data)) {
+        setRecentOrders(ro.data.data)
+      }
+    })
+  }
 
   useEffect(() => {
     Promise.all([
@@ -84,8 +95,14 @@ export default function DashboardPage() {
     setInvoiceModalOpen(true)
   }
 
-  const handlePrint = () => {
-    window.print()
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      await ordersApi.update(orderId, { order_status: newStatus })
+      message.success('Cập nhật trạng thái thành công')
+      setRecentOrders(prev => prev.map(o => o.id === orderId ? { ...o, order_status: newStatus } : o))
+    } catch (err) {
+      message.error('Lỗi khi cập nhật trạng thái')
+    }
   }
 
   // Column specs: Bố cục "STT số bên trái / bên phải, không hiển thị mã SP"
@@ -133,9 +150,29 @@ export default function DashboardPage() {
       title: 'Trạng thái',
       dataIndex: 'order_status',
       align: 'center',
-      render: v => {
-        const s = ORDER_STATUS[String(v || '').toLowerCase()] || { color: 'default', text: v, icon: null }
-        return <Tag icon={s.icon} color={s.color} style={{ borderRadius: 12 }}>{s.text}</Tag>
+      render: (v, record) => {
+        const currentKey = String(v || '').toLowerCase()
+        const currentStatus = ORDER_STATUS[currentKey] || { color: 'default', text: currentKey, icon: null }
+        return (
+          <Dropdown
+            menu={{
+              items: Object.keys(ORDER_STATUS).map(key => ({
+                key,
+                label: (
+                  <span style={{ color: ORDER_STATUS[key].color, fontWeight: 500 }}>
+                    {ORDER_STATUS[key].text}
+                  </span>
+                )
+              })),
+              onClick: (e) => handleStatusChange(record.id, e.key)
+            }}
+            trigger={['click']}
+          >
+            <div style={{ cursor: 'pointer', display: 'inline-block' }}>
+              <Badge color={currentStatus.color} text={<span style={{ fontWeight: 500 }}>{currentStatus.text} <DownOutlined style={{ fontSize: 10, marginLeft: 2 }}/></span>} />
+            </div>
+          </Dropdown>
+        )
       },
     },
     {
@@ -159,10 +196,22 @@ export default function DashboardPage() {
               icon={<PrinterOutlined />}
               onClick={() => handleOpenInvoice(record)}
               style={{ borderRadius: 6 }}
-            >
-              Hóa đơn
-            </Button>
+            />
           </Tooltip>
+          {String(record.order_status).toLowerCase() === 'confirmed' && (
+            <Tooltip title="Tạo đơn GHN">
+              <Button
+                type="primary"
+                size="small"
+                icon={<SendOutlined />}
+                onClick={() => {
+                  setSelectedOrder(record)
+                  setGhnModalOpen(true)
+                }}
+                style={{ background: '#f59e0b', borderRadius: 6 }}
+              />
+            </Tooltip>
+          )}
         </Space>
       ),
     },
@@ -239,18 +288,22 @@ export default function DashboardPage() {
       {/* Header section */}
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <Title level={3} style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>Tổng Quan Hệ Thống Quản Trị</Title>
-          <Text type="secondary">Báo cáo doanh thu & chỉ số hoạt động kinh doanh trực tuyến BookMart</Text>
+          <Title level={3} style={{ margin: 0, fontFamily: "'Inter', sans-serif" }}>
+            {isStaff ? 'Khu Vực Quản Lý & Xử Lý Đơn Hàng' : 'Tổng Quan Hệ Thống Quản Trị'}
+          </Title>
+          <Text type="secondary">
+            {isStaff ? 'Trung tâm điều phối và kiểm soát trạng thái kinh doanh' : 'Báo cáo doanh thu & chỉ số hoạt động kinh doanh trực tuyến BookMart'}
+          </Text>
         </div>
         <div style={{ padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600, background: 'rgba(132, 177, 121, 0.15)', color: '#059669', border: '1px solid #059669' }}>
           ● Hệ thống hoạt động bình thường
         </div>
       </div>
 
-      {/* ── STAT CARDS (Chữ bên trái, số hiển thị động bên phải) ── */}
+      {/* ── STAT CARDS ── */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         {[
-          {
+          ...(isStaff ? [] : [{
             label: 'Tổng doanh thu',
             value: stats.totalRevenue,
             prefix: '₫',
@@ -258,7 +311,7 @@ export default function DashboardPage() {
             iconBg: 'rgba(104,159,56,0.14)',
             iconColor: '#059669',
             sub: 'Cập nhật thời gian thực'
-          },
+          }]),
           {
             label: 'Tổng đơn hàng',
             value: stats.totalOrders,
@@ -287,7 +340,7 @@ export default function DashboardPage() {
             sub: 'Đăng ký trong tháng này'
           }
         ].map((card, i) => (
-          <Col key={i} xs={24} sm={12} lg={6}>
+          <Col key={i} xs={24} sm={12} lg={isStaff ? 8 : 6}>
             <Card
               size="small"
               variant="outlined"
@@ -329,8 +382,9 @@ export default function DashboardPage() {
       </Row>
 
       {/* ── CHARTS SECTION ── */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} lg={15}>
+      {!isStaff && (
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col xs={24} lg={15}>
           <Card
             title={
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -391,7 +445,8 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </Card>
         </Col>
-      </Row>
+        </Row>
+      )}
 
       {/* ── TOP BOOKS & RECENT ORDERS SECTION ── */}
       <Row gutter={[16, 16]}>
@@ -444,168 +499,20 @@ export default function DashboardPage() {
         </Col>
       </Row>
 
-      {/* ── MODAL IN HÓA ĐƠN (PRINTABLE INVOICE MODAL) ── */}
-      <Modal
-        open={invoiceModalOpen}
-        onCancel={() => setInvoiceModalOpen(false)}
-        footer={[
-          <Button key="close" onClick={() => setInvoiceModalOpen(false)}>
-            Đóng
-          </Button>,
-          <Button key="print" type="primary" icon={<PrinterOutlined />} onClick={handlePrint} style={{ backgroundColor: '#059669' }}>
-            In Hóa Đơn
-          </Button>,
-        ]}
-        width={720}
-        destroyOnClose
-        style={{ top: 20 }}
-      >
-        {selectedOrder && (
-          <div ref={printRef} className="printable-invoice" style={{ padding: '10px 10px' }}>
-            {/* Header Website */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #059669', paddingBottom: 16, marginBottom: 20 }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <img src="/bookmart_logo.png" alt="BookMart" style={{ height: 40 }} />
-                  <Title level={3} style={{ margin: 0, color: '#059669', fontFamily: "'Inter', sans-serif" }}>BookMart</Title>
-                </div>
-                <Text type="secondary" style={{ fontSize: 13, display: 'block', marginTop: 4 }}>
-                  <GlobalOutlined /> Website: <strong>bookmart.vn</strong> | <PhoneOutlined /> Hotline: 1900 8888
-                </Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  <MailOutlined /> Email: cskh@bookmart.vn | Hóa Đơn Bán Hàng Trực Tuyến
-                </Text>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <Title level={4} style={{ margin: 0, color: isDark ? '#e5e7eb' : '#333' }}>HÓA ĐƠN BÁN HÀNG</Title>
-                <Text code style={{ fontSize: 14, color: '#059669', fontWeight: 700 }}>#{selectedOrder.order_code}</Text>
-                <div style={{ marginTop: 4 }}>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    Ngày lập: {new Date(selectedOrder.created_at).toLocaleDateString('vi-VN')} {new Date(selectedOrder.created_at).toLocaleTimeString('vi-VN')}
-                  </Text>
-                </div>
-              </div>
-            </div>
+      {/* ── MODAL IN HÓA ĐƠN ── */}
+      <InvoiceModal 
+        open={invoiceModalOpen} 
+        onClose={() => setInvoiceModalOpen(false)} 
+        order={selectedOrder} 
+      />
 
-            {/* Thông tin khách hàng & Giao hàng */}
-            <Card size="small" style={{ borderRadius: 8, marginBottom: 20, background: isDark ? '#27272A' : '#f8fafc', borderColor: isDark ? '#3F3F46' : '#e2e8f0' }}>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>KHÁCH HÀNG:</Text>
-                  <Text strong style={{ fontSize: 15, color: isDark ? '#e5e7eb' : '#0f172a' }}>{selectedOrder.customer_name || 'Khách vãng lai'}</Text>
-                  {selectedOrder.customer_email && <div style={{ fontSize: 13 }}>Email: {selectedOrder.customer_email}</div>}
-                  {selectedOrder.customer_phone && <div style={{ fontSize: 13 }}>SĐT: <strong>{selectedOrder.customer_phone}</strong></div>}
-                </Col>
-                <Col span={12}>
-                  <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>ĐỊA CHỈ GIAO HÀNG:</Text>
-                  <div style={{ fontSize: 13, fontWeight: 500 }}>
-                    <HomeOutlined style={{ marginRight: 4, color: '#059669' }} />
-                    {addressInfo?.full_address || addressInfo?.street_address || 'Địa chỉ đăng ký trên hệ thống'}
-                  </div>
-                  <div style={{ marginTop: 6 }}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>Hình thức thanh toán: </Text>
-                    <Tag color={selectedOrder.payment_method === 'vnpay' ? 'purple' : 'blue'} style={{ fontWeight: 600 }}>
-                      {selectedOrder.payment_method === 'vnpay' ? 'Thanh toán VNPAY' : 'Thanh toán COD'}
-                    </Tag>
-                  </div>
-                </Col>
-              </Row>
-            </Card>
-
-            {/* Bảng danh sách sản phẩm (STT, Tên sách, Đơn giá, Số lượng, Thành tiền - KHÔNG mã SP) */}
-            <Title level={5} style={{ marginBottom: 10, color: isDark ? '#e5e7eb' : '#0f172a' }}>Chi tiết danh sách sách đặt mua</Title>
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 20, fontSize: 13, color: isDark ? '#e5e7eb' : '#0f172a' }}>
-              <thead>
-                <tr style={{ background: isDark ? '#262626' : '#f1f5f9', borderBottom: `2px solid ${isDark ? '#434343' : '#e2e8f0'}`, textAlign: 'left' }}>
-                  <th style={{ padding: '8px 12px', width: 50, textAlign: 'center' }}>STT</th>
-                  <th style={{ padding: '8px 12px' }}>Tên sách</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'right', width: 120 }}>Đơn giá</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'center', width: 80 }}>Số lượng</th>
-                  <th style={{ padding: '8px 12px', textAlign: 'right', width: 130 }}>Thành tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedOrder.items && selectedOrder.items.length > 0 ? (
-                  selectedOrder.items.map((item, idx) => (
-                    <tr key={idx} style={{ borderBottom: `1px solid ${isDark ? '#3F3F46' : '#e2e8f0'}` }}>
-                      <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: isDark ? '#a6a6a6' : '#64748b' }}>{idx + 1}</td>
-                      <td style={{ padding: '10px 12px', fontWeight: 600 }}>{item.item_name}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right' }}>₫ {fmt(item.unit_price)}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 700 }}>{item.quantity}</td>
-                      <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700 }}>₫ {fmt(item.total_price)}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} style={{ padding: '16px', textAlign: 'center', color: '#8c8c8c' }}>
-                      Sản phẩm trong đơn hàng #{selectedOrder.order_code}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-
-            {/* Bảng tổng tiền & thanh toán */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-              <div style={{ width: 280 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13 }}>
-                  <Text type="secondary">Tạm tính tiền hàng:</Text>
-                  <Text strong>₫ {fmt(selectedOrder.subtotal || selectedOrder.total_amount)}</Text>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13 }}>
-                  <Text type="secondary">Phí vận chuyển:</Text>
-                  <Text>₫ {fmt(selectedOrder.shipping_fee || 30000)}</Text>
-                </div>
-                {Number(selectedOrder.discount_amount) > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 13, color: '#ff4d4f' }}>
-                    <Text type="secondary" style={{ color: '#ff4d4f' }}>Giảm giá (Voucher):</Text>
-                    <Text strong style={{ color: '#ff4d4f' }}>- ₫ {fmt(selectedOrder.discount_amount)}</Text>
-                  </div>
-                )}
-                <Divider style={{ margin: '8px 0', borderColor: isDark ? '#434343' : 'rgba(0,0,0,0.06)' }} />
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 16 }}>
-                  <Text strong style={{ color: isDark ? '#e5e7eb' : '#0f172a' }}>TỔNG THANH TOÁN:</Text>
-                  <Text strong style={{ color: '#059669', fontSize: 18 }}>₫ {fmt(selectedOrder.total_amount)}</Text>
-                </div>
-              </div>
-            </div>
-
-            {/* Chân trang hóa đơn */}
-            <div style={{ marginTop: 30, paddingTop: 16, borderTop: `1px dashed ${isDark ? '#434343' : '#d9d9d9'}`, textTransform: 'center', textAlign: 'center' }}>
-              <Text type="secondary" style={{ fontSize: 12, fontStyle: 'italic', display: 'block' }}>
-                Cảm ơn Quý khách đã mua sắm tại BookMart.vn!
-              </Text>
-              <Text type="secondary" style={{ fontSize: 11 }}>
-                Mọi thắc mắc vui lòng liên hệ Hotline 1900 8888 để được hỗ trợ giải đáp.
-              </Text>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* CSS @media print chuyên dụng cho việc in ấn Hóa Đơn */}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .printable-invoice, .printable-invoice * {
-            visibility: visible;
-          }
-          .printable-invoice {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            padding: 20px !important;
-            background: #fff !important;
-            color: #000 !important;
-          }
-          .ant-modal-footer, .ant-modal-close {
-            display: none !important;
-          }
-        }
-      `}</style>
+      {/* ── MODAL GHN ── */}
+      <GhnModal
+        open={ghnModalOpen}
+        onClose={() => setGhnModalOpen(false)}
+        orderId={selectedOrder?.id}
+        onSuccess={reloadData}
+      />
     </div>
   )
 }

@@ -38,8 +38,8 @@ import { useAuth } from "../../context/AuthContext";
 
 const { Text, Title } = Typography;
 
-const ROLE_COLOR = { ADMIN: "red", STAFF: "blue", CUSTOMER: "default" };
-const ROLE_LABEL = { ADMIN: "Admin", STAFF: "Staff", CUSTOMER: "Khách hàng" };
+const ROLE_COLOR = { admin: "red", staff: "blue", customer: "default" };
+const ROLE_LABEL = { admin: "Admin", staff: "Staff", customer: "Khách hàng" };
 
 const INIT = {
   email: "",
@@ -47,7 +47,7 @@ const INIT = {
   full_name: "",
   phone: "",
   avatar_url: "",
-  role: "CUSTOMER",
+  role: "customer",
   loyalty_points: 0,
   is_verified: false,
   is_active: true,
@@ -80,7 +80,7 @@ export default function UsersPage() {
       full_name: rec.full_name,
       phone: rec.phone || "",
       avatar_url: rec.avatar_url || "",
-      role: rec.role || "CUSTOMER",
+      role: rec.role || "customer",
       loyalty_points: rec.loyalty_points || 0,
       is_verified: rec.is_verified || false,
       is_active: rec.is_active !== false, // default true
@@ -196,7 +196,7 @@ export default function UsersPage() {
               onClick={() => openEdit(rec)}
             />
           </Tooltip>
-          {currentUser?.role === "ADMIN" && currentUser?.id !== rec.id && (
+          {currentUser?.role === "admin" && currentUser?.id !== rec.id && (
             <Popconfirm
               title="Khóa/Xóa người dùng này?"
               description="Bạn có chắc chắn muốn thực hiện hành động này?"
@@ -353,9 +353,9 @@ export default function UsersPage() {
                 >
                   <Select
                     options={[
-                      { label: "Khách hàng", value: "CUSTOMER" },
-                      { label: "Nhân viên (Staff)", value: "STAFF" },
-                      { label: "Quản trị viên (Admin)", value: "ADMIN" },
+                      { label: "Khách hàng", value: "customer" },
+                      { label: "Nhân viên (Staff)", value: "staff" },
+                      { label: "Quản trị viên (Admin)", value: "admin" },
                     ]}
                   />
                 </Form.Item>

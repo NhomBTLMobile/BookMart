@@ -46,3 +46,21 @@ export const remove = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
+export const createGHN = async (req, res, next) => {
+  try {
+    const data = await service.createGHNShipping(req.params.id, req.body)
+    sendSuccess(res, 'Tạo đơn GHN thành công', data)
+  } catch (err) { next(err) }
+}
+
+export const ghnWebhook = async (req, res, next) => {
+  try {
+    await service.handleGHNWebhook(req.body);
+    // Luôn trả về 200 để xác nhận đã nhận Webhook thành công với GHN
+    res.status(200).send('OK');
+  } catch (err) { 
+    console.error("GHN Webhook Error:", err);
+    res.status(200).send('OK'); 
+  }
+}
+

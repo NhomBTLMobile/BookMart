@@ -33,12 +33,66 @@ export class BooksRepository {
   }
 
   async create(data) {
-    return Books.create(data)
+    const { author_ids, category_ids, image_url, ...bookData } = data
+    const book = await Books.create(bookData)
+    
+    if (author_ids && author_ids.length > 0) {
+      for (const authorId of author_ids) {
+        await sequelize.query('INSERT INTO book_authors (book_id, author_id) VALUES (:bookId, :authorId)', {
+          replacements: { bookId: book.id, authorId: authorId }
+        })
+      }
+    }
+    
+    if (category_ids && category_ids.length > 0) {
+      for (const categoryId of category_ids) {
+        await sequelize.query('INSERT INTO book_categories (book_id, category_id) VALUES (:bookId, :categoryId)', {
+          replacements: { bookId: book.id, categoryId: categoryId }
+        })
+      }
+    }
+    
+    if (image_url) {
+      await sequelize.query('INSERT INTO book_images (book_id, image_url, sort_order) VALUES (:bookId, :url, 1)', {
+        replacements: { bookId: book.id, url: image_url }
+      })
+    }
+    
+    return book
   }
 
   async update(id, data) {
-    const [affectedRows] = await Books.update(data, { where: { id } })
-    if (affectedRows === 0) return null
+    const { author_ids, category_ids, image_url, ...bookData } = data
+    const [affectedRows] = await Books.update(bookData, { where: { id } })
+    
+    if (author_ids) {
+      await sequelize.query('DELETE FROM book_authors WHERE book_id = :id', { replacements: { id } })
+      for (const authorId of author_ids) {
+        await sequelize.query('INSERT INTO book_authors (book_id, author_id) VALUES (:id, :authorId)', {
+          replacements: { id, authorId }
+        })
+      }
+    }
+    
+    if (category_ids) {
+      await sequelize.query('DELETE FROM book_categories WHERE book_id = :id', { replacements: { id } })
+      for (const categoryId of category_ids) {
+        await sequelize.query('INSERT INTO book_categories (book_id, category_id) VALUES (:id, :categoryId)', {
+          replacements: { id, categoryId }
+        })
+      }
+    }
+    
+    if (image_url !== undefined) {
+      await sequelize.query('DELETE FROM book_images WHERE book_id = :id', { replacements: { id } })
+      if (image_url) {
+        await sequelize.query('INSERT INTO book_images (book_id, image_url, sort_order) VALUES (:id, :url, 1)', {
+          replacements: { id, url: image_url }
+        })
+      }
+    }
+    
+    if (affectedRows === 0 && !author_ids && !category_ids && image_url === undefined) return null
     return this.findById(id)
   }
 

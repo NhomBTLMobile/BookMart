@@ -16,6 +16,9 @@ import {
   Row,
   Col,
   Badge,
+  Dropdown,
+  Modal,
+  InputNumber,
 } from "antd";
 import {
   SearchOutlined,
@@ -26,12 +29,16 @@ import {
   MailOutlined,
   EnvironmentOutlined,
   DollarOutlined,
-  SaveOutlined
+  SaveOutlined,
+  PrinterOutlined,
+  DownOutlined,
+  SendOutlined,
 } from "@ant-design/icons";
 import { App } from "antd";
 import { useCrud } from "../../hooks/useCrud";
 import { ordersApi } from "../../api/services";
 import { useAuth } from "../../context/AuthContext";
+import InvoiceModal from '../../components/Invoice/InvoiceModal';
 
 const { Text, Title } = Typography;
 const fmt = (n) => new Intl.NumberFormat("vi-VN").format(Number(n) || 0);
@@ -46,9 +53,9 @@ const ORDER_STATUS_OPTIONS = [
 ];
 
 const PAYMENT_STATUS_OPTIONS = [
-  { label: "Chưa thanh toán", value: "unpaid", color: "warning" },
+  { label: "Chờ thanh toán", value: "pending", color: "warning" },
   { label: "Đã thanh toán", value: "paid", color: "#059669" },
-  { label: "Hoàn tiền", value: "refunded", color: "default" },
+  { label: "Thất bại", value: "failed", color: "error" },
 ];
 
 const getStatus = (val, options) => {
@@ -61,9 +68,14 @@ export default function OrdersPage() {
   const { message } = App.useApp();
   const crud = useCrud(ordersApi);
   const [form] = Form.useForm();
+  const [ghnForm] = Form.useForm();
   
   const [viewRec, setViewRec] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [creatingGhn, setCreatingGhn] = useState(false);
+  const [ghnModalOpen, setGhnModalOpen] = useState(false);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   const openDetail = async (id) => {
     try {
@@ -87,12 +99,42 @@ export default function OrdersPage() {
       setSaving(true);
       await crud.update(viewRec.id, values);
       message.success("Cập nhật trạng thái thành công");
-      // Cập nhật lại state viewRec để UI phản hồi ngay
       setViewRec(prev => ({ ...prev, ...values }));
     } catch (err) {
       if (err?.response) message.error(err.response.data?.message || "Lỗi cập nhật");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCreateGhn = async () => {
+    try {
+      const vals = await ghnForm.validateFields();
+      setCreatingGhn(true);
+      const res = await ordersApi.createGHN(viewRec.id, vals);
+      message.success("Tạo vận đơn GHN thành công!");
+      setGhnModalOpen(false);
+      crud.fetchData();
+      setViewRec(prev => ({ ...prev, order_status: 'packing' }));
+      form.setFieldsValue({ order_status: 'packing' });
+    } catch (err) {
+      message.error(err?.response?.data?.message || "Lỗi tạo vận đơn GHN");
+    } finally {
+      setCreatingGhn(false);
+    }
+  };
+
+  const handleOpenInvoice = (rec) => {
+    if (rec.items) {
+      setSelectedOrder(rec);
+      setInvoiceModalOpen(true);
+    } else {
+      ordersApi.getById(rec.id).then(res => {
+        if (res.data.success) {
+          setSelectedOrder(res.data.data);
+          setInvoiceModalOpen(true);
+        }
+      }).catch(() => message.error("Lỗi tải hóa đơn"));
     }
   };
 
@@ -150,9 +192,34 @@ export default function OrdersPage() {
       title: "Trạng thái",
       dataIndex: "order_status",
       align: 'center',
-      render: (v) => {
-        const s = getStatus(v, ORDER_STATUS_OPTIONS);
-        return <Badge color={s.color} text={<span style={{ fontWeight: 500 }}>{s.label}</span>} />;
+      render: (v, rec) => {
+        const currentKey = String(v || '').toLowerCase();
+        const currentStatus = getStatus(currentKey, ORDER_STATUS_OPTIONS);
+        
+        return (
+          <Dropdown
+            menu={{
+              items: ORDER_STATUS_OPTIONS.map(opt => ({
+                key: opt.value,
+                label: <span style={{ color: opt.color, fontWeight: 500 }}>{opt.label}</span>
+              })),
+              onClick: async (e) => {
+                try {
+                  await ordersApi.update(rec.id, { order_status: e.key });
+                  message.success("Cập nhật trạng thái thành công");
+                  crud.fetchData();
+                } catch (err) {
+                  message.error("Lỗi cập nhật trạng thái");
+                }
+              }
+            }}
+            trigger={['click']}
+          >
+            <div style={{ cursor: 'pointer', display: 'inline-block' }}>
+              <Badge color={currentStatus.color} text={<span style={{ fontWeight: 500 }}>{currentStatus.label} <DownOutlined style={{ fontSize: 10, marginLeft: 2 }}/></span>} />
+            </div>
+          </Dropdown>
+        );
       },
     },
     {
@@ -170,7 +237,16 @@ export default function OrdersPage() {
       align: 'center',
       render: (_, rec) => (
         <Space size={4}>
-          <Tooltip title="Chi tiết & Xử lý">
+          <Tooltip title="In hóa đơn">
+            <Button
+              type="primary"
+              ghost
+              icon={<PrinterOutlined />}
+              size="small"
+              onClick={() => handleOpenInvoice(rec)}
+            />
+          </Tooltip>
+          <Tooltip title="Chi tiết">
             <Button
               type="primary"
               icon={<EyeOutlined />}
@@ -317,6 +393,18 @@ export default function OrdersPage() {
                     </Button>
                   </Col>
                 </Row>
+                {viewRec.order_status?.toLowerCase() === 'confirmed' && (
+                  <Row style={{ marginTop: 12 }}>
+                    <Col span={24}>
+                      <Button type="primary" icon={<SendOutlined />} style={{ background: '#f59e0b', width: '100%' }} onClick={() => {
+                        ghnForm.setFieldsValue({ weight: 500, length: 20, width: 20, height: 10 });
+                        setGhnModalOpen(true);
+                      }}>
+                        Tạo Đơn Giao Hàng Nhanh (GHN)
+                      </Button>
+                    </Col>
+                  </Row>
+                )}
               </Form>
             </Card>
 
@@ -404,6 +492,52 @@ export default function OrdersPage() {
           </div>
         )}
       </Drawer>
+
+      <Modal
+        title={<span><SendOutlined style={{ color: '#f59e0b', marginRight: 8 }} />Tạo đơn Giao Hàng Nhanh (GHN)</span>}
+        open={ghnModalOpen}
+        onCancel={() => setGhnModalOpen(false)}
+        onOk={handleCreateGhn}
+        confirmLoading={creatingGhn}
+        okText="Gửi lên GHN"
+        cancelText="Hủy"
+        okButtonProps={{ style: { background: '#f59e0b', borderColor: '#f59e0b' } }}
+      >
+        <Form form={ghnForm} layout="vertical">
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Trọng lượng (gram)" name="weight" rules={[{ required: true, message: 'Nhập trọng lượng' }]}>
+                <InputNumber style={{ width: '100%' }} min={10} max={30000} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Chiều dài (cm)" name="length" rules={[{ required: true, message: 'Nhập chiều dài' }]}>
+                <InputNumber style={{ width: '100%' }} min={1} max={200} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Chiều rộng (cm)" name="width" rules={[{ required: true, message: 'Nhập chiều rộng' }]}>
+                <InputNumber style={{ width: '100%' }} min={1} max={200} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Chiều cao (cm)" name="height" rules={[{ required: true, message: 'Nhập chiều cao' }]}>
+                <InputNumber style={{ width: '100%' }} min={1} max={200} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Typography.Text type="secondary" style={{ fontSize: 13 }}>
+            * Thông tin kích thước sẽ được gửi qua API của GHN để tạo vận đơn chính thức. 
+            Sau khi tạo, đơn sẽ chuyển sang trạng thái <strong>Đang đóng gói</strong>.
+          </Typography.Text>
+        </Form>
+      </Modal>
+
+      <InvoiceModal 
+        open={invoiceModalOpen} 
+        onClose={() => setInvoiceModalOpen(false)} 
+        order={selectedOrder} 
+      />
     </>
   );
 }

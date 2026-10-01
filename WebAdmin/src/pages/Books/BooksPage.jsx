@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card, Table, Button, Input, Space, Drawer, Form, InputNumber, Select,
   Tag, Switch, Tooltip, Popconfirm, Typography, Row, Col, Divider
@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons';
 import { App } from 'antd';
 import { useCrud } from '../../hooks/useCrud';
-import { booksApi } from '../../api/services';
+import { booksApi, authorsApi, categoriesApi, publishersApi } from '../../api/services';
 
 const { Text, Title } = Typography;
 const fmt = (n) => new Intl.NumberFormat('vi-VN').format(n || 0);
@@ -40,8 +40,10 @@ const INIT = {
   width_cm: 0,
   height_cm: 0,
   warehouse_location: '',
-  description: '',
   is_active: true,
+  author_ids: [],
+  category_ids: [],
+  image_url: '',
 };
 
 const getFormatLabel = (val) => {
@@ -62,6 +64,16 @@ export default function BooksPage() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
 
+  const [authors, setAuthors] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [publishers, setPublishers] = useState([]);
+
+  useEffect(() => {
+    authorsApi.getAll({ limit: 1000 }).then(res => setAuthors(res.data.data)).catch(() => {});
+    categoriesApi.getAll({ limit: 1000 }).then(res => setCategories(res.data.data)).catch(() => {});
+    publishersApi.getAll({ limit: 1000 }).then(res => setPublishers(res.data.data)).catch(() => {});
+  }, []);
+
   const openCreate = () => {
     setEditing(null);
     form.setFieldsValue(INIT);
@@ -70,7 +82,12 @@ export default function BooksPage() {
 
   const openEdit = (r) => {
     setEditing(r);
-    form.setFieldsValue({ ...r });
+    form.setFieldsValue({
+      ...r,
+      author_ids: r.authors?.map(a => a.id) || [],
+      category_ids: r.categories?.map(c => c.id) || [],
+      image_url: r.images?.[0]?.image_url || r.image_url || ''
+    });
     setOpen(true);
   };
 
@@ -133,7 +150,7 @@ export default function BooksPage() {
       render: (v, rec) => (
         <div>
           <Text strong style={{ fontSize: 15, display: 'block' }}>₫ {fmt(v)}</Text>
-          {rec.original_price > v && (
+          {Number(rec.original_price) > Number(v) && (
             <Text type="secondary" delete style={{ fontSize: 12 }}>₫ {fmt(rec.original_price)}</Text>
           )}
         </div>
@@ -260,9 +277,19 @@ export default function BooksPage() {
                 <Input placeholder="nha-gia-kim" />
               </Form.Item>
             </Col>
+            <Col span={24}>
+              <Form.Item label="Link Ảnh Bìa" name="image_url">
+                <Input placeholder="https://..." />
+              </Form.Item>
+            </Col>
             <Col span={8}>
               <Form.Item label="Mã NXB" name="publisher_id">
-                <InputNumber style={{ width: '100%' }} placeholder="ID" min={1} />
+                <Select
+                  showSearch
+                  placeholder="Chọn NXB"
+                  filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                  options={publishers.map(p => ({ label: p.name, value: p.id }))}
+                />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -277,6 +304,31 @@ export default function BooksPage() {
                   <Select.Option value="hard_cover">Bìa cứng</Select.Option>
                   <Select.Option value="ebook">Sách điện tử</Select.Option>
                 </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Tác giả" name="author_ids">
+                <Select
+                  mode="multiple"
+                  showSearch
+                  placeholder="Chọn tác giả"
+                  filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                  options={authors.map(a => ({ label: a.name, value: a.id }))}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Thể loại" name="category_ids">
+                <Select
+                  mode="multiple"
+                  showSearch
+                  placeholder="Chọn thể loại"
+                  filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
+                  options={categories.map(c => ({ label: c.name, value: c.id }))}
+                />
               </Form.Item>
             </Col>
           </Row>
