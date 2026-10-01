@@ -41,61 +41,37 @@ const StarPicker = ({ value, onChange }: { value: number; onChange: (n: number) 
 
 const RATING_LABELS = ['', 'Rất tệ', 'Tệ', 'Bình thường', 'Rất tốt', 'Tuyệt vời!'];
 
-// ─── Mock data ───────────────────────────────────────────────────────────────
-const BOOKS: Record<string, {
-  title: string; author: string; price: string;
-  originalPrice: string; discount: string; rating: number;
-  image: any; reviewsCount: number; soldCount: string;
-  publisher: string; publishYear: number; pages: number; format: string;
-  description: string; stock: number;
-}> = {
-  '1': {
-    title: 'Đắc Nhân Tâm', author: 'Dale Carnegie',
-    price: '89.000đ', originalPrice: '120.000đ', discount: '-25%',
-    rating: 4.8, image: require('../../assets/images/book1.jpg'),
-    reviewsCount: 1245, soldCount: '12.5k',
-    publisher: 'NXB Tổng Hợp TPHCM', publishYear: 2023, pages: 320, format: 'Bìa mềm',
-    description: 'Đắc Nhân Tâm là cuốn sách kinh điển về nghệ thuật giao tiếp và tạo dựng mối quan hệ. Với những nguyên tắc vượt thời gian, cuốn sách đã thay đổi cuộc đời hàng triệu người trên thế giới.\n\nCuốn sách không chỉ dạy bạn cách chinh phục lòng người mà còn giúp bạn trở thành phiên bản tốt hơn của chính mình trong công việc, cuộc sống và các mối quan hệ.',
-    stock: 8,
-  },
-  '2': {
-    title: 'Nhà Giả Kim', author: 'Paulo Coelho',
-    price: '55.000đ', originalPrice: '75.000đ', discount: '-26%',
-    rating: 4.9, image: require('../../assets/images/book2.jpg'),
-    reviewsCount: 2340, soldCount: '28k',
-    publisher: 'NXB Hội Nhà Văn', publishYear: 2023, pages: 228, format: 'Bìa mềm',
-    description: 'Nhà Giả Kim là hành trình huyền bí của chàng chăn cừu Santiago trên con đường tìm kiếm kho báu. Nhưng ý nghĩa sâu xa hơn, đó là cuộc hành trình khám phá bản thân và ý nghĩa cuộc sống.\n\nMột cuốn sách truyền cảm hứng mạnh mẽ, đã được dịch ra hơn 80 thứ tiếng và bán hàng chục triệu bản trên toàn thế giới.',
-    stock: 3,
-  },
-  '3': {
-    title: 'Tôi Thấy Hoa Vàng Trên Cỏ Xanh', author: 'Nguyễn Nhật Ánh',
-    price: '65.000đ', originalPrice: '85.000đ', discount: '-23%',
-    rating: 4.7, image: require('../../assets/images/book3.jpg'),
-    reviewsCount: 890, soldCount: '9.2k',
-    publisher: 'NXB Trẻ', publishYear: 2022, pages: 348, format: 'Bìa mềm',
-    description: 'Câu chuyện về tuổi thơ hồn nhiên, trong sáng của hai anh em Thiều và Tường tại một làng quê nghèo miền Trung. Tác phẩm gợi lên những ký ức đẹp về một thời thơ ấu đã qua, về tình anh em, tình làng xóm.',
-    stock: 15,
-  },
-  '4': {
-    title: 'Tuổi Trẻ Đáng Giá Bao Nhiêu', author: 'Rosie Nguyễn',
-    price: '49.000đ', originalPrice: '79.000đ', discount: '-38%',
-    rating: 4.8, image: require('../../assets/images/book4.jpg'),
-    reviewsCount: 3120, soldCount: '35k',
-    publisher: 'NXB Hội Nhà Văn', publishYear: 2023, pages: 256, format: 'Bìa cứng',
-    description: 'Cuốn sách dành riêng cho những bạn trẻ đang trong giai đoạn khám phá bản thân và tìm kiếm hướng đi trong cuộc sống. Với văn phong gần gũi và chân thực, Rosie Nguyễn đã truyền tải những bài học quý giá từ chính trải nghiệm của mình.',
-    stock: 21,
-  },
-};
+import { bookService } from '../../services/bookService';
+import { useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
 
 // ─── Component chính ─────────────────────────────────────────────────────────
 export default function BookDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const book = BOOKS[id as string] ?? BOOKS['1'];
+  
+  const [book, setBook] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [myRating, setMyRating] = useState(5);
   const [myComment, setMyComment] = useState('');
+
+  useEffect(() => {
+    const fetchBook = async () => {
+      try {
+        const res = await bookService.getBookDetails(id as string);
+        if (res.success && res.data) {
+          setBook(res.data);
+        }
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBook();
+  }, [id]);
 
   // Hiệu ứng nhấn yêu thích (Scale animation – Feedback tức thì)
   const heartScale = useRef(new Animated.Value(1)).current;
@@ -112,6 +88,46 @@ export default function BookDetailsScreen() {
     setMyComment('');
     setMyRating(5);
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (!book) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: COLORS.text }}>Không tìm thấy sách</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20, padding: 10, backgroundColor: COLORS.primary, borderRadius: 8 }}>
+          <Text style={{ color: '#fff' }}>Quay lại</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  const formatPrice = (price: any) => {
+    if (!price) return '0đ';
+    const num = typeof price === 'string' ? parseInt(price) : price;
+    return new Intl.NumberFormat('vi-VN').format(num) + 'đ';
+  };
+
+  const coverImage = book.images && book.images.length > 0 
+    ? { uri: book.images[0].image_url } 
+    : require('../../assets/images/book1.jpg');
+    
+  const authorName = book.authors && book.authors.length > 0 
+    ? book.authors.map((a: any) => a.name).join(', ') 
+    : 'Đang cập nhật';
+    
+  const publisherName = book.publisher?.name || 'Đang cập nhật';
+  const salePrice = formatPrice(book.sale_price);
+  const originalPrice = formatPrice(book.original_price);
+  const discount = book.original_price > book.sale_price 
+    ? `-${Math.round((1 - (book.sale_price / book.original_price)) * 100)}%` 
+    : null;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -169,7 +185,7 @@ export default function BookDetailsScreen() {
               {/* Bìa chính */}
               <View style={styles.bookCoverWrapper}>
                 <Image
-                  source={book.image}
+                  source={coverImage}
                   style={styles.bookCover}
                   contentFit="cover"
                   transition={400}
@@ -192,36 +208,38 @@ export default function BookDetailsScreen() {
         */}
         <View style={styles.section}>
           <View style={styles.priceRow}>
-            <Text style={styles.salePrice}>{book.price}</Text>
-            <Text style={styles.originalPrice}>{book.originalPrice}</Text>
-            <View style={styles.discountPill}>
-              <Text style={styles.discountText}>{book.discount}</Text>
-            </View>
+            <Text style={styles.salePrice}>{salePrice}</Text>
+            <Text style={styles.originalPrice}>{originalPrice}</Text>
+            {discount && (
+              <View style={styles.discountPill}>
+                <Text style={styles.discountText}>{discount}</Text>
+              </View>
+            )}
           </View>
 
           <Text style={styles.bookTitle}>{book.title}</Text>
           <Text style={styles.bookAuthor}>
-            bởi <Text style={styles.authorLink}>{book.author}</Text>
+            bởi <Text style={styles.authorLink}>{authorName}</Text>
           </Text>
 
           {/* Social proof bar */}
           <View style={styles.socialBar}>
             <View style={styles.socialItem}>
               <Ionicons name="star" size={15} color="#E5A72A" />
-              <Text style={styles.socialText}>{book.rating}</Text>
-              <Text style={styles.socialSub}> ({book.reviewsCount})</Text>
+              <Text style={styles.socialText}>{book.avg_rating || 5}</Text>
+              <Text style={styles.socialSub}> ({book.review_count || 0})</Text>
             </View>
             <View style={styles.socialDot} />
             <View style={styles.socialItem}>
               <Ionicons name="checkmark-circle" size={15} color={COLORS.primary} />
-              <Text style={styles.socialText}> Đã bán {book.soldCount}</Text>
+              <Text style={styles.socialText}> Đã bán {book.sold_count || 0}</Text>
             </View>
-            {book.stock <= 10 && (
+            {(book.stock_qty || 0) <= 10 && (
               <>
                 <View style={styles.socialDot} />
                 {/* Scarcity Effect – chỉ còn ít – thúc đẩy hành động */}
                 <View style={styles.stockBadge}>
-                  <Text style={styles.stockText}>🔥 Còn {book.stock} cuốn</Text>
+                  <Text style={styles.stockText}>🔥 Còn {book.stock_qty || 0} cuốn</Text>
                 </View>
               </>
             )}
@@ -254,11 +272,11 @@ export default function BookDetailsScreen() {
           <Text style={styles.sectionTitle}>Chi tiết sách</Text>
           <View style={styles.specsGrid}>
             {[
-              ['Tác giả', book.author],
-              ['Nhà xuất bản', book.publisher],
-              ['Năm xuất bản', String(book.publishYear)],
-              ['Số trang', `${book.pages} trang`],
-              ['Hình thức', book.format],
+              ['Tác giả', authorName],
+              ['Nhà xuất bản', publisherName],
+              ['Kích thước', `${book.length_cm || 0}x${book.width_cm || 0} cm`],
+              ['Hình thức', book.format || 'Bìa mềm'],
+              ['Khối lượng', `${book.weight_grams || 0} g`],
             ].map(([label, value]) => (
               <View key={label} style={styles.specRow}>
                 <Text style={styles.specLabel}>{label}</Text>
@@ -273,7 +291,7 @@ export default function BookDetailsScreen() {
         {/* ── 5. MÔ TẢ ─────────────────────────────────────────── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Về cuốn sách này</Text>
-          <Text style={styles.descText}>{book.description}</Text>
+          <Text style={styles.descText}>{book.description || 'Chưa có mô tả.'}</Text>
         </View>
 
         <Divider />
@@ -294,7 +312,7 @@ export default function BookDetailsScreen() {
           {/* Tóm tắt điểm đánh giá */}
           <View style={styles.ratingOverview}>
             <View style={styles.ratingBig}>
-              <Text style={styles.ratingBigNum}>{book.rating}</Text>
+              <Text style={styles.ratingBigNum}>{book.avg_rating || 5}</Text>
               <Text style={styles.ratingBigStar}>★</Text>
             </View>
             <View style={styles.ratingBars}>
@@ -334,7 +352,7 @@ export default function BookDetailsScreen() {
           ))}
 
           <TouchableOpacity style={styles.seeAllBtn}>
-            <Text style={styles.seeAllText}>Xem tất cả {book.reviewsCount} đánh giá</Text>
+            <Text style={styles.seeAllText}>Xem tất cả {book.review_count || 0} đánh giá</Text>
             <Ionicons name="chevron-forward" size={16} color={COLORS.primaryDark} />
           </TouchableOpacity>
         </View>

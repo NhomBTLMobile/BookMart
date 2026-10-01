@@ -27,20 +27,22 @@ export default function SectionHeader({
         {title}
       </Text>
 
-      <TouchableOpacity
-        onPress={onPress}
-        style={styles.more}
-      >
-        <Text style={styles.text}>
-          Xem thêm
-        </Text>
+      {onPress && (
+        <TouchableOpacity
+          onPress={onPress}
+          style={styles.more}
+        >
+          <Text style={styles.text}>
+            Xem thêm
+          </Text>
 
-        <Ionicons
-          name="chevron-forward"
-          size={17}
-          color={COLORS.textSecondary}
-        />
-      </TouchableOpacity>
+          <Ionicons
+            name="chevron-forward"
+            size={17}
+            color={COLORS.textSecondary}
+          />
+        </TouchableOpacity>
+      )}
 
     </View>
   );

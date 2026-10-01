@@ -1,6 +1,7 @@
 import React from 'react';
 
 import {
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/colors';
 
 type Props = {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   title: string;
   onPress?: () => void;
 };
@@ -22,6 +23,8 @@ export default function CategoryCard({
   title,
   onPress,
 }: Props) {
+  const isUrl = icon && (icon.startsWith('http://') || icon.startsWith('https://'));
+
   return (
     <TouchableOpacity
       style={styles.container}
@@ -29,11 +32,19 @@ export default function CategoryCard({
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>
-        <Ionicons
-          name={icon}
-          size={26}
-          color={COLORS.primary}
-        />
+        {isUrl ? (
+          <Image 
+            source={{ uri: icon }} 
+            style={{ width: 26, height: 26, tintColor: COLORS.primary }} 
+            resizeMode="contain" 
+          />
+        ) : (
+          <Ionicons
+            name={icon as any}
+            size={26}
+            color={COLORS.primary}
+          />
+        )}
       </View>
 
       <Text style={styles.title}>
