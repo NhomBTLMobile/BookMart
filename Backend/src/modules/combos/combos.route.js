@@ -71,7 +71,7 @@ const router = Router()
  *               ends_at:
  *                 type: string
  */
-router.get('/', authMiddleware, getAll)
+router.get('/', getAll)
 router.post('/', authMiddleware, create)
 
 /**
@@ -135,7 +135,7 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  */
-router.get('/:id', authMiddleware, getById)
+router.get('/:id', getById)
 router.put('/:id', authMiddleware, update)
 router.delete('/:id', authMiddleware, remove)
 

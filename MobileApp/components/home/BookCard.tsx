@@ -7,6 +7,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 
 type Props = {
@@ -20,10 +22,12 @@ type Props = {
   /** Callback nhận node của ảnh sách để đo vị trí và trigger fly animation */
   onCartPress?: (node: View | null, imageSource: any) => void;
   discount?: string;
+  originalPrice?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function BookCard({
-  image, title, author, price, rating, discount,
+  image, title, author, price, rating, discount, originalPrice, style,
   onPress, onAddToCart, onCartPress,
 }: Props) {
   const imageWrapRef = useRef<View>(null);
@@ -37,7 +41,7 @@ export default function BookCard({
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, style]}
       activeOpacity={0.85}
       onPress={onPress}
     >
@@ -61,7 +65,12 @@ export default function BookCard({
 
       {/* Giá + nút thêm giỏ */}
       <View style={styles.bottomRow}>
-        <Text style={styles.price}>{price}</Text>
+        <View style={styles.priceContainer}>
+          {originalPrice && (
+            <Text style={styles.originalPrice}>{originalPrice}</Text>
+          )}
+          <Text style={styles.price}>{price}</Text>
+        </View>
         <TouchableOpacity style={styles.cartButton} onPress={handleAddToCart}>
           <Ionicons name="cart-outline" size={18} color={COLORS.white} />
         </TouchableOpacity>
@@ -134,6 +143,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 8,
+  },
+
+  priceContainer: {
+    justifyContent: 'center',
+  },
+
+  originalPrice: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    textDecorationLine: 'line-through',
+    marginBottom: 2,
   },
 
   price: {

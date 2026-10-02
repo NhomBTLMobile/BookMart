@@ -13,11 +13,13 @@ import { COLORS } from '@/constants/colors';
 type Props = {
   value: string;
   onChangeText: (text: string) => void;
+  onSubmitEditing?: () => void;
 };
 
 export default function SearchBar({
   value,
   onChangeText,
+  onSubmitEditing,
 }: Props) {
   return (
     <View style={styles.container}>
@@ -32,6 +34,8 @@ export default function SearchBar({
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
+        onSubmitEditing={onSubmitEditing}
+        returnKeyType="search"
         placeholder="Tìm sách, tác giả, thể loại..."
         placeholderTextColor={COLORS.textSecondary}
       />
@@ -61,11 +65,9 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
-
     marginLeft: 10,
-
     fontSize: 14,
-
     color: COLORS.text,
+    paddingVertical: 0,
   },
 });

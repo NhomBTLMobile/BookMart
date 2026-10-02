@@ -31,12 +31,47 @@ import { useCart } from '@/context/CartContext';
 export default function HomeScreen() {
 
   const [search, setSearch] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const carAnim = useRef(new Animated.Value(0)).current;
+
+  const handleSearchChange = (text: string) => {
+    setSearch(text);
+    if (text.trim().length > 0) {
+      setShowSuggestions(true);
+      setIsSearching(true);
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const res = await homeService.searchBooks(text.trim(), 1, 5);
+          if (res.success) {
+            setSuggestions(res.data);
+          } else {
+            setSuggestions([]);
+          }
+        } catch (error) {
+          setSuggestions([]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 500);
+    } else {
+      setShowSuggestions(false);
+      setSuggestions([]);
+      setIsSearching(false);
+    }
+  };
+
   const { cartCount, addToCart: addContextCart } = useCart();
 
   const [featuredBooks, setFeaturedBooks] = useState<any[]>([]);
   const [newBooks, setNewBooks] = useState<any[]>([]);
   const [bestsellers, setBestsellers] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [combos, setCombos] = useState<any[]>([]);
+  const [vouchers, setVouchers] = useState<any[]>([]);
   
   // States for infinite scrolling
   const [allBooks, setAllBooks] = useState<any[]>([]);
@@ -51,18 +86,24 @@ export default function HomeScreen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [featuredRes, newRes, bestsellersRes, categoriesRes, allBooksRes] = await Promise.all([
+        const [featuredRes, newRes, bestsellersRes, categoriesRes, allBooksRes, combosRes, vouchersRes] = await Promise.all([
           homeService.getFeaturedBooks(5),
           homeService.getNewBooks(5),
           homeService.getBestsellers(5),
           homeService.getCategories(),
-          homeService.getAllBooks(1, 6)
+          homeService.getAllBooks(1, 6),
+          homeService.getCombos(5),
+          homeService.getVouchers()
         ]);
         
         if (featuredRes.success) setFeaturedBooks(featuredRes.data);
         if (newRes.success) setNewBooks(newRes.data);
         if (bestsellersRes.success) setBestsellers(bestsellersRes.data);
         if (categoriesRes.success) setCategories(categoriesRes.data);
+        if (combosRes.success) setCombos(combosRes.data);
+        if (vouchersRes.success && vouchersRes.data.length > 0) {
+          setVouchers(vouchersRes.data);
+        }
         if (allBooksRes.success) {
           setAllBooks(allBooksRes.data);
           if (allBooksRes.data.length < 6) setHasMore(false);
@@ -83,6 +124,24 @@ export default function HomeScreen() {
     };
     fetchData();
     fetchUser();
+
+    // Car Animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(carAnim, {
+          toValue: 5,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(carAnim, {
+          toValue: 0,
+          duration: 800,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   }, []);
 
   const loadMoreBooks = async () => {
@@ -224,7 +283,57 @@ export default function HomeScreen() {
       </View>
 
       {/* SEARCH */}
-      <SearchBar value={search} onChangeText={setSearch} />
+      <View style={styles.searchWrapper}>
+        <SearchBar 
+          value={search} 
+          onChangeText={handleSearchChange} 
+          onSubmitEditing={() => {
+            setShowSuggestions(false);
+            if (search.trim()) {
+              router.push(`/search?q=${encodeURIComponent(search.trim())}`);
+            }
+          }}
+        />
+        {showSuggestions && (
+          <View style={styles.suggestionsDropdown}>
+            {isSearching ? (
+              <View style={styles.suggestionItem}>
+                <ActivityIndicator size="small" color={COLORS.primary} style={{ marginRight: 10 }} />
+                <Text style={styles.suggestionText}>Đang tìm...</Text>
+              </View>
+            ) : suggestions.length > 0 ? (
+              <>
+                {suggestions.map((book) => (
+                  <TouchableOpacity 
+                    key={book.id} 
+                    style={styles.suggestionItem}
+                    onPress={() => {
+                      setShowSuggestions(false);
+                      router.push(`/book/${book.id}`);
+                    }}
+                  >
+                    <Ionicons name="search-outline" size={18} color={COLORS.textSecondary} />
+                    <Text style={styles.suggestionText} numberOfLines={1}>{book.title}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity 
+                  style={styles.viewAllSuggestions}
+                  onPress={() => {
+                    setShowSuggestions(false);
+                    router.push(`/search?q=${encodeURIComponent(search.trim())}`);
+                  }}
+                >
+                  <Text style={styles.viewAllText}>Xem tất cả kết quả cho "{search}"</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.suggestionItem}>
+                <Text style={styles.suggestionText}>Không có kết quả nào.</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
 
       {/* BANNER */}
       <View style={styles.bannerSection}>
@@ -243,6 +352,7 @@ export default function HomeScreen() {
                 title={book.title}
                 author={book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
                 price={formatPrice(book.sale_price)}
+                originalPrice={parseFloat(book.original_price) > parseFloat(book.sale_price) ? formatPrice(book.original_price) : undefined}
                 rating={parseFloat(book.avg_rating) || 5.0}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
@@ -291,6 +401,7 @@ export default function HomeScreen() {
                 title={book.title}
                 author={book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
                 price={formatPrice(book.sale_price)}
+                originalPrice={parseFloat(book.original_price) > parseFloat(book.sale_price) ? formatPrice(book.original_price) : undefined}
                 rating={parseFloat(book.avg_rating) || 4.9}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
@@ -322,6 +433,7 @@ export default function HomeScreen() {
                 title={book.title}
                 author={book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
                 price={formatPrice(book.sale_price)}
+                originalPrice={parseFloat(book.original_price) > parseFloat(book.sale_price) ? formatPrice(book.original_price) : undefined}
                 rating={parseFloat(book.avg_rating) || 4.8}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
@@ -340,17 +452,87 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
       )}
+
+      {/* COMBOS */}
+      {combos.length > 0 && (
+        <View style={styles.section}>
+          <SectionHeader title="🎁 Combo Sách Tiết Kiệm" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {combos.map((combo, index) => (
+              <BookCard
+                key={combo.id || index}
+                image={combo.cover_image_url ? { uri: combo.cover_image_url } : getPlaceholderImage(index)}
+                title={combo.name}
+                author={combo.stock_qty ? `Còn lại: ${combo.stock_qty} bộ` : 'Đang cập nhật'}
+                price={formatPrice(combo.combo_price)}
+                originalPrice={parseFloat(combo.original_total) > parseFloat(combo.combo_price) ? formatPrice(combo.original_total) : undefined}
+                rating={5.0}
+                discount={parseFloat(combo.original_total) > parseFloat(combo.combo_price) ? `-${Math.round((1 - (parseFloat(combo.combo_price) / parseFloat(combo.original_total))) * 100)}%` : undefined}
+                onPress={() => router.push(`/combo/${combo.id}` as any)}
+                onAddToCart={() => addContextCart({
+                  id: combo.id,
+                  title: combo.name,
+                  author: combo.stock_qty ? `Còn lại: ${combo.stock_qty} bộ` : 'Đang cập nhật',
+                  price: combo.combo_price,
+                  originalPrice: combo.original_total,
+                  image: combo.cover_image_url ? { uri: combo.cover_image_url } : getPlaceholderImage(index),
+                  quantity: 1
+                })}
+                onCartPress={triggerFlyToCart}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      )}
       
-      {/* FREE SHIPPING */}
-      <View style={styles.shippingCard}>
-        <View style={styles.shippingIcon}>
-          <Ionicons name="car-outline" size={24} color={COLORS.primary} />
+      {/* VOUCHERS */}
+      {vouchers.length > 0 && (
+        <View style={styles.section}>
+          <SectionHeader title="🎟️ Mã giảm giá & Ưu đãi" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+            {vouchers.map((v, index) => {
+              const theme = v.type === 'shipping' 
+                ? { bg: '#E3F2FD', border: '#90CAF9', icon: '#1976D2', title: '#1565C0', sub: '#1E88E5', btn: '#1976D2' }
+                : { bg: '#FFF3E0', border: '#FFCC80', icon: '#E65100', title: '#E65100', sub: '#F57C00', btn: '#F57C00' };
+              
+              return (
+                <View 
+                  key={v.id || index} 
+                  style={[
+                    styles.shippingCard, 
+                    { 
+                      marginTop: 0, 
+                      width: 310, 
+                      marginRight: 15,
+                      backgroundColor: theme.bg,
+                      borderColor: theme.border
+                    }
+                  ]}
+                >
+                  <Animated.View style={[
+                    styles.shippingIcon, 
+                    v.type === 'shipping' ? { transform: [{ translateX: carAnim }] } : {},
+                    { shadowColor: theme.icon }
+                  ]}>
+                    <Ionicons name={v.type === 'shipping' ? "car-sport" : "ticket"} size={24} color={theme.icon} />
+                  </Animated.View>
+                  <View style={styles.shippingText}>
+                    <Text style={[styles.shippingTitle, { color: theme.title }]}>
+                      {v.type === 'shipping' ? 'Miễn phí vận chuyển' : 'Voucher giảm giá'}
+                    </Text>
+                    <Text style={[styles.shippingSubtitle, { color: theme.sub }]} numberOfLines={2}>
+                      Giảm {formatPrice(v.value)} cho đơn từ {formatPrice(v.min_order_value)}
+                    </Text>
+                  </View>
+                  <TouchableOpacity style={[styles.shippingBtn, { backgroundColor: theme.btn }]} onPress={() => console.log('Lấy mã', v.code)}>
+                    <Text style={styles.shippingBtnText}>Lấy mã</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </ScrollView>
         </View>
-        <View style={styles.shippingText}>
-          <Text style={styles.shippingTitle}>Miễn phí vận chuyển</Text>
-          <Text style={styles.shippingSubtitle}>Cho đơn hàng từ 200.000đ</Text>
-        </View>
-      </View>
+      )}
 
       <View style={styles.allBooksHeader}>
         <SectionHeader title="📚 Tất cả sách" />
@@ -370,10 +552,12 @@ export default function HomeScreen() {
   const renderBookItem = ({ item, index }: { item: any, index: number }) => (
     <View style={styles.gridItem}>
       <BookCard
+        style={styles.bookCardOverrides}
         image={getImageSource(item, index)}
         title={item.title}
         author={item.authors && item.authors.length > 0 ? item.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
         price={formatPrice(item.sale_price)}
+        originalPrice={parseFloat(item.original_price) > parseFloat(item.sale_price) ? formatPrice(item.original_price) : undefined}
         rating={parseFloat(item.avg_rating) || 5.0}
         discount={parseFloat(item.original_price) > parseFloat(item.sale_price) ? `-${Math.round((1 - (parseFloat(item.sale_price) / parseFloat(item.original_price))) * 100)}%` : undefined}
         onPress={() => router.push(`/book/${item.id}`)}
@@ -405,8 +589,8 @@ export default function HomeScreen() {
           numColumns={2}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={renderHeader}
-          ListFooterComponent={renderFooter}
+          ListHeaderComponent={renderHeader()}
+          ListFooterComponent={renderFooter()}
           onEndReached={loadMoreBooks}
           onEndReachedThreshold={0.5}
           columnWrapperStyle={styles.columnWrapper}
@@ -544,10 +728,12 @@ const styles = StyleSheet.create({
   shippingCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primaryLight,
+    backgroundColor: '#E3F2FD',
     borderRadius: 16,
     padding: 15,
     marginTop: 22,
+    borderWidth: 1,
+    borderColor: '#90CAF9',
   },
   shippingIcon: {
     width: 46,
@@ -556,31 +742,54 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   shippingText: {
     marginLeft: 12,
+    flex: 1,
   },
   shippingTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.text,
+    fontWeight: '800',
+    color: '#1565C0',
   },
   shippingSubtitle: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: '#1E88E5',
     marginTop: 3,
   },
+  shippingBtn: {
+    backgroundColor: '#1976D2',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  shippingBtnText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   allBooksHeader: {
-    marginTop: 30,
-    marginBottom: 10,
+    marginTop: 35,
+    marginBottom: 15,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
   columnWrapper: {
     justifyContent: 'space-between',
   },
   gridItem: {
-    flex: 1,
-    maxWidth: '48%',
-    marginBottom: 16,
+    width: '48%',
+    marginBottom: 20,
+  },
+  bookCardOverrides: {
+    width: '100%',
+    marginRight: 0,
   },
   loadingFooter: {
     paddingVertical: 20,
@@ -592,5 +801,53 @@ const styles = StyleSheet.create({
     left: 0,
     borderRadius: 8,
     zIndex: 9999,
+  },
+  searchWrapper: {
+    zIndex: 10,
+    elevation: 10,
+    position: 'relative',
+  },
+  suggestionsDropdown: {
+    position: 'absolute',
+    top: 55,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 15,
+    zIndex: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.03)',
+  },
+  suggestionText: {
+    fontSize: 14,
+    color: COLORS.text,
+    marginLeft: 10,
+    flex: 1,
+  },
+  viewAllSuggestions: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: COLORS.primaryLight,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primaryDark,
   },
 });
