@@ -67,6 +67,27 @@ export class OrdersRepository {
     return order
   }
 
+  async findByUserId(userId) {
+    const [rows] = await sequelize.query(`
+      SELECT o.*, u.full_name as customer_name
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      WHERE o.user_id = :userId
+      ORDER BY o.created_at DESC
+    `, { replacements: { userId } })
+
+    for (const order of rows) {
+      const [items] = await sequelize.query(`
+        SELECT oi.id, oi.item_name, oi.unit_price, oi.quantity, oi.total_price, oi.book_id, bi.image_url
+        FROM order_items oi
+        LEFT JOIN book_images bi ON oi.book_id = bi.book_id AND bi.sort_order = 1
+        WHERE oi.order_id = :orderId
+      `, { replacements: { orderId: order.id } })
+      order.items = items || []
+    }
+    return rows
+  }
+
   async create(data) {
     return Orders.create(data)
   }

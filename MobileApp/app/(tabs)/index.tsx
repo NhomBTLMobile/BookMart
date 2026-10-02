@@ -382,7 +382,7 @@ export default function HomeScreen() {
                 key={cat.id || i} 
                 icon={cat.icon_url || 'book-outline'} 
                 title={cat.name} 
-                onPress={() => router.push('/(tabs)/categories')}
+                onPress={() => router.push(`/category/${cat.id}?name=${encodeURIComponent(cat.name)}` as any)}
               />
             ))}
           </ScrollView>
@@ -461,6 +461,7 @@ export default function HomeScreen() {
             {combos.map((combo, index) => (
               <BookCard
                 key={combo.id || index}
+                isCombo={true}
                 image={combo.cover_image_url ? { uri: combo.cover_image_url } : getPlaceholderImage(index)}
                 title={combo.name}
                 author={combo.stock_qty ? `Còn lại: ${combo.stock_qty} bộ` : 'Đang cập nhật'}

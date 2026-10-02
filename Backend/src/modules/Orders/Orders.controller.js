@@ -14,6 +14,13 @@ export const getAll = async (req, res, next) => {
   } catch (err) { next(err) }
 }
 
+export const getMyOrders = async (req, res, next) => {
+  try {
+    const data = await service.getByUserId(req.user.id)
+    sendSuccess(res, 'Lấy danh sách đơn hàng thành công', data)
+  } catch (err) { next(err) }
+}
+
 export const getById = async (req, res, next) => {
   try {
     const data = await service.getById(req.params.id)

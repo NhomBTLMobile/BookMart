@@ -1,5 +1,6 @@
 import { Op } from 'sequelize'
 import Users from './users.model.js'
+import { sequelize } from '../../config/database.js'
 
 export class UsersRepository {
   async findAll({ limit, offset, sort, order, search }) {
@@ -24,7 +25,17 @@ export class UsersRepository {
   }
 
   async findById(id) {
-    return Users.findByPk(id)
+    const [rows] = await sequelize.query(`
+      SELECT u.*, 
+             (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) as order_count,
+             (SELECT COUNT(*) FROM wishlists w WHERE w.user_id = u.id) as wishlist_count
+      FROM users u
+      WHERE u.id = :id
+    `, { 
+      replacements: { id },
+      type: sequelize.QueryTypes.SELECT
+    })
+    return rows || null
   }
 
   async create(data) {

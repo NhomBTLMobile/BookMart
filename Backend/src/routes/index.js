@@ -22,6 +22,7 @@ import userVouchersRouter from '../modules/user_vouchers/user_vouchers.route.js'
 import usersRouter from '../modules/users/users.route.js'
 import vouchersRouter from '../modules/vouchers/vouchers.route.js'
 import dashboardRouter from '../modules/dashboard/dashboard.route.js'
+import wishlistsRouter from '../modules/wishlists/wishlists.route.js'
 
 const router = Router()
 
@@ -48,5 +49,6 @@ router.use('/user_oauth_providers', userOauthProvidersRouter)
 router.use('/user_vouchers', userVouchersRouter)
 router.use('/users', usersRouter)
 router.use('/vouchers', vouchersRouter)
+router.use('/wishlists', wishlistsRouter)
 
 export default router

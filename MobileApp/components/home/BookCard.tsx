@@ -23,11 +23,12 @@ type Props = {
   onCartPress?: (node: View | null, imageSource: any) => void;
   discount?: string;
   originalPrice?: string;
+  isCombo?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
 export default function BookCard({
-  image, title, author, price, rating, discount, originalPrice, style,
+  image, title, author, price, rating, discount, originalPrice, isCombo, style,
   onPress, onAddToCart, onCartPress,
 }: Props) {
   const imageWrapRef = useRef<View>(null);
@@ -58,10 +59,12 @@ export default function BookCard({
       <Text style={styles.title} numberOfLines={2}>{title}</Text>
       <Text style={styles.author} numberOfLines={1}>{author}</Text>
 
-      <View style={styles.ratingContainer}>
-        <Ionicons name="star" size={14} color="#E5A72A" />
-        <Text style={styles.rating}>{rating}</Text>
-      </View>
+      {!isCombo && (
+        <View style={styles.ratingContainer}>
+          <Ionicons name="star" size={14} color="#E5A72A" />
+          <Text style={styles.rating}>{rating}</Text>
+        </View>
+      )}
 
       {/* Giá + nút thêm giỏ */}
       <View style={styles.bottomRow}>

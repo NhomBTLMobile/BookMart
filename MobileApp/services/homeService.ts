@@ -29,6 +29,13 @@ export const homeService = {
     } catch { return { success: false, data: [] }; }
   },
   
+  getBooksByCategory: async (categoryId: string, page = 1, limit = 10) => {
+    try {
+      const response = await api.get(`/books/search/advanced?category_id=${categoryId}&page=${page}&limit=${limit}`);
+      return response.data;
+    } catch { return { success: false, data: [] }; }
+  },
+  
   getAllBooks: async (page = 1, limit = 10) => {
     try {
       const response = await api.get(`/books?page=${page}&limit=${limit}`);
@@ -48,6 +55,13 @@ export const homeService = {
       const response = await api.get(`/combos?limit=${limit}`);
       return response.data;
     } catch { return { success: false, data: [] }; }
+  },
+
+  getComboDetails: async (id: string) => {
+    try {
+      const response = await api.get(`/combos/${id}`);
+      return response.data;
+    } catch { return { success: false, data: null }; }
   },
 
   getVouchers: async () => {

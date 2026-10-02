@@ -42,11 +42,13 @@ const StarPicker = ({ value, onChange }: { value: number; onChange: (n: number) 
 
 const RATING_LABELS = ['', 'Rất tệ', 'Tệ', 'Bình thường', 'Rất tốt', 'Tuyệt vời!'];
 
-import { bookService } from '../../services/bookService';
 import { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 
 import { useCart } from '../../context/CartContext';
+import { bookService } from '../../services/bookService';
+import { homeService } from '../../services/homeService';
+import { wishlistService } from '../../services/wishlistService';
 
 // ─── Component chính ─────────────────────────────────────────────────────────
 export default function BookDetailsScreen() {
@@ -55,6 +57,10 @@ export default function BookDetailsScreen() {
   
   const [book, setBook] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [vouchers, setVouchers] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [totalReviews, setTotalReviews] = useState<number>(0);
+  const [ratingCounts, setRatingCounts] = useState<any>({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, total: 0 });
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -64,9 +70,39 @@ export default function BookDetailsScreen() {
   useEffect(() => {
     const fetchBook = async () => {
       try {
-        const res = await bookService.getBookDetails(id as string);
-        if (res.success && res.data) {
-          setBook(res.data);
+        const [bookRes, vouchersRes, reviewsRes] = await Promise.all([
+          bookService.getBookDetails(id as string),
+          homeService.getVouchers(),
+          bookService.getBookReviews(id as string, 10)
+        ]);
+        
+        if (bookRes.success && bookRes.data) {
+          setBook(bookRes.data);
+        }
+        
+        if (vouchersRes.success && vouchersRes.data) {
+          setVouchers(vouchersRes.data);
+        }
+
+        // Check if book is in wishlist
+        try {
+          const wlRes = await wishlistService.getMyWishlist();
+          if (wlRes.success && wlRes.data) {
+            const isFav = wlRes.data.some((b: any) => String(b.id) === String(id));
+            setIsFavorite(isFav);
+          }
+        } catch (e) {
+          // ignore
+        }
+        
+        if (reviewsRes.success && reviewsRes.data) {
+          setReviews(reviewsRes.data);
+          setTotalReviews(reviewsRes.meta?.total || reviewsRes.data.length);
+          const counts: any = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, total: reviewsRes.data.length };
+          reviewsRes.data.forEach((r: any) => {
+            if (counts[r.rating] !== undefined) counts[r.rating]++;
+          });
+          setRatingCounts(counts);
         }
       } catch (err) {
         console.log(err);
@@ -79,12 +115,20 @@ export default function BookDetailsScreen() {
 
   // Hiệu ứng nhấn yêu thích (Scale animation – Feedback tức thì)
   const heartScale = useRef(new Animated.Value(1)).current;
-  const handleFavorite = () => {
+  const handleFavorite = async () => {
     setIsFavorite(v => !v);
     Animated.sequence([
       Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true }),
       Animated.spring(heartScale, { toValue: 1, useNativeDriver: true }),
     ]).start();
+    
+    // Call API
+    try {
+      await wishlistService.toggleWishlist(book.id);
+    } catch (e) {
+      // rollback if failed
+      setIsFavorite(v => !v);
+    }
   };
 
   const handleSubmitReview = () => {
@@ -132,6 +176,17 @@ export default function BookDetailsScreen() {
   const discount = book.original_price > book.sale_price 
     ? `-${Math.round((1 - (book.sale_price / book.original_price)) * 100)}%` 
     : null;
+
+  const getFormatLabel = (format: string) => {
+    switch (format) {
+      case 'soft_cover': return 'Bìa mềm';
+      case 'hard_cover': return 'Bìa cứng';
+      case 'board_book': return 'Sách bìa bồi';
+      case 'audio_book': return 'Sách nói';
+      case 'e_book': return 'Sách điện tử';
+      default: return format || 'Bìa mềm';
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -230,8 +285,8 @@ export default function BookDetailsScreen() {
           <View style={styles.socialBar}>
             <View style={styles.socialItem}>
               <Ionicons name="star" size={15} color="#E5A72A" />
-              <Text style={styles.socialText}>{book.avg_rating || 5}</Text>
-              <Text style={styles.socialSub}> ({book.review_count || 0})</Text>
+              <Text style={styles.socialText}>{book.avg_rating ? Number(book.avg_rating).toFixed(1) : '5.0'}</Text>
+              <Text style={styles.socialSub}> ({totalReviews})</Text>
             </View>
             <View style={styles.socialDot} />
             <View style={styles.socialItem}>
@@ -253,23 +308,24 @@ export default function BookDetailsScreen() {
         <Divider />
 
         {/* ── 3. VOUCHER ────────────────────────────────────────── */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ưu đãi dành cho bạn</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
-            {[
-              { icon: 'ticket-outline', label: 'Giảm 15.000đ' },
-              { icon: 'car-outline', label: 'Freeship' },
-              { icon: 'gift-outline', label: 'Quà tặng kèm' },
-            ].map((v, i) => (
-              <TouchableOpacity key={i} style={styles.voucherChip} activeOpacity={0.8}>
-                <Ionicons name={v.icon as any} size={15} color={COLORS.primaryDark} />
-                <Text style={styles.voucherLabel}>{v.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <Divider />
+        {vouchers.length > 0 && (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Ưu đãi dành cho bạn</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
+                {vouchers.map((v, i) => (
+                  <TouchableOpacity key={v.id || i} style={styles.voucherChip} activeOpacity={0.8}>
+                    <Ionicons name={v.type === 'shipping' ? 'car-outline' : 'ticket-outline'} size={15} color={COLORS.primaryDark} />
+                    <Text style={styles.voucherLabel}>
+                      {v.type === 'shipping' ? 'Freeship' : `Giảm ${formatPrice(v.value)}`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+            <Divider />
+          </>
+        )}
 
         {/* ── 4. CHI TIẾT SÁCH ──────────────────────────────────── */}
         <View style={styles.section}>
@@ -279,7 +335,7 @@ export default function BookDetailsScreen() {
               ['Tác giả', authorName],
               ['Nhà xuất bản', publisherName],
               ['Kích thước', `${book.length_cm || 0}x${book.width_cm || 0} cm`],
-              ['Hình thức', book.format || 'Bìa mềm'],
+              ['Hình thức', getFormatLabel(book.format)],
               ['Khối lượng', `${book.weight_grams || 0} g`],
             ].map(([label, value]) => (
               <View key={label} style={styles.specRow}>
@@ -316,49 +372,60 @@ export default function BookDetailsScreen() {
           {/* Tóm tắt điểm đánh giá */}
           <View style={styles.ratingOverview}>
             <View style={styles.ratingBig}>
-              <Text style={styles.ratingBigNum}>{book.avg_rating || 5}</Text>
+              <Text style={styles.ratingBigNum}>{book.avg_rating ? Number(book.avg_rating).toFixed(1) : '5.0'}</Text>
               <Text style={styles.ratingBigStar}>★</Text>
             </View>
             <View style={styles.ratingBars}>
-              {[5, 4, 3, 2, 1].map(s => (
-                <View key={s} style={styles.ratingBarRow}>
-                  <Text style={styles.ratingBarLabel}>{s}</Text>
-                  <View style={styles.ratingBarTrack}>
-                    <View style={[styles.ratingBarFill, { width: `${s === 5 ? 72 : s === 4 ? 18 : s === 3 ? 6 : 2}%` }]} />
+              {[5, 4, 3, 2, 1].map(s => {
+                const pct = ratingCounts.total > 0 ? (ratingCounts[s] / ratingCounts.total) * 100 : (s === 5 ? 100 : 0);
+                return (
+                  <View key={s} style={styles.ratingBarRow}>
+                    <Text style={styles.ratingBarLabel}>{s}</Text>
+                    <View style={styles.ratingBarTrack}>
+                      <View style={[styles.ratingBarFill, { width: `${pct}%` }]} />
+                    </View>
                   </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           </View>
 
           {/* Review cards */}
-          {[
-            { name: 'Hoàng Nam', initial: 'H', stars: 5, date: '2 ngày trước', text: 'Sách bọc cẩn thận, giao nhanh. Nội dung rất hay, rất đáng đọc và suy ngẫm!' },
-            { name: 'Thu Hà', initial: 'T', stars: 4, date: '1 tuần trước', text: 'Chất lượng sách tốt. Nội dung mang lại nhiều giá trị, đặc biệt phù hợp cho người mới bắt đầu.' },
-          ].map((rv, i) => (
-            <View key={i} style={styles.reviewCard}>
+          {reviews.map((rv, i) => (
+            <View key={rv.id || i} style={styles.reviewCard}>
               <View style={styles.reviewHeader}>
-                <View style={[styles.avatar, { backgroundColor: i === 0 ? COLORS.primary : '#7C6AF0' }]}>
-                  <Text style={styles.avatarText}>{rv.initial}</Text>
-                </View>
+                {rv.user_avatar_url ? (
+                  <Image source={{ uri: rv.user_avatar_url }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, { backgroundColor: COLORS.primary }]}>
+                    <Text style={styles.avatarText}>{(rv.user_name || 'U').charAt(0).toUpperCase()}</Text>
+                  </View>
+                )}
                 <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.reviewerName}>{rv.name}</Text>
+                  <Text style={styles.reviewerName}>{rv.user_name || 'Người dùng'}</Text>
                   <View style={{ flexDirection: 'row', marginTop: 2 }}>
-                    {Array.from({ length: rv.stars }).map((_, si) => (
+                    {Array.from({ length: rv.rating || 5 }).map((_, si) => (
                       <Ionicons key={si} name="star" size={12} color="#E5A72A" />
                     ))}
                   </View>
                 </View>
-                <Text style={styles.reviewDate}>{rv.date}</Text>
+                <Text style={styles.reviewDate}>{new Date(rv.created_at).toLocaleDateString('vi-VN')}</Text>
               </View>
-              <Text style={styles.reviewText}>{rv.text}</Text>
+              <Text style={styles.reviewText}>{rv.body}</Text>
             </View>
           ))}
+          {reviews.length === 0 && (
+            <Text style={{ textAlign: 'center', marginTop: 15, color: COLORS.textSecondary }}>
+              Chưa có đánh giá nào cho cuốn sách này.
+            </Text>
+          )}
 
-          <TouchableOpacity style={styles.seeAllBtn}>
-            <Text style={styles.seeAllText}>Xem tất cả {book.review_count || 0} đánh giá</Text>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.primaryDark} />
-          </TouchableOpacity>
+          {reviews.length > 0 && (
+            <TouchableOpacity style={styles.seeAllBtn}>
+              <Text style={styles.seeAllText}>Xem tất cả {totalReviews} đánh giá</Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.primaryDark} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <Divider />

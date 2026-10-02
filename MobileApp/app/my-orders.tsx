@@ -12,6 +12,8 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SHADOW, SPACING } from '../constants/colors';
+import { orderService } from '../services/orderService';
+import { ActivityIndicator } from 'react-native';
 
 // ─── Types ────────────────────────────────────────────────────────
 type OrderStatus = 'PENDING' | 'DELIVERING' | 'DELIVERED' | 'CANCELLED';
@@ -29,46 +31,7 @@ type Order = {
   }[];
 };
 
-// ─── Mock Data ───────────────────────────────────────────────────
-const MOCK_ORDERS: Order[] = [
-  {
-    id: 'BMX9821A',
-    status: 'PENDING',
-    date: 'Hôm nay, 10:24',
-    total: 154000,
-    items: [
-      { title: 'Đắc Nhân Tâm', image: require('../assets/images/book1.jpg'), price: 89000, qty: 1 },
-      { title: 'Tôi thấy hoa vàng trên cỏ xanh', image: require('../assets/images/book3.jpg'), price: 65000, qty: 1 },
-    ],
-  },
-  {
-    id: 'BMT5521C',
-    status: 'DELIVERING',
-    date: '12/05/2026',
-    total: 55000,
-    items: [
-      { title: 'Nhà Giả Kim', image: require('../assets/images/book2.jpg'), price: 55000, qty: 1 },
-    ],
-  },
-  {
-    id: 'BMK1190D',
-    status: 'DELIVERED',
-    date: '02/05/2026',
-    total: 219000,
-    items: [
-      { title: 'Tuổi Trẻ Đáng Giá Bao Nhiêu', image: require('../assets/images/book4.jpg'), price: 49000, qty: 2 },
-    ],
-  },
-  {
-    id: 'BMC3341X',
-    status: 'CANCELLED',
-    date: '15/04/2026',
-    total: 120000,
-    items: [
-      { title: 'Sapiens - Lược Sử Loài Người', image: require('../assets/images/book1.jpg'), price: 120000, qty: 1 },
-    ],
-  },
-];
+// ─── Real Data Integration ───────────────────────────────────────────────────
 
 const TABS: { id: OrderStatus; label: string }[] = [
   { id: 'PENDING', label: 'Chờ xác nhận' },
@@ -89,8 +52,48 @@ const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
 // ─── Main Screen ─────────────────────────────────────────────────
 export default function MyOrdersScreen() {
   const [activeTab, setActiveTab] = useState<OrderStatus>('PENDING');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredOrders = MOCK_ORDERS.filter(o => o.status === activeTab);
+  React.useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await orderService.getMyOrders();
+        if (res.success && res.data) {
+          const mappedOrders = res.data.map((o: any) => {
+            let status: OrderStatus = 'PENDING';
+            if (['pending', 'confirmed', 'packing'].includes(o.order_status)) status = 'PENDING';
+            else if (o.order_status === 'shipping') status = 'DELIVERING';
+            else if (o.order_status === 'delivered') status = 'DELIVERED';
+            else if (o.order_status === 'cancelled') status = 'CANCELLED';
+
+            const d = new Date(o.created_at);
+            return {
+              id: o.order_code || o.id,
+              internalId: o.id,
+              status,
+              date: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
+              total: parseFloat(o.total_amount),
+              items: (o.items || []).map((i: any) => ({
+                title: i.item_name,
+                image: i.image_url ? { uri: i.image_url } : require('../assets/images/book1.jpg'),
+                price: parseFloat(i.unit_price),
+                qty: i.quantity
+              }))
+            };
+          });
+          setOrders(mappedOrders);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  const filteredOrders = orders.filter(o => o.status === activeTab);
 
   const renderOrder = ({ item }: { item: Order }) => {
     const config = STATUS_CONFIG[item.status];
@@ -115,16 +118,18 @@ export default function MyOrdersScreen() {
         <View style={styles.divider} />
 
         {/* Body: Product Info */}
-        <View style={styles.cardBody}>
-          <Image source={firstItem.image} style={styles.productImg} contentFit="cover" />
-          <View style={styles.productInfo}>
-            <Text style={styles.productTitle} numberOfLines={2}>{firstItem.title}</Text>
-            <View style={styles.productPriceRow}>
-              <Text style={styles.productPrice}>{fmt(firstItem.price)}</Text>
-              <Text style={styles.productQty}>x{firstItem.qty}</Text>
+        {firstItem && (
+          <View style={styles.cardBody}>
+            <Image source={firstItem.image} style={styles.productImg} contentFit="cover" />
+            <View style={styles.productInfo}>
+              <Text style={styles.productTitle} numberOfLines={2}>{firstItem.title}</Text>
+              <View style={styles.productPriceRow}>
+                <Text style={styles.productPrice}>{fmt(firstItem.price)}</Text>
+                <Text style={styles.productQty}>x{firstItem.qty}</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         {moreCount > 0 && (
           <Text style={styles.moreItemsText}>
@@ -195,19 +200,25 @@ export default function MyOrdersScreen() {
       </View>
 
       {/* ── List ── */}
-      <FlatList
-        data={filteredOrders}
-        keyExtractor={item => item.id}
-        renderItem={renderOrder}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={64} color={COLORS.divider} />
-            <Text style={styles.emptyText}>Chưa có đơn hàng nào</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredOrders}
+          keyExtractor={item => item.id}
+          renderItem={renderOrder}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="receipt-outline" size={64} color={COLORS.divider} />
+              <Text style={styles.emptyText}>Chưa có đơn hàng nào</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

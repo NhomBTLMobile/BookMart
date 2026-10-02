@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove, createGHN, ghnWebhook } from './orders.controller.js'
+import { getAll, getById, create, update, remove, createGHN, ghnWebhook, getMyOrders } from './orders.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -163,6 +163,7 @@ router.post('/', authMiddleware, create)
  *         schema:
  *           type: string
  */
+router.get('/me', authMiddleware, getMyOrders)
 router.get('/:id', authMiddleware, getById)
 router.put('/:id', authMiddleware, update)
 router.delete('/:id', authMiddleware, remove)

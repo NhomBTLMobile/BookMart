@@ -156,7 +156,6 @@ export class BooksRepository {
         { '$authors.name$': { [Op.iLike]: `%${query}%` } }
       ]
     }
-    if (category_id) where['$categories.id$'] = category_id
     if (publisher_id) where.publisher_id = publisher_id
     if (min_price || max_price) {
       where.sale_price = {}
@@ -167,12 +166,20 @@ export class BooksRepository {
     const sortField = sort || 'created_at'
     const sortOrder = order || 'DESC'
 
+    const includes = this.getSummaryIncludes()
+    if (category_id) {
+      const categoryInclude = includes.find(inc => inc.association === 'categories')
+      if (categoryInclude) {
+        categoryInclude.where = { id: category_id }
+      }
+    }
+
     const { count, rows } = await Books.findAndCountAll({
       where,
       limit,
       offset,
       order: [[sortField, sortOrder]],
-      include: this.getSummaryIncludes(),
+      include: includes,
       distinct: true // important when using include with belongsToMany
     })
 

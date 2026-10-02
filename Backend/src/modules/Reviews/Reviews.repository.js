@@ -3,13 +3,23 @@ import Reviews from './reviews.model.js'
 import { sequelize } from '../../config/database.js'
 
 export class ReviewsRepository {
-  async findAll({ limit, offset, sort, order, search }) {
+  async findAll({ limit, offset, sort, order, search, book_id }) {
     let whereClause = ''
     const replacements = {}
+    let conditions = []
 
     if (search) {
-      whereClause = 'WHERE r.body ILIKE :search OR u.full_name ILIKE :search OR b.title ILIKE :search'
+      conditions.push('(r.body ILIKE :search OR u.full_name ILIKE :search OR b.title ILIKE :search)')
       replacements.search = `%${search}%`
+    }
+
+    if (book_id) {
+      conditions.push('r.book_id = :book_id')
+      replacements.book_id = book_id
+    }
+
+    if (conditions.length > 0) {
+      whereClause = 'WHERE ' + conditions.join(' AND ')
     }
 
     const sortField = sort ? `r.${sort}` : 'r.created_at'

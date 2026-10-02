@@ -10,6 +10,10 @@ export class OrdersService {
     return repo.findAll(query)
   }
 
+  async getByUserId(userId) {
+    return repo.findByUserId(userId)
+  }
+
   async getById(id) {
     const item = await repo.findById(id)
     if (!item) {

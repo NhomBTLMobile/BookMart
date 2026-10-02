@@ -35,5 +35,17 @@ export const authService = {
   checkLogin: async () => {
     const token = await SecureStore.getItemAsync('accessToken');
     return !!token;
+  },
+
+  getMe: async () => {
+    try {
+      const response = await api.get('/users/me');
+      if (response.data && response.data.data) {
+        await SecureStore.setItemAsync('user', JSON.stringify(response.data.data));
+      }
+      return response.data;
+    } catch (e) {
+      return { success: false, data: null };
+    }
   }
 };

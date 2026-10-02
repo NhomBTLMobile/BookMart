@@ -45,7 +45,6 @@ const MENU_GROUPS: { title: string; items: MenuItem[] }[] = [
     items: [
       { id: 'edit',     label: 'Chỉnh sửa hồ sơ',  icon: 'person-outline' },
       { id: 'address',  label: 'Địa chỉ giao hàng', icon: 'location-outline' },
-      { id: 'payment',  label: 'Phương thức thanh toán', icon: 'card-outline' },
     ],
   },
   {
@@ -95,6 +94,7 @@ export default function ProfileScreen() {
     useCallback(() => {
       const fetchUser = async () => {
         try {
+          // First use local data for fast UI rendering
           const userStr = await SecureStore.getItemAsync('user');
           if (userStr) {
             const parsedUser = JSON.parse(userStr);
@@ -105,9 +105,26 @@ export default function ProfileScreen() {
               email: parsedUser.email || '',
               avatar: parsedUser.avatar_url || '',
               avatarText: initials,
-              orders: parsedUser.orders || 0,
-              wishlist: parsedUser.wishlist || 0,
-              points: parsedUser.points || 0,
+              orders: parsedUser.order_count || parsedUser.orders || 0,
+              wishlist: parsedUser.wishlist_count || parsedUser.wishlist || 0,
+              points: parsedUser.loyalty_points || parsedUser.points || 0,
+            });
+          }
+          
+          // Then fetch real data from server
+          const res = await authService.getMe();
+          if (res.success && res.data) {
+            const parsedUser = res.data;
+            const fullName = parsedUser.full_name || parsedUser.username || 'Bạn';
+            const initials = fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+            setUser({
+              name: fullName,
+              email: parsedUser.email || '',
+              avatar: parsedUser.avatar_url || '',
+              avatarText: initials,
+              orders: parseInt(parsedUser.order_count) || parsedUser.orders || 0, // Fallback to 0 if not calculated yet
+              wishlist: parseInt(parsedUser.wishlist_count) || parsedUser.wishlist || 0,
+              points: parsedUser.loyalty_points || parsedUser.points || 0,
             });
           }
         } catch (e) {
@@ -129,7 +146,7 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await authService.logout();
-            router.replace('/(auth)');
+            router.replace('/(auth)/login');
           }
         }
       ]
@@ -145,12 +162,11 @@ export default function ProfileScreen() {
         {/* ── HEADER / Avatar ── */}
         <View style={styles.profileCard}>
           {/* Avatar chữ tắt — Endowment Effect */}
-          <View style={[styles.avatar, user.avatar ? { padding: 0 } : {}]}>
-            {user.avatar ? (
-              <Image source={{ uri: user.avatar }} style={{ width: '100%', height: '100%', borderRadius: 40 }} />
-            ) : (
-              <Text style={styles.avatarText}>{user.avatarText}</Text>
-            )}
+          <View style={[styles.avatar, { padding: 0 }]}>
+            <Image 
+              source={{ uri: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random&color=fff&size=128` }} 
+              style={{ width: '100%', height: '100%', borderRadius: 40 }} 
+            />
           </View>
           <Text style={styles.userName}>{user.name}</Text>
           <Text style={styles.userEmail}>{user.email}</Text>
@@ -186,8 +202,9 @@ export default function ProfileScreen() {
                   item={item} 
                   onPress={() => {
                     if (item.id === 'orders') router.push('/my-orders');
+                    else if (item.id === 'wishlist') router.push('/wishlist');
                     else if (item.id === 'logout') handleLogout();
-                    else console.log(item.id);
+                    else Alert.alert('Thông báo', 'Tính năng đang được phát triển!');
                   }} 
                 />
                 {idx < group.items.length - 1 && <View style={styles.separator} />}

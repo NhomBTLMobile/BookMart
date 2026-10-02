@@ -1,25 +1,38 @@
 import { Op } from 'sequelize'
 import Categories from './categories.model.js'
+import { sequelize } from '../../config/database.js'
 
 export class CategoriesRepository {
   async findAll({ limit, offset, sort, order, search }) {
-    const where = {}
+    let whereClause = ''
+    const replacements = {}
+
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.iLike]: `%${search}%` } },
-        { slug: { [Op.iLike]: `%${search}%` } }
-      ]
+      whereClause = 'WHERE name ILIKE :search OR slug ILIKE :search'
+      replacements.search = `%${search}%`
     }
 
-    const sortField = sort || 'id'
-    const { count, rows } = await Categories.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: [[sortField, order || 'DESC']],
+    const sortField = sort || 'sort_order'
+    const sortOrder = order || 'ASC'
+
+    const [countResult] = await sequelize.query(`
+      SELECT COUNT(*) as count FROM categories ${whereClause}
+    `, { replacements })
+    
+    const total = parseInt(countResult[0].count, 10)
+
+    const [rows] = await sequelize.query(`
+      SELECT c.*, 
+             (SELECT COUNT(*) FROM book_categories bc WHERE bc.category_id = c.id) as book_count
+      FROM categories c
+      ${whereClause}
+      ORDER BY c.${sortField} ${sortOrder}
+      LIMIT :limit OFFSET :offset
+    `, { 
+      replacements: { ...replacements, limit: limit || 100, offset: offset || 0 } 
     })
 
-    return { total: count, data: rows }
+    return { total, data: rows }
   }
 
   async findById(id) {

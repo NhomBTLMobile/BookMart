@@ -11,8 +11,10 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING, RADIUS, SHADOW } from '@/constants/colors';
 import { homeService } from '@/services/homeService';
 
@@ -20,7 +22,7 @@ import { homeService } from '@/services/homeService';
 type Category = {
   id: string;
   title: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: string;
   bookCount: number;
   featured?: boolean;
 };
@@ -40,7 +42,11 @@ function CategoryGridItem({ item, onPress }: { item: Category; onPress: () => vo
       )}
 
       <View style={styles.iconWrap}>
-        <Ionicons name={item.icon} size={26} color={COLORS.primary} />
+        {item.icon && item.icon.startsWith('http') ? (
+          <Image source={{ uri: item.icon }} style={{ width: 28, height: 28 }} contentFit="contain" />
+        ) : (
+          <Ionicons name={(item.icon as any) || 'book-outline'} size={26} color={COLORS.primary} />
+        )}
       </View>
 
       <Text style={styles.gridTitle} numberOfLines={1}>
@@ -66,7 +72,7 @@ export default function CategoriesScreen() {
             id: cat.id || Math.random().toString(),
             title: cat.name,
             icon: cat.icon_url || 'book-outline',
-            bookCount: cat.book_count || 0,
+            bookCount: cat.book_count ? parseInt(cat.book_count) : 0,
             featured: cat.is_featured || false,
           }));
           setCategories(formattedData);
@@ -134,7 +140,7 @@ export default function CategoriesScreen() {
                 <CategoryGridItem
                   key={item.id}
                   item={item}
-                  onPress={() => console.log(item.title)}
+                  onPress={() => router.push(`/category/${item.id}?name=${encodeURIComponent(item.title)}` as any)}
                 />
               ))}
             </View>
