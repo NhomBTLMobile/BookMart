@@ -124,7 +124,11 @@ export default function BookDetailsScreen() {
     
     // Call API
     try {
-      await wishlistService.toggleWishlist(book.id);
+      const res = await wishlistService.toggleWishlist(book.id);
+      if (res && res.success === false) {
+        // rollback if failed
+        setIsFavorite(v => !v);
+      }
     } catch (e) {
       // rollback if failed
       setIsFavorite(v => !v);
@@ -467,7 +471,18 @@ export default function BookDetailsScreen() {
         <TouchableOpacity
           style={styles.buyBtn}
           activeOpacity={0.85}
-          onPress={() => router.push('/checkout' as any)}
+          onPress={() => {
+            const buyNowItem = {
+              id: book.id,
+              title: book.title,
+              author: authorName,
+              price: book.sale_price,
+              originalPrice: book.original_price,
+              image: coverImage,
+              quantity: 1
+            };
+            router.push({ pathname: '/checkout', params: { items: JSON.stringify([buyNowItem]) } });
+          }}
         >
           <Text style={styles.buyBtnText}>Mua ngay</Text>
         </TouchableOpacity>

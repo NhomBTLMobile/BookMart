@@ -18,8 +18,9 @@ import {
   SPACING,
 } from '@/constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useRef, useState, useMemo } from 'react';
+import { useCart } from '../context/CartContext';
 import {
   Alert,
   Animated,
@@ -57,35 +58,6 @@ type Address = {
   city: string;
 };
 
-// ─── Mock Data ───────────────────────────────────────────────
-const ORDER_ITEMS: OrderItem[] = [
-  {
-    id: '1',
-    title: 'Đắc Nhân Tâm',
-    author: 'Dale Carnegie',
-    price: 89_000,
-    originalPrice: 112_000,
-    image: require('../assets/images/book1.jpg'),
-    quantity: 1,
-  },
-  {
-    id: '2',
-    title: 'Nhà Giả Kim',
-    author: 'Paulo Coelho',
-    price: 55_000,
-    originalPrice: 74_000,
-    image: require('../assets/images/book2.jpg'),
-    quantity: 2,
-  },
-  {
-    id: '3',
-    title: 'Tôi thấy hoa vàng trên cỏ xanh',
-    author: 'Nguyễn Nhật Ánh',
-    price: 65_000,
-    image: require('../assets/images/book3.jpg'),
-    quantity: 1,
-  },
-];
 
 const SAVED_ADDRESS: Address = {
   name: 'Nguyễn Văn An',
@@ -223,6 +195,20 @@ function SuccessModal({ visible, orderId, total, onClose }: {
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function CheckoutScreen() {
+  const { items: paramsItems } = useLocalSearchParams<{ items?: string }>();
+  const { items: cartItems } = useCart();
+  
+  const ORDER_ITEMS = useMemo(() => {
+    if (paramsItems) {
+      try {
+        return JSON.parse(paramsItems);
+      } catch (e) {
+        return [];
+      }
+    }
+    return cartItems;
+  }, [paramsItems, cartItems]);
+
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cod');
   const [note, setNote] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);

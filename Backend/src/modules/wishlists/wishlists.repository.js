@@ -35,7 +35,7 @@ export class WishlistsRepository {
 
   async add(userId, bookId) {
     await sequelize.query(`
-      INSERT INTO wishlists (user_id, book_id) VALUES (:userId, :bookId) ON CONFLICT DO NOTHING
+      INSERT INTO wishlists (user_id, book_id) VALUES (:userId, :bookId)
     `, { replacements: { userId, bookId } })
   }
 

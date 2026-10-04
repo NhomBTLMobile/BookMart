@@ -9,7 +9,7 @@ export const wishlistService = {
       return { success: false, data: [] };
     }
   },
-  toggleWishlist: async (bookId: number) => {
+  toggleWishlist: async (bookId: string) => {
     try {
       const response = await api.post('/wishlists', { book_id: bookId });
       return response.data;

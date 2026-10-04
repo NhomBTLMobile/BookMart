@@ -37,7 +37,7 @@ export default function WishlistScreen() {
     }, [])
   );
 
-  const handleRemove = async (bookId: number) => {
+  const handleRemove = async (bookId: string) => {
     // Optimistic UI update
     setWishlist(prev => prev.filter(b => b.id !== bookId));
     await wishlistService.toggleWishlist(bookId);
@@ -77,7 +77,7 @@ export default function WishlistScreen() {
                 style={styles.bookCardOverrides}
                 image={item.image_url ? { uri: item.image_url } : require('@/assets/images/book1.jpg')}
                 title={item.title}
-                author={item.authors && item.authors.length > 0 ? item.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
+                author={item.authors && item.authors.length > 0 ? item.authors.map((a: any) => a?.name).filter(Boolean).join(', ') : 'Đang cập nhật'}
                 price={formatPrice(item.sale_price)}
                 originalPrice={parseFloat(item.original_price) > parseFloat(item.sale_price) ? formatPrice(item.original_price) : undefined}
                 rating={parseFloat(item.avg_rating) || 5.0}
