@@ -208,6 +208,9 @@ export default function ProfileScreen() {
                     else if (item.id === 'reviews') router.push('/my-reviews');
                     else if (item.id === 'edit') router.push('/edit-profile');
                     else if (item.id === 'password') router.push('/change-password');
+                    else if (item.id === 'support') router.push('/support');
+                    else if (item.id === 'about') router.push('/about');
+                    else if (item.id === 'address') router.push('/addresses');
                     else if (item.id === 'logout') handleLogout();
                     else Alert.alert('Thông báo', 'Tính năng đang được phát triển!');
                   }} 

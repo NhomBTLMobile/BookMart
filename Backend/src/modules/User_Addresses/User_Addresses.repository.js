@@ -2,28 +2,21 @@ import { Op } from 'sequelize'
 import UserAddresses from './user_addresses.model.js'
 
 export class UserAddressesRepository {
-  async findAll({ limit, offset, sort, order, search }) {
+  async findAll({ limit, offset, sort, order, search, user_id }) {
     const where = {}
     if (search) {
-      where['label'] = { [Op.iLike]: `%${search}%` }
+      where[Op.or] = [
+        { label: { [Op.iLike]: `%${search}%` } },
+        { recipient_name: { [Op.iLike]: `%${search}%` } },
+        { phone: { [Op.iLike]: `%${search}%` } },
+        { province_name: { [Op.iLike]: `%${search}%` } },
+        { district_name: { [Op.iLike]: `%${search}%` } },
+        { ward_name: { [Op.iLike]: `%${search}%` } },
+      ]
     }
-    if (search) {
-      where['recipient_name'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['phone'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['province_name'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['district_name'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['ward_code'] = { [Op.iLike]: `%${search}%` }
-    }
-    if (search) {
-      where['ward_name'] = { [Op.iLike]: `%${search}%` }
+    
+    if (user_id) {
+      where.user_id = user_id
     }
 
     const sortField = sort || 'id'
@@ -42,10 +35,19 @@ export class UserAddressesRepository {
   }
 
   async create(data) {
+    if (data.is_default && data.user_id) {
+      await UserAddresses.update({ is_default: false }, { where: { user_id: data.user_id } })
+    }
     return UserAddresses.create(data)
   }
 
   async update(id, data) {
+    if (data.is_default) {
+      const addr = await this.findById(id)
+      if (addr && addr.user_id) {
+        await UserAddresses.update({ is_default: false }, { where: { user_id: addr.user_id } })
+      }
+    }
     const [affectedRows] = await UserAddresses.update(data, { where: { id } })
     if (affectedRows === 0) return null
     return this.findById(id)
