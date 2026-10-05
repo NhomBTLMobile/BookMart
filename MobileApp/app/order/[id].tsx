@@ -121,10 +121,11 @@ export default function OrderDetailScreen() {
   let parsedAddress = { name: '', phone: '', address: '' };
   try {
     const p = typeof order.shipping_snapshot === 'string' ? JSON.parse(order.shipping_snapshot) : (order.shipping_snapshot || {});
+    const pAddress = p.full_address || [p.street_address, p.ward, p.district, p.city].filter(Boolean).join(', ') || p.address || '';
     parsedAddress = {
-      name: p.full_name || order.customer_name || '',
+      name: p.full_name || p.recipient_name || order.customer_name || '',
       phone: p.phone || order.customer_phone || '',
-      address: p.full_address || p.street_address || ''
+      address: pAddress
     };
   } catch (e) {}
 
@@ -178,6 +179,11 @@ export default function OrderDetailScreen() {
                 <Image source={{ uri: item.image_url }} style={styles.itemImage} contentFit="cover" />
                 <View style={styles.itemInfo}>
                   <Text style={styles.itemTitle} numberOfLines={2}>{item.item_name}</Text>
+                  {item.isCombo && (
+                    <View style={styles.comboBadge}>
+                      <Text style={styles.comboBadgeText}>COMBO</Text>
+                    </View>
+                  )}
                   <View style={styles.itemPriceRow}>
                     <Text style={styles.itemPrice}>{fmt(item.unit_price)}</Text>
                     <Text style={styles.itemQty}>x{item.quantity}</Text>
@@ -261,8 +267,9 @@ export default function OrderDetailScreen() {
           </TouchableOpacity>
         )}
         {mappedStatus === 'DELIVERED' && (
-          <TouchableOpacity style={styles.primaryBtn}>
-            <Text style={styles.primaryBtnText}>Đánh giá sản phẩm</Text>
+          <TouchableOpacity style={styles.reviewBtn} onPress={() => router.push(`/order-review?orderId=${order.id}`)}>
+            <Ionicons name="star" size={18} color="#fff" style={{ marginRight: 6 }} />
+            <Text style={styles.reviewBtnText}>Đánh giá nhận điểm</Text>
           </TouchableOpacity>
         )}
         {(mappedStatus === 'CANCELLED' || mappedStatus === 'DELIVERED') && (
@@ -342,6 +349,19 @@ const styles = StyleSheet.create({
   itemInfo: { flex: 1, marginLeft: SPACING.md },
   itemTitle: { fontSize: FONT_SIZE.base, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text, marginBottom: 2 },
   itemAuthor: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 8 },
+  comboBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  comboBadgeText: {
+    color: '#2E7D32',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   itemPriceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   itemPrice: { fontSize: FONT_SIZE.sm, color: COLORS.primaryDark, fontWeight: FONT_WEIGHT.bold },
   itemQty: { fontSize: FONT_SIZE.sm, color: COLORS.text, fontWeight: FONT_WEIGHT.medium },
@@ -385,6 +405,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryBtnText: { color: COLORS.white, fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
+  reviewBtn: {
+    backgroundColor: '#FF9800',
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOW.sm,
+  },
+  reviewBtnText: { color: COLORS.white, fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
   cancelBtn: {
     backgroundColor: COLORS.white,
     paddingVertical: SPACING.md,

@@ -64,7 +64,8 @@ export class OrdersRepository {
     const [items] = await sequelize.query(`
       SELECT oi.id, oi.item_name, oi.unit_price, oi.quantity, oi.total_price, oi.book_id, oi.combo_id,
              COALESCE(bi.image_url, c.cover_image_url) as image_url,
-             CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo"
+             CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo",
+             (SELECT COUNT(*) FROM reviews r WHERE r.order_item_id = oi.id) > 0 as "isReviewed"
       FROM order_items oi
       LEFT JOIN book_images bi ON oi.book_id = bi.book_id AND bi.sort_order = 1
       LEFT JOIN combos c ON oi.combo_id = c.id
@@ -72,6 +73,14 @@ export class OrdersRepository {
     `, { replacements: { id } })
     
     order.items = items || []
+    
+    const [pointsResult] = await sequelize.query(`
+      SELECT COUNT(*) as count 
+      FROM loyalty_points_ledger 
+      WHERE type = 'earn_review' AND ref_id = :id
+    `, { replacements: { id } })
+    order.hasEarnedReviewPoints = parseInt(pointsResult[0].count, 10) > 0;
+
     return order
   }
 
@@ -93,7 +102,8 @@ export class OrdersRepository {
     const [items] = await sequelize.query(`
       SELECT oi.id, oi.item_name, oi.unit_price, oi.quantity, oi.total_price, oi.book_id, oi.combo_id,
              COALESCE(bi.image_url, c.cover_image_url) as image_url,
-             CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo"
+             CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo",
+             (SELECT COUNT(*) FROM reviews r WHERE r.order_item_id = oi.id) > 0 as "isReviewed"
       FROM order_items oi
       LEFT JOIN book_images bi ON oi.book_id = bi.book_id AND bi.sort_order = 1
       LEFT JOIN combos c ON oi.combo_id = c.id
@@ -117,7 +127,8 @@ export class OrdersRepository {
       const [items] = await sequelize.query(`
         SELECT oi.id, oi.item_name, oi.unit_price, oi.quantity, oi.total_price, oi.book_id, oi.combo_id, 
                COALESCE(bi.image_url, c.cover_image_url) as image_url,
-               CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo"
+               CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo",
+               (SELECT COUNT(*) FROM reviews r WHERE r.order_item_id = oi.id) > 0 as "isReviewed"
         FROM order_items oi
         LEFT JOIN book_images bi ON oi.book_id = bi.book_id AND bi.sort_order = 1
         LEFT JOIN combos c ON oi.combo_id = c.id
@@ -206,6 +217,34 @@ export class OrdersRepository {
             { is_used: false },
             { where: { user_id: oldOrder.user_id, voucher_id: oldOrder.voucher_id }, transaction }
           );
+        }
+      }
+
+      // Nếu đơn hàng chuyển sang trạng thái đã giao hàng (delivered)
+      if (data.order_status === 'delivered' && oldOrder.order_status !== 'delivered' && oldOrder.user_id) {
+        // Kiểm tra xem đã cộng điểm cho đơn này chưa
+        const existingEarn = await LoyaltyPointsLedger.findOne({
+          where: { user_id: oldOrder.user_id, ref_id: oldOrder.id, type: 'earn_order' },
+          transaction
+        });
+        
+        if (!existingEarn) {
+          const earnedPoints = Math.floor(oldOrder.total_amount / 100);
+          if (earnedPoints > 0) {
+            const user = await Users.findByPk(oldOrder.user_id, { transaction });
+            if (user) {
+              const newBalance = (user.loyalty_points || 0) + earnedPoints;
+              await user.update({ loyalty_points: newBalance }, { transaction });
+              await LoyaltyPointsLedger.create({
+                user_id: oldOrder.user_id,
+                delta: earnedPoints,
+                balance_after: newBalance,
+                type: 'earn_order',
+                ref_id: oldOrder.id,
+                created_at: new Date()
+              }, { transaction });
+            }
+          }
         }
       }
 

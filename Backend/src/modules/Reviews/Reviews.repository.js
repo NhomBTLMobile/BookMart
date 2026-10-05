@@ -1,6 +1,9 @@
 import { Op } from 'sequelize'
 import Reviews from './reviews.model.js'
 import { sequelize } from '../../config/database.js'
+import Users from '../users/users.model.js'
+import LoyaltyPointsLedger from '../loyalty_points_ledger/loyalty_points_ledger.model.js'
+import OrderItems from '../order_items/order_items.model.js'
 
 export class ReviewsRepository {
   async findAll({ limit, offset, sort, order, search, book_id, user_id }) {
@@ -81,7 +84,58 @@ export class ReviewsRepository {
   }
 
   async create(data) {
-    return Reviews.create(data)
+    const transaction = await sequelize.transaction();
+    try {
+      if (data.order_item_id) {
+        const existingReview = await Reviews.findOne({ where: { order_item_id: data.order_item_id }, transaction });
+        if (existingReview) {
+           const err = new Error('Sản phẩm này đã được đánh giá');
+           err.status = 400;
+           throw err;
+        }
+      }
+
+      const review = await Reviews.create(data, { transaction });
+      let pointsAwarded = false;
+      
+      // Tặng 500 điểm khi đánh giá sản phẩm thành công (1 lần duy nhất trên 1 đơn hàng)
+      if (data.user_id && data.order_item_id) {
+        const orderItem = await OrderItems.findByPk(data.order_item_id, { transaction });
+        
+        if (orderItem && orderItem.order_id) {
+          // Kiểm tra xem đã tặng điểm cho ĐƠN HÀNG này chưa
+          const existingEarn = await LoyaltyPointsLedger.findOne({
+            where: { user_id: data.user_id, ref_id: orderItem.order_id, type: 'earn_review' },
+            transaction
+          });
+          
+          if (!existingEarn) {
+            const user = await Users.findByPk(data.user_id, { transaction });
+            if (user) {
+              const earnedPoints = 500;
+              const newBalance = (user.loyalty_points || 0) + earnedPoints;
+              await user.update({ loyalty_points: newBalance }, { transaction });
+              await LoyaltyPointsLedger.create({
+                user_id: data.user_id,
+                delta: earnedPoints,
+                balance_after: newBalance,
+                type: 'earn_review',
+                ref_id: orderItem.order_id, // Lưu ref_id là order_id để kiểm soát
+                created_at: new Date()
+              }, { transaction });
+              pointsAwarded = true;
+            }
+          }
+        }
+      }
+      
+      await transaction.commit();
+      review.dataValues.pointsAwarded = pointsAwarded;
+      return review;
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
   }
 
   async update(id, data) {

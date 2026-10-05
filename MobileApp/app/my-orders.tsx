@@ -76,114 +76,13 @@ const DB_STATUS_MAP: Record<string, OrderStatus> = {
   cancelled: 'CANCELLED',
 };
 
-// ─── Review Modal ─────────────────────────────────────────────────
-function ReviewModal({
-  visible,
-  order,
-  onClose,
-  onSubmit,
-}: {
-  visible: boolean;
-  order: Order | null;
-  onClose: () => void;
-  onSubmit: (rating: number, comment: string) => Promise<void>;
-}) {
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!comment.trim()) {
-      Alert.alert('Lưu ý', 'Vui lòng nhập nội dung đánh giá');
-      return;
-    }
-    setSubmitting(true);
-    await onSubmit(rating, comment);
-    setSubmitting(false);
-    setRating(5);
-    setComment('');
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <View style={rv.overlay}>
-        <View style={rv.sheet}>
-          <View style={rv.sheetHeader}>
-            <Text style={rv.sheetTitle}>Đánh giá đơn hàng</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={8}>
-              <Ionicons name="close" size={24} color={COLORS.text} />
-            </TouchableOpacity>
-          </View>
-
-          {order && order.items.length > 0 && (
-            <View style={rv.productPreview}>
-              <Image source={order.items[0].image} style={rv.previewImg} contentFit="cover" />
-              <Text style={rv.previewTitle} numberOfLines={2}>{order.items[0].title}</Text>
-            </View>
-          )}
-
-          {/* Star Rating */}
-          <Text style={rv.label}>Chất lượng sản phẩm</Text>
-          <View style={rv.stars}>
-            {[1, 2, 3, 4, 5].map(s => (
-              <TouchableOpacity key={s} onPress={() => setRating(s)} hitSlop={6}>
-                <Ionicons
-                  name={s <= rating ? 'star' : 'star-outline'}
-                  size={34}
-                  color={s <= rating ? '#FFB300' : COLORS.border}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Text style={rv.ratingLabel}>
-            {['', 'Rất tệ', 'Tệ', 'Bình thường', 'Tốt', 'Tuyệt vời!'][rating]}
-          </Text>
-
-          {/* Comment */}
-          <Text style={rv.label}>Nhận xét của bạn</Text>
-          <TextInput
-            style={rv.input}
-            placeholder="Chia sẻ cảm nhận về sản phẩm..."
-            placeholderTextColor={COLORS.textHint}
-            value={comment}
-            onChangeText={setComment}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-
-          <View style={rv.pointsNote}>
-            <Ionicons name="gift-outline" size={16} color={COLORS.primary} />
-            <Text style={rv.pointsText}>Viết đánh giá để nhận <Text style={{ fontWeight: 'bold', color: COLORS.primaryDark }}>+{rating * 10} điểm</Text> thưởng!</Text>
-          </View>
-
-          <TouchableOpacity
-            style={[rv.submitBtn, submitting && { opacity: 0.7 }]}
-            onPress={handleSubmit}
-            disabled={submitting}
-            activeOpacity={0.82}
-          >
-            {submitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="send-outline" size={16} color="#fff" />
-                <Text style={rv.submitBtnText}>Gửi đánh giá</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
-}
+// ReviewModal removed. Utilizing order-review screen instead.
 
 // ─── Main Screen ─────────────────────────────────────────────────
 export default function MyOrdersScreen() {
   const [activeTab, setActiveTab] = useState<OrderStatus>('PENDING');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
   const { addToCart } = useCart();
 
   const fetchOrders = useCallback(async () => {
@@ -263,25 +162,7 @@ export default function MyOrdersScreen() {
     ]);
   };
 
-  // ── Gửi đánh giá ──
-  const handleSubmitReview = async (rating: number, comment: string) => {
-    if (!reviewOrder) return;
-    try {
-      // Submit review for each book item
-      const bookItems = reviewOrder.items.filter(i => !i.isCombo && i.book_id);
-      for (const item of bookItems) {
-        await api.post('/reviews', {
-          book_id: item.book_id,
-          rating,
-          comment,
-        });
-      }
-      Alert.alert('Cảm ơn bạn! 🎉', `Đánh giá đã được gửi. Bạn nhận được +${rating * 10} điểm thưởng!`);
-      setReviewOrder(null);
-    } catch (e: any) {
-      Alert.alert('Lỗi', e.response?.data?.message || 'Không thể gửi đánh giá');
-    }
-  };
+  // Gửi đánh giá removed, using separate screen
 
   const filteredOrders = orders.filter(o => o.status === activeTab);
 
@@ -299,9 +180,14 @@ export default function MyOrdersScreen() {
       >
         {/* ── Status Strip ── */}
         <View style={[s.statusStrip, { backgroundColor: config.bg }]}>
-          <Ionicons name={config.icon as any} size={14} color={config.color} />
-          <Text style={[s.statusLabel, { color: config.color }]}>{config.label}</Text>
-          <Text style={s.orderId}>#{item.id}</Text>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Ionicons name={config.icon as any} size={14} color={config.color} />
+            <Text style={[s.statusLabel, { color: config.color }]}>{config.label}</Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={s.orderId}>#{item.id}</Text>
+            <Text style={s.dateTextHeader}>{item.date}</Text>
+          </View>
         </View>
 
         {/* ── Product Preview ── */}
@@ -327,11 +213,9 @@ export default function MyOrdersScreen() {
 
         {/* ── Footer ── */}
         <View style={s.footer}>
-          <View>
-            <Text style={s.dateText}>{item.date}</Text>
-            <Text style={s.totalText}>
-              Tổng: <Text style={s.totalAmount}>{fmt(item.total)}</Text>
-            </Text>
+          <View style={s.totalRow}>
+            <Text style={s.totalText}>Thành tiền:</Text>
+            <Text style={s.totalAmount}>{fmt(item.total)}</Text>
           </View>
 
           <View style={s.actions}>
@@ -346,18 +230,6 @@ export default function MyOrdersScreen() {
               </TouchableOpacity>
             )}
 
-            {/* Đánh giá — chỉ sau khi giao thành công */}
-            {item.status === 'DELIVERED' && (
-              <TouchableOpacity
-                style={s.btnPrimary}
-                onPress={() => setReviewOrder(item)}
-                activeOpacity={0.82}
-              >
-                <Ionicons name="star-outline" size={13} color="#fff" />
-                <Text style={s.btnPrimaryText}>Đánh giá</Text>
-              </TouchableOpacity>
-            )}
-
             {/* Mua lại — sau khi giao hoặc đã hủy */}
             {(item.status === 'DELIVERED' || item.status === 'CANCELLED') && (
               <TouchableOpacity
@@ -367,6 +239,18 @@ export default function MyOrdersScreen() {
               >
                 <Ionicons name="refresh-outline" size={13} color={COLORS.textSecondary} />
                 <Text style={s.btnOutlineText}>Mua lại</Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Đánh giá — chỉ sau khi giao thành công */}
+            {item.status === 'DELIVERED' && (
+              <TouchableOpacity
+                style={s.btnReview}
+                onPress={() => router.push(`/order-review?orderId=${item.internalId}` as any)}
+                activeOpacity={0.82}
+              >
+                <Ionicons name="star" size={13} color="#fff" />
+                <Text style={s.btnReviewText}>Đánh giá nhận điểm</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -440,13 +324,6 @@ export default function MyOrdersScreen() {
         />
       )}
 
-      {/* ── Review Modal ── */}
-      <ReviewModal
-        visible={reviewOrder !== null}
-        order={reviewOrder}
-        onClose={() => setReviewOrder(null)}
-        onSubmit={handleSubmitReview}
-      />
     </SafeAreaView>
   );
 }
@@ -501,13 +378,13 @@ const s = StyleSheet.create({
   },
   statusStrip: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
-  statusLabel: { fontSize: 13, fontWeight: FONT_WEIGHT.semibold, flex: 1 },
-  orderId: { fontSize: 11, color: COLORS.textSecondary, fontWeight: FONT_WEIGHT.medium },
+  statusLabel: { fontSize: 13, fontWeight: FONT_WEIGHT.semibold },
+  orderId: { fontSize: 12, color: COLORS.text, fontWeight: FONT_WEIGHT.bold },
+  dateTextHeader: { fontSize: 10, color: COLORS.textSecondary, marginTop: 2 },
 
   productRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, paddingTop: SPACING.sm },
   productImg: { width: 60, height: 80, borderRadius: RADIUS.sm, backgroundColor: COLORS.background },
@@ -521,17 +398,14 @@ const s = StyleSheet.create({
   divider: { height: 1, backgroundColor: COLORS.divider, marginHorizontal: SPACING.md },
 
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: SPACING.md,
     paddingTop: SPACING.sm,
   },
-  dateText: { fontSize: 11, color: COLORS.textSecondary, marginBottom: 2 },
-  totalText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
-  totalAmount: { color: COLORS.primaryDark, fontWeight: FONT_WEIGHT.bold, fontSize: FONT_SIZE.base },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
+  totalText: { fontSize: FONT_SIZE.sm, color: COLORS.text },
+  totalAmount: { color: COLORS.primaryDark, fontWeight: FONT_WEIGHT.bold, fontSize: FONT_SIZE.lg },
 
-  actions: { flexDirection: 'row', gap: SPACING.sm, alignItems: 'center' },
+  actions: { flexDirection: 'row', gap: SPACING.sm, justifyContent: 'flex-end', alignItems: 'center' },
   btnPrimary: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: COLORS.primary,
@@ -546,6 +420,14 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.md, backgroundColor: COLORS.white,
   },
   btnOutlineText: { color: COLORS.textSecondary, fontSize: 13, fontWeight: FONT_WEIGHT.medium },
+  btnReview: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#FF9800', // Khác biệt, thu hút sự chú ý
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: RADIUS.md,
+    ...SHADOW.sm,
+  },
+  btnReviewText: { color: '#fff', fontSize: 13, fontWeight: FONT_WEIGHT.bold },
 
   // Empty
   emptyState: { alignItems: 'center', paddingTop: 80, paddingHorizontal: SPACING.xl },
@@ -560,49 +442,4 @@ const s = StyleSheet.create({
   shopBtnText: { color: '#fff', fontWeight: FONT_WEIGHT.bold, fontSize: FONT_SIZE.base },
 });
 
-// ─── Review Modal Styles ──────────────────────────────────────────
-const rv = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: SPACING.xl,
-    paddingBottom: Platform.OS === 'ios' ? 40 : SPACING.xl,
-  },
-  sheetHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  sheetTitle: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: COLORS.text },
 
-  productPreview: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.lg, backgroundColor: COLORS.background, padding: SPACING.sm, borderRadius: RADIUS.md },
-  previewImg: { width: 48, height: 64, borderRadius: RADIUS.sm },
-  previewTitle: { flex: 1, fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text },
-
-  label: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textSecondary, marginBottom: SPACING.sm },
-  stars: { flexDirection: 'row', gap: 8, marginBottom: 6 },
-  ratingLabel: { fontSize: FONT_SIZE.base, fontWeight: FONT_WEIGHT.bold, color: '#FFB300', marginBottom: SPACING.md, minHeight: 22 },
-
-  input: {
-    borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    minHeight: 90, fontSize: FONT_SIZE.base,
-    color: COLORS.text,
-    marginBottom: SPACING.md,
-  },
-
-  pointsNote: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#FFF8E1', borderRadius: RADIUS.sm,
-    padding: SPACING.sm, marginBottom: SPACING.lg,
-  },
-  pointsText: { fontSize: FONT_SIZE.sm, color: COLORS.text, flex: 1 },
-
-  submitBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.md, paddingVertical: 14,
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8,
-  },
-  submitBtnText: { color: '#fff', fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
-});

@@ -21,6 +21,10 @@ const Reviews = sequelize.define(
       type: DataTypes.UUID,
       allowNull: true,
     },
+    combo_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
     rating: {
       type: DataTypes.SMALLINT,
       allowNull: false,
@@ -45,12 +49,15 @@ const Reviews = sequelize.define(
     hooks: {
       afterSave: async (review, options) => {
         if (review.book_id) await updateBookRating(review.book_id)
+        if (review.combo_id) await updateComboRating(review.combo_id)
       },
       afterUpdate: async (review, options) => {
         if (review.book_id) await updateBookRating(review.book_id)
+        if (review.combo_id) await updateComboRating(review.combo_id)
       },
       afterDestroy: async (review, options) => {
         if (review.book_id) await updateBookRating(review.book_id)
+        if (review.combo_id) await updateComboRating(review.combo_id)
       }
     }
   }
@@ -68,6 +75,21 @@ async function updateBookRating(bookId) {
     await sequelize.query(query, { replacements: { bookId } })
   } catch (err) {
     console.error('Lỗi khi cập nhật rating cho sách:', err)
+  }
+}
+
+async function updateComboRating(comboId) {
+  const query = `
+    UPDATE combos
+    SET 
+      avg_rating = COALESCE((SELECT AVG(rating) FROM reviews WHERE combo_id = :comboId), 0),
+      review_count = (SELECT COUNT(*) FROM reviews WHERE combo_id = :comboId)
+    WHERE id = :comboId;
+  `
+  try {
+    await sequelize.query(query, { replacements: { comboId } })
+  } catch (err) {
+    console.error('Lỗi khi cập nhật rating cho combo:', err)
   }
 }
 

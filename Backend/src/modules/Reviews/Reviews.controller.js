@@ -28,8 +28,12 @@ export const getById = async (req, res, next) => {
 
 export const create = async (req, res, next) => {
   try {
-    const { error, value } = createReviewsSchema.validate(req.body)
-    if (error) return sendError(res, error.details[0].message, 400)
+    const payload = { ...req.body, user_id: req.user?.id }
+    const { error, value } = createReviewsSchema.validate(payload)
+    if (error) {
+      console.error('Validation error:', error.details[0].message, payload)
+      return sendError(res, error.details[0].message, 400)
+    }
     const data = await service.create(value)
     sendCreated(res, 'Tạo thành công', data)
   } catch (err) { next(err) }

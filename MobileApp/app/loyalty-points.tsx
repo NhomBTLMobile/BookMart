@@ -63,13 +63,18 @@ export default function LoyaltyPointsScreen() {
     let iconName: keyof typeof Ionicons.glyphMap = 'star';
     let title = 'Nhận điểm thưởng';
     
-    if (item.type === 'EARN') {
+    const type = (item.type || '').toLowerCase();
+    
+    if (type === 'earn_order') {
       iconName = 'add-circle';
       title = 'Điểm từ đơn hàng';
-    } else if (item.type === 'REDEEM') {
+    } else if (type === 'earn_review') {
+      iconName = 'add-circle';
+      title = 'Đánh giá sản phẩm';
+    } else if (type.includes('redeem')) {
       iconName = 'remove-circle';
-      title = 'Dùng điểm thanh toán';
-    } else if (item.type === 'REFUND') {
+      title = type === 'redeem_voucher' ? 'Đổi Voucher' : 'Dùng điểm thanh toán';
+    } else if (type.includes('refund')) {
       iconName = 'refresh-circle';
       title = 'Hoàn điểm đơn hủy';
     }
