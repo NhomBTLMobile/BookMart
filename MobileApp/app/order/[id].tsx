@@ -40,6 +40,8 @@ const MOCK_ORDER_DETAIL = {
 
 const STATUS_CONFIG: Record<string, { color: string; label: string; icon: string; desc: string }> = {
   PENDING: { color: '#E5A72A', label: 'Chờ xác nhận', icon: 'time', desc: 'Đơn hàng đang chờ người bán xác nhận.' },
+  CONFIRMED: { color: '#2E7D32', label: 'Đã xác nhận', icon: 'checkmark-done-circle', desc: 'Đơn hàng đã được xác nhận và chờ chuẩn bị.' },
+  PACKING: { color: '#0277BD', label: 'Đang chuẩn bị hàng', icon: 'cube', desc: 'Người bán đang đóng gói đơn hàng của bạn.' },
   DELIVERING: { color: '#1A56DB', label: 'Đang giao hàng', icon: 'bicycle', desc: 'Đơn hàng đang trên đường giao đến bạn.' },
   DELIVERED: { color: COLORS.primaryDark, label: 'Giao hàng thành công', icon: 'checkmark-circle', desc: 'Đơn hàng đã được giao thành công.' },
   CANCELLED: { color: '#E53935', label: 'Đã hủy', icon: 'close-circle', desc: 'Đơn hàng đã bị hủy.' },
@@ -104,20 +106,25 @@ export default function OrderDetailScreen() {
   if (loading || !order) return <SafeAreaView style={styles.container} />;
 
   // Map status
-  const mappedStatus = order.order_status?.toUpperCase() === 'PENDING' ? 'PENDING' :
-                       order.order_status?.toUpperCase() === 'PROCESSING' ? 'DELIVERING' :
-                       order.order_status?.toUpperCase() === 'COMPLETED' ? 'DELIVERED' : 'CANCELLED';
+  let mappedStatus = 'PENDING';
+  const os = order.order_status?.toLowerCase() || '';
+  if (os === 'pending') mappedStatus = 'PENDING';
+  else if (os === 'confirmed') mappedStatus = 'CONFIRMED';
+  else if (os === 'packing') mappedStatus = 'PACKING';
+  else if (os === 'shipping') mappedStatus = 'DELIVERING';
+  else if (os === 'delivered') mappedStatus = 'DELIVERED';
+  else if (os === 'cancelled' || os === 'returned') mappedStatus = 'CANCELLED';
   
   const statusConfig = STATUS_CONFIG[mappedStatus] || STATUS_CONFIG.PENDING;
 
   // Xử lý địa chỉ
   let parsedAddress = { name: '', phone: '', address: '' };
   try {
-    const p = typeof order.shipping_address === 'string' ? JSON.parse(order.shipping_address) : order.shipping_address;
+    const p = typeof order.shipping_snapshot === 'string' ? JSON.parse(order.shipping_snapshot) : (order.shipping_snapshot || {});
     parsedAddress = {
-      name: p.receiver_name || '',
-      phone: p.phone_number || '',
-      address: p.address || ''
+      name: p.full_name || order.customer_name || '',
+      phone: p.phone || order.customer_phone || '',
+      address: p.full_address || p.street_address || ''
     };
   } catch (e) {}
 
@@ -212,16 +219,22 @@ export default function OrderDetailScreen() {
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tạm tính</Text>
-            <Text style={styles.summaryValue}>{fmt(order.total_amount - (order.shipping_fee || 0) + (order.voucher_discount || 0))}</Text>
+            <Text style={styles.summaryValue}>{fmt(order.subtotal || 0)}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Phí vận chuyển</Text>
             <Text style={styles.summaryValue}>{fmt(order.shipping_fee || 0)}</Text>
           </View>
-          {Number(order.voucher_discount) > 0 && (
+          {Number(order.discount_amount) > 0 && (
             <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Giảm giá</Text>
-              <Text style={[styles.summaryValue, { color: COLORS.success }]}>-{fmt(order.voucher_discount)}</Text>
+              <Text style={styles.summaryLabel}>Voucher giảm giá</Text>
+              <Text style={[styles.summaryValue, { color: COLORS.success }]}>-{fmt(order.discount_amount)}</Text>
+            </View>
+          )}
+          {Number(order.points_discount) > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Dùng điểm thưởng</Text>
+              <Text style={[styles.summaryValue, { color: COLORS.success }]}>-{fmt(order.points_discount)}</Text>
             </View>
           )}
           
