@@ -134,6 +134,21 @@ export const calculateFee = async (req, res, next) => {
 
     const ghnRes = await ghnCalculateFee(feeData);
     
+    // ĐIỀU CHỈNH MÔI TRƯỜNG DEV: Giảm cước gốc của API Test theo tỷ lệ phần trăm
+    // Mức phí Dev thường cao gấp đôi thực tế, ta nhân với hệ số 0.48 (tương đương 48% giá dev)
+    // Cách này giúp giá nhảy cực kỳ chuẩn xác theo khoảng cách và cân nặng thực.
+    if (ghnRes && ghnRes.data && ghnRes.data.total) {
+      let adjustedFee = Math.round((ghnRes.data.total * 0.48) / 100) * 100;
+      
+      // Chốt chặn nhỏ nhất
+      if (adjustedFee < 15500) adjustedFee = 15500;
+      
+      ghnRes.data.total = adjustedFee;
+      if (ghnRes.data.service_fee) {
+        ghnRes.data.service_fee = adjustedFee;
+      }
+    }
+
     sendSuccess(res, 'Tính phí thành công', ghnRes.data);
   } catch (err) { next(err) }
 }
