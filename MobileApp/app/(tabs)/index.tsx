@@ -353,7 +353,7 @@ export default function HomeScreen() {
                 author={book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
                 price={formatPrice(book.sale_price)}
                 originalPrice={parseFloat(book.original_price) > parseFloat(book.sale_price) ? formatPrice(book.original_price) : undefined}
-                rating={parseFloat(book.avg_rating) || 5.0}
+                rating={parseFloat(book.avg_rating) || 0}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
                 onAddToCart={() => addContextCart({
@@ -402,7 +402,7 @@ export default function HomeScreen() {
                 author={book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
                 price={formatPrice(book.sale_price)}
                 originalPrice={parseFloat(book.original_price) > parseFloat(book.sale_price) ? formatPrice(book.original_price) : undefined}
-                rating={parseFloat(book.avg_rating) || 4.9}
+                rating={parseFloat(book.avg_rating) || 0}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
                 onAddToCart={() => addContextCart({
@@ -434,7 +434,7 @@ export default function HomeScreen() {
                 author={book.authors && book.authors.length > 0 ? book.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
                 price={formatPrice(book.sale_price)}
                 originalPrice={parseFloat(book.original_price) > parseFloat(book.sale_price) ? formatPrice(book.original_price) : undefined}
-                rating={parseFloat(book.avg_rating) || 4.8}
+                rating={parseFloat(book.avg_rating) || 0}
                 discount={parseFloat(book.original_price) > parseFloat(book.sale_price) ? `-${Math.round((1 - (parseFloat(book.sale_price) / parseFloat(book.original_price))) * 100)}%` : undefined}
                 onPress={() => router.push(`/book/${book.id}`)}
                 onAddToCart={() => addContextCart({
@@ -559,7 +559,7 @@ export default function HomeScreen() {
         author={item.authors && item.authors.length > 0 ? item.authors.map((a: any) => a.name).join(', ') : 'Đang cập nhật'}
         price={formatPrice(item.sale_price)}
         originalPrice={parseFloat(item.original_price) > parseFloat(item.sale_price) ? formatPrice(item.original_price) : undefined}
-        rating={parseFloat(item.avg_rating) || 5.0}
+        rating={parseFloat(item.avg_rating) || 0}
         discount={parseFloat(item.original_price) > parseFloat(item.sale_price) ? `-${Math.round((1 - (parseFloat(item.sale_price) / parseFloat(item.original_price))) * 100)}%` : undefined}
         onPress={() => router.push(`/book/${item.id}`)}
         onAddToCart={() => addContextCart({

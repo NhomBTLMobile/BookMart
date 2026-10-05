@@ -61,8 +61,10 @@ export default function BookCard({
 
       {!isCombo && (
         <View style={styles.ratingContainer}>
-          <Ionicons name="star" size={14} color="#E5A72A" />
-          <Text style={styles.rating}>{rating}</Text>
+          <Ionicons name="star" size={14} color={rating > 0 ? "#E5A72A" : COLORS.textHint} />
+          <Text style={[styles.rating, rating === 0 && { color: COLORS.textHint }]}>
+            {rating > 0 ? rating.toFixed(1) : 'Chưa có'}
+          </Text>
         </View>
       )}
 

@@ -42,7 +42,30 @@ const Reviews = sequelize.define(
     tableName: 'reviews',
     timestamps: false,
     underscored: true,
+    hooks: {
+      afterSave: async (review, options) => {
+        if (review.book_id) await updateBookRating(review.book_id)
+      },
+      afterDestroy: async (review, options) => {
+        if (review.book_id) await updateBookRating(review.book_id)
+      }
+    }
   }
 )
+
+async function updateBookRating(bookId) {
+  const query = `
+    UPDATE books
+    SET 
+      avg_rating = COALESCE((SELECT AVG(rating) FROM reviews WHERE book_id = :bookId), 0),
+      review_count = (SELECT COUNT(*) FROM reviews WHERE book_id = :bookId)
+    WHERE id = :bookId;
+  `
+  try {
+    await sequelize.query(query, { replacements: { bookId } })
+  } catch (err) {
+    console.error('Lỗi khi cập nhật rating cho sách:', err)
+  }
+}
 
 export default Reviews
