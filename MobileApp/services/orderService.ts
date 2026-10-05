@@ -9,4 +9,13 @@ export const orderService = {
       return { success: false, data: [] };
     }
   },
+  
+  createOrder: async (data: any) => {
+    try {
+      const response = await api.post('/orders', data);
+      return response.data;
+    } catch (e: any) {
+      return { success: false, message: e.response?.data?.message || 'Có lỗi xảy ra' };
+    }
+  }
 };

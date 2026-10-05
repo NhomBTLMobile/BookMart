@@ -11,11 +11,12 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SHADOW, SPACING } from '../constants/colors';
 import { addressService } from '../services/addressService';
 
 export default function AddressesScreen() {
+  const { mode } = useLocalSearchParams<{ mode: string }>();
   const [addresses, setAddresses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -72,8 +73,19 @@ export default function AddressesScreen() {
     }
   };
 
+  const handleSelect = (item: any) => {
+    if (mode === 'select') {
+      addressService.setSelectedAddressId(item.id);
+      router.back();
+    }
+  };
+
   const renderItem = ({ item }: { item: any }) => (
-    <View style={styles.addressCard}>
+    <TouchableOpacity 
+      style={[styles.addressCard, mode === 'select' && styles.addressCardSelectable]}
+      activeOpacity={mode === 'select' ? 0.7 : 1}
+      onPress={() => handleSelect(item)}
+    >
       <View style={styles.cardHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
           <View style={styles.labelBadge}>
@@ -113,7 +125,7 @@ export default function AddressesScreen() {
           <Text style={styles.setDefaultText}>Thiết lập mặc định</Text>
         </TouchableOpacity>
       )}
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -182,6 +194,10 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     marginBottom: SPACING.md,
     ...SHADOW.sm,
+  },
+  addressCardSelectable: {
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
   cardHeader: {
     flexDirection: 'row',

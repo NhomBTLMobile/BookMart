@@ -1,7 +1,11 @@
 import { api } from './api';
 import * as SecureStore from 'expo-secure-store';
 
+let selectedAddressId: string | null = null;
+
 export const addressService = {
+  setSelectedAddressId: (id: string | null) => { selectedAddressId = id; },
+  getSelectedAddressId: () => selectedAddressId,
   getMyAddresses: async () => {
     try {
       const userStr = await SecureStore.getItemAsync('user');

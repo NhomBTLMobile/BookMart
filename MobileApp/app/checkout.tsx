@@ -18,9 +18,12 @@ import {
   SPACING,
 } from '@/constants/colors';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useRef, useState, useMemo } from 'react';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useRef, useState, useMemo, useCallback } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import { useCart } from '../context/CartContext';
+import { addressService } from '../services/addressService';
+import { orderService } from '../services/orderService';
 import {
   Alert,
   Animated,
@@ -34,6 +37,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator
 } from 'react-native';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -59,14 +63,7 @@ type Address = {
 };
 
 
-const SAVED_ADDRESS: Address = {
-  name: 'Nguyễn Văn An',
-  phone: '0901 234 567',
-  address: '123 Đường Lê Lợi',
-  ward: 'Phường Bến Nghé',
-  district: 'Quận 1',
-  city: 'TP. Hồ Chí Minh',
-};
+// Removed SAVED_ADDRESS
 
 const PAYMENT_OPTIONS: { id: PaymentMethod; label: string; sub: string; icon: string; color: string }[] = [
   { id: 'cod',    label: 'Tiền mặt (COD)', sub: 'Thanh toán khi nhận hàng',    icon: 'cash-outline',   color: '#3E9B4F' },
@@ -212,17 +209,52 @@ export default function CheckoutScreen() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethod>('cod');
   const [note, setNote] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
-  const [orderId] = useState(() => Math.random().toString(36).slice(2, 8).toUpperCase());
+  const [address, setAddress] = useState<any>(null);
+  const [loadingAddress, setLoadingAddress] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchAddress = async () => {
+        try {
+          const res = await addressService.getMyAddresses();
+          if (res && res.length > 0) {
+            const selectedId = addressService.getSelectedAddressId();
+            if (selectedId) {
+              const selectedAddr = res.find((a: any) => a.id === selectedId);
+              if (selectedAddr) {
+                setAddress(selectedAddr);
+                return;
+              }
+            }
+            const defaultAddr = res.find((a: any) => a.is_default) || res[0];
+            setAddress(defaultAddr);
+          } else {
+            setAddress(null);
+          }
+        } catch(e) {
+        } finally {
+          setLoadingAddress(false);
+        }
+      };
+      fetchAddress();
+    }, [])
+  );
 
   // ── Tính tổng ──
-  const subtotal = ORDER_ITEMS.reduce((sum, it) => sum + it.price * it.quantity, 0);
-  const originalTotal = ORDER_ITEMS.reduce((sum, it) => sum + (it.originalPrice ?? it.price) * it.quantity, 0);
+  const subtotal = ORDER_ITEMS.reduce((sum: any, it: any) => sum + it.price * it.quantity, 0);
+  const originalTotal = ORDER_ITEMS.reduce((sum: any, it: any) => sum + (it.originalPrice ?? it.price) * it.quantity, 0);
   const saved = originalTotal - subtotal;
   const shippingFee = subtotal >= 200_000 ? 0 : 30_000;
   const total = subtotal + shippingFee;
-  const totalQty = ORDER_ITEMS.reduce((s, i) => s + i.quantity, 0);
+  const totalQty = ORDER_ITEMS.reduce((s: any, i: any) => s + i.quantity, 0);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (!address) {
+      Alert.alert('Lỗi', 'Vui lòng thêm địa chỉ giao hàng trước khi thanh toán');
+      return;
+    }
+    
     Alert.alert(
       'Xác nhận đặt hàng',
       `Tổng thanh toán: ${fmt(total)}\nPhương thức: ${PAYMENT_OPTIONS.find(p => p.id === selectedPayment)?.label}`,
@@ -230,7 +262,64 @@ export default function CheckoutScreen() {
         { text: 'Quay lại', style: 'cancel' },
         { 
           text: 'Đặt hàng', 
-          onPress: () => router.replace({ pathname: '/order-success', params: { orderId, total: total.toString() } }) 
+          onPress: async () => {
+            setIsSubmitting(true);
+            try {
+              const userStr = await SecureStore.getItemAsync('user');
+              const user = userStr ? JSON.parse(userStr) : null;
+              
+              const itemsPayload = ORDER_ITEMS.map((i: any) => ({
+                book_id: i.isCombo ? null : i.id, // Support combo vs book
+                combo_id: i.isCombo ? i.id : null,
+                item_name: i.title,
+                unit_price: i.price,
+                quantity: i.quantity,
+                total_price: i.price * i.quantity
+              }));
+              
+              const payload = {
+                order_code: `ORD-${Date.now()}`,
+                user_id: user?.id,
+                address_id: address.id,
+                shipping_snapshot: {
+                  full_name: address.recipient_name,
+                  phone: address.phone,
+                  street_address: address.street_address,
+                  ward: address.ward_name,
+                  district: address.district_name,
+                  city: address.province_name,
+                  ward_code: address.ward_code,
+                  district_id: address.district_id
+                },
+                subtotal,
+                shipping_fee: shippingFee,
+                discount_amount: saved,
+                total_amount: total,
+                payment_method: selectedPayment,
+                payment_status: 'unpaid',
+                order_status: 'pending',
+                items: itemsPayload
+              };
+              
+              const res = await orderService.createOrder(payload);
+              setIsSubmitting(false);
+              
+              if (res.success !== false) {
+                // If the user bought from cart, we should clear it, but currently we don't have a way to know 
+                // if it's from cart or buy now unless we check paramsItems
+                // For simplicity, we just navigate.
+                router.replace({ 
+                  pathname: '/order-success', 
+                  params: { orderId: res.data?.order_code || payload.order_code, total: total.toString() } 
+                });
+              } else {
+                Alert.alert('Lỗi', res.message || 'Không thể tạo đơn hàng');
+              }
+            } catch(e) {
+              setIsSubmitting(false);
+              Alert.alert('Lỗi', 'Đã xảy ra lỗi khi tạo đơn');
+            }
+          }
         },
       ]
     );
@@ -270,24 +359,57 @@ export default function CheckoutScreen() {
           <View style={s.card}>
             <SectionHeader icon="location-outline" title="Địa chỉ giao hàng" />
 
-            <View style={s.addressBlock}>
-              <View style={s.addressNameRow}>
-                <Ionicons name="person-circle-outline" size={18} color={COLORS.textSecondary} />
-                <Text style={s.addressName}>{SAVED_ADDRESS.name}</Text>
-                <View style={s.defaultBadge}>
-                  <Text style={s.defaultBadgeText}>Mặc định</Text>
+            {loadingAddress ? (
+              <ActivityIndicator size="small" color={COLORS.primary} style={{ marginVertical: 20 }} />
+            ) : address ? (
+              <View style={s.addressBlock}>
+                <View style={s.addressHeader}>
+                  <View style={s.addressIconRow}>
+                    <Ionicons name="person" size={14} color={COLORS.textSecondary} />
+                    <Text style={s.addressName}>{address.recipient_name}</Text>
+                  </View>
+                  <View style={s.addressIconRow}>
+                    <Ionicons name="call" size={14} color={COLORS.textSecondary} />
+                    <Text style={s.addressPhone}>{address.phone}</Text>
+                  </View>
+                </View>
+
+                <View style={s.addressDetailWrap}>
+                  <Ionicons name="location" size={16} color={COLORS.primary} style={{ marginTop: 2 }} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={s.addressText}>{address.street_address}</Text>
+                    <Text style={s.addressSubText}>
+                      {address.ward_name}, {address.district_name}, {address.province_name}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={s.addressFooter}>
+                  {address.is_default && (
+                    <View style={s.defaultBadge}>
+                      <Text style={s.defaultBadgeText}>Mặc định</Text>
+                    </View>
+                  )}
+                  {address.label && (
+                    <View style={s.labelBadge}>
+                      <Text style={s.labelBadgeText}>{address.label}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
-              <Text style={s.addressPhone}>{SAVED_ADDRESS.phone}</Text>
-              <Text style={s.addressText}>
-                {SAVED_ADDRESS.address}, {SAVED_ADDRESS.ward},{'\n'}
-                {SAVED_ADDRESS.district}, {SAVED_ADDRESS.city}
-              </Text>
-            </View>
+            ) : (
+              <View style={{ paddingVertical: 10, alignItems: 'center' }}>
+                <Text style={{ color: COLORS.textSecondary, marginBottom: 10 }}>Bạn chưa có địa chỉ giao hàng</Text>
+              </View>
+            )}
 
-            <TouchableOpacity style={s.changeBtn} activeOpacity={0.75}>
-              <Ionicons name="create-outline" size={14} color={COLORS.primaryDark} />
-              <Text style={s.changeBtnText}>Thay đổi địa chỉ</Text>
+            <TouchableOpacity 
+              style={s.changeBtn} 
+              activeOpacity={0.75}
+              onPress={() => router.push('/addresses?mode=select')}
+            >
+              <Ionicons name={address ? "create-outline" : "add-circle-outline"} size={14} color={COLORS.primaryDark} />
+              <Text style={s.changeBtnText}>{address ? "Thay đổi địa chỉ" : "Thêm địa chỉ mới"}</Text>
             </TouchableOpacity>
           </View>
 
@@ -330,7 +452,7 @@ export default function CheckoutScreen() {
           <View style={s.card}>
             <SectionHeader icon="bag-outline" title={`Đơn hàng (${totalQty} cuốn)`} />
 
-            {ORDER_ITEMS.map((item) => (
+            {ORDER_ITEMS.map((item: any) => (
               <View key={item.id} style={s.orderItemRow}>
                 <Image source={item.image} style={s.orderItemImage} />
                 <View style={s.orderItemBody}>
@@ -410,9 +532,20 @@ export default function CheckoutScreen() {
           <Text style={s.bottomTotalLabel}>Tổng thanh toán</Text>
           <Text style={s.bottomTotalValue}>{fmt(total)}</Text>
         </View>
-        <TouchableOpacity style={s.confirmBtn} onPress={handleConfirm} activeOpacity={0.82}>
-          <Ionicons name="checkmark-circle-outline" size={18} color={COLORS.white} />
-          <Text style={s.confirmBtnText}>Xác nhận đặt hàng</Text>
+        <TouchableOpacity 
+          style={[s.confirmBtn, isSubmitting && { opacity: 0.7 }]} 
+          onPress={handleConfirm} 
+          activeOpacity={0.82}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color={COLORS.white} />
+          ) : (
+            <>
+              <Ionicons name="checkmark-circle-outline" size={18} color={COLORS.white} />
+              <Text style={s.confirmBtnText}>Xác nhận đặt hàng</Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -547,18 +680,63 @@ const s = StyleSheet.create({
   },
 
   // ── Address ──
-  addressBlock: { gap: SPACING.xs + 2 },
-  addressNameRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  addressName: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COLORS.text, flex: 1 },
+  addressBlock: { 
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.divider
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: SPACING.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.divider,
+  },
+  addressIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  addressName: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COLORS.text },
+  addressPhone: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, fontWeight: FONT_WEIGHT.medium },
+  
+  addressDetailWrap: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginTop: 4,
+  },
+  addressText: { fontSize: FONT_SIZE.sm, color: COLORS.text, fontWeight: FONT_WEIGHT.medium },
+  addressSubText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, lineHeight: 20 },
+  
+  addressFooter: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
   defaultBadge: {
     backgroundColor: COLORS.primaryLight,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.sm,
+    alignSelf: 'flex-start',
   },
-  defaultBadgeText: { fontSize: FONT_SIZE.xs, color: COLORS.primary, fontWeight: FONT_WEIGHT.semibold },
-  addressPhone: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, marginLeft: 26 },
-  addressText: { fontSize: FONT_SIZE.sm, color: COLORS.text, lineHeight: 20, marginLeft: 26 },
+  defaultBadgeText: { fontSize: 11, color: COLORS.primary, fontWeight: FONT_WEIGHT.bold },
+  labelBadge: {
+    backgroundColor: COLORS.surfaceAlt,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  labelBadgeText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: FONT_WEIGHT.bold },
+
   changeBtn: {
     flexDirection: 'row',
     alignItems: 'center',

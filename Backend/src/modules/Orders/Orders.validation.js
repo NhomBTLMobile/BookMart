@@ -15,6 +15,14 @@ export const createOrdersSchema = Joi.object({
   payment_method: Joi.string().required(),
   payment_status: Joi.string().allow(null, ''),
   order_status: Joi.string().allow(null, ''),
+  items: Joi.array().items(Joi.object({
+    book_id: Joi.string().uuid().allow(null, ''),
+    combo_id: Joi.string().uuid().allow(null, ''),
+    item_name: Joi.string().required(),
+    unit_price: Joi.number().required(),
+    quantity: Joi.number().integer().required(),
+    total_price: Joi.number().required()
+  })).optional()
 })
 
 export const updateOrdersSchema = Joi.object({

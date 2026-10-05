@@ -1,5 +1,6 @@
 import { Op } from 'sequelize'
 import Orders from './orders.model.js'
+import OrderItems from '../order_items/order_items.model.js'
 import { sequelize } from '../../config/database.js'
 
 export class OrdersRepository {
@@ -89,7 +90,23 @@ export class OrdersRepository {
   }
 
   async create(data) {
-    return Orders.create(data)
+    const { items, ...orderData } = data;
+    const transaction = await sequelize.transaction();
+    try {
+      const order = await Orders.create(orderData, { transaction });
+      if (items && items.length > 0) {
+        const orderItemsData = items.map(i => ({
+          ...i,
+          order_id: order.id
+        }));
+        await OrderItems.bulkCreate(orderItemsData, { transaction });
+      }
+      await transaction.commit();
+      return this.findById(order.id);
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
   }
 
   async update(id, data) {
