@@ -195,7 +195,8 @@ function SuccessModal({ visible, orderId, total, onClose }: {
 // ─── Main Screen ─────────────────────────────────────────────
 export default function CheckoutScreen() {
   const { items: paramsItems } = useLocalSearchParams<{ items?: string }>();
-  const { items: cartItems } = useCart();
+  const { items: cartItems, clearCart } = useCart();
+  const isBuyingFromCart = !paramsItems;
   
   const ORDER_ITEMS = useMemo(() => {
     if (paramsItems) {
@@ -409,12 +410,10 @@ export default function CheckoutScreen() {
               setIsSubmitting(false);
               
               if (res.success !== false) {
-                // If the user bought from cart, we should clear it, but currently we don't have a way to know 
-                // if it's from cart or buy now unless we check paramsItems
-                // For simplicity, we just navigate.
-                router.replace({ 
-                  pathname: '/order-success', 
-                  params: { orderId: res.data?.order_code || payload.order_code, total: total.toString() } 
+                if (isBuyingFromCart) clearCart();
+                router.replace({
+                  pathname: '/order-success',
+                  params: { orderId: res.data?.order_code || payload.order_code, total: total.toString() }
                 });
               } else {
                 Alert.alert('Lỗi', res.message || 'Không thể tạo đơn hàng');
