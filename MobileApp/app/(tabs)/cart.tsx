@@ -13,6 +13,7 @@ import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SHADOW, SPACING } from '@/const
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { useCart } from '../../context/CartContext';
 import {
   Alert,
   Image,
@@ -27,11 +28,12 @@ import {
 type CartItem = {
   id: string;
   title: string;
-  author: string;
+  author?: string;
   price: number;          // giá hiện tại (VNĐ)
   originalPrice?: number; // giá gốc để gạch (Anchoring Effect)
   image: any;
   quantity: number;
+  isCombo?: boolean;
 };
 
 // ─── Dữ liệu mock ────────────────────────────────────────────
@@ -99,7 +101,13 @@ function CartItemRow({
       <View style={styles.itemBody}>
         {/* Tên & tác giả */}
         <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
-        <Text style={styles.itemAuthor}>{item.author}</Text>
+        {item.isCombo ? (
+          <View style={{ alignSelf: 'flex-start', backgroundColor: COLORS.primaryLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 2 }}>
+            <Text style={{ color: COLORS.primaryDark, fontSize: 10, fontWeight: 'bold' }}>COMBO</Text>
+          </View>
+        ) : (
+          <Text style={styles.itemAuthor}>{item.author}</Text>
+        )}
 
         {/* Giá — Anchoring Effect */}
         <View style={styles.priceRow}>
@@ -142,7 +150,7 @@ function CartItemRow({
   );
 }
 
-import { useCart } from '../../context/CartContext';
+// ─── Main Screen ─────────────────────────────────────────────
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function CartScreen() {
@@ -168,10 +176,7 @@ export default function CartScreen() {
 
   // ── Tính tổng ──
   const subtotal = items.reduce((sum, it) => sum + it.price * it.quantity, 0);
-  const shippingFee = subtotal >= FREE_SHIP_THRESHOLD ? 0 : 30_000;
-  const total = subtotal + shippingFee;
-  const remainForFreeShip = Math.max(0, FREE_SHIP_THRESHOLD - subtotal);
-  const freeShipProgress = Math.min(1, subtotal / FREE_SHIP_THRESHOLD);
+  const total = subtotal;
 
   // ── Giỏ trống ──
   if (items.length === 0) {
@@ -203,32 +208,6 @@ export default function CartScreen() {
           <Text style={styles.headerBadge}>{items.length} sách</Text>
         </View>
 
-        {/* ── Thanh tiến trình miễn phí ship (Scarcity / FOMO) ── */}
-        <View style={styles.freeShipCard}>
-          <Ionicons
-            name={remainForFreeShip === 0 ? 'checkmark-circle' : 'car-outline'}
-            size={20}
-            color={remainForFreeShip === 0 ? COLORS.success : COLORS.primaryDark}
-          />
-          <View style={styles.freeShipBody}>
-            {remainForFreeShip === 0 ? (
-              <Text style={styles.freeShipText}>
-                🎉 <Text style={{ fontWeight: FONT_WEIGHT.bold }}>Bạn được miễn phí vận chuyển!</Text>
-              </Text>
-            ) : (
-              <Text style={styles.freeShipText}>
-                Mua thêm{' '}
-                <Text style={styles.freeShipHighlight}>{fmt(remainForFreeShip)}</Text>
-                {' '}để được miễn phí vận chuyển
-              </Text>
-            )}
-            {/* Progress bar */}
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${freeShipProgress * 100}%` as any }]} />
-            </View>
-          </View>
-        </View>
-
         {/* ── Danh sách sách ── */}
         {items.map((item) => (
           <CartItemRow
@@ -240,29 +219,13 @@ export default function CartScreen() {
           />
         ))}
 
-        {/* ── Mã giảm giá ── */}
-        <TouchableOpacity style={styles.couponRow} activeOpacity={0.75}>
-          <Ionicons name="pricetag-outline" size={18} color={COLORS.primaryDark} />
-          <Text style={styles.couponText}>Nhập mã giảm giá</Text>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
-        </TouchableOpacity>
-
         {/* ── Tóm tắt đơn hàng ── */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Chi tiết đơn hàng</Text>
 
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tạm tính ({items.reduce((s, i) => s + i.quantity, 0)} cuốn)</Text>
+            <Text style={styles.summaryLabel}>Tạm tính ({items.reduce((s, i) => s + i.quantity, 0)} sản phẩm)</Text>
             <Text style={styles.summaryValue}>{fmt(subtotal)}</Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Phí vận chuyển</Text>
-            {shippingFee === 0 ? (
-              <Text style={[styles.summaryValue, { color: COLORS.success }]}>Miễn phí</Text>
-            ) : (
-              <Text style={styles.summaryValue}>{fmt(shippingFee)}</Text>
-            )}
           </View>
 
           <View style={styles.divider} />

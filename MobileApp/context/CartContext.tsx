@@ -4,11 +4,12 @@ import * as SecureStore from 'expo-secure-store';
 export type CartItem = {
   id: string;
   title: string;
-  author: string;
+  author?: string;
   price: number;
   originalPrice?: number;
   image: any;
   quantity: number;
+  isCombo?: boolean;
 };
 
 type CartContextType = {
