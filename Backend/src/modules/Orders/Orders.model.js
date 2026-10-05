@@ -12,7 +12,7 @@ const Orders = sequelize.define(
     order_code: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: { len: [0, 20] },
+      validate: { len: [0, 50] },
     },
     user_id: {
       type: DataTypes.UUID,

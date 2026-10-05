@@ -59,9 +59,13 @@ export class OrdersRepository {
     const order = orders[0]
 
     const [items] = await sequelize.query(`
-      SELECT id, item_name, unit_price, quantity, total_price, book_id
-      FROM order_items
-      WHERE order_id = :id
+      SELECT oi.id, oi.item_name, oi.unit_price, oi.quantity, oi.total_price, oi.book_id, oi.combo_id,
+             COALESCE(bi.image_url, c.cover_image_url) as image_url,
+             CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo"
+      FROM order_items oi
+      LEFT JOIN book_images bi ON oi.book_id = bi.book_id AND bi.sort_order = 1
+      LEFT JOIN combos c ON oi.combo_id = c.id
+      WHERE oi.order_id = :id
     `, { replacements: { id } })
     
     order.items = items || []
@@ -79,9 +83,12 @@ export class OrdersRepository {
 
     for (const order of rows) {
       const [items] = await sequelize.query(`
-        SELECT oi.id, oi.item_name, oi.unit_price, oi.quantity, oi.total_price, oi.book_id, bi.image_url
+        SELECT oi.id, oi.item_name, oi.unit_price, oi.quantity, oi.total_price, oi.book_id, oi.combo_id, 
+               COALESCE(bi.image_url, c.cover_image_url) as image_url,
+               CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo"
         FROM order_items oi
         LEFT JOIN book_images bi ON oi.book_id = bi.book_id AND bi.sort_order = 1
+        LEFT JOIN combos c ON oi.combo_id = c.id
         WHERE oi.order_id = :orderId
       `, { replacements: { orderId: order.id } })
       order.items = items || []
@@ -105,6 +112,7 @@ export class OrdersRepository {
       return this.findById(order.id);
     } catch (e) {
       await transaction.rollback();
+      console.error('[OrdersRepository.create] Error details:', e.message, e.original?.message, e.original?.detail);
       throw e;
     }
   }

@@ -379,7 +379,7 @@ export default function CheckoutScreen() {
               }));
               
               const payload = {
-                order_code: `ORD-${Date.now()}`,
+                order_code: `BM${Date.now().toString(36).toUpperCase()}`,
                 user_id: user?.id,
                 address_id: address.id,
                 shipping_snapshot: {
@@ -400,7 +400,7 @@ export default function CheckoutScreen() {
                 voucher_id: appliedVoucher?.id || null,
                 points_used: pointsDiscount, // 1 point = 1 VND
                 payment_method: selectedPayment,
-                payment_status: 'unpaid',
+                payment_status: 'pending',
                 order_status: 'pending',
                 items: itemsPayload
               };
@@ -621,13 +621,7 @@ export default function CheckoutScreen() {
 
             <View style={s.summaryDivider} />
 
-            {/* Tiết kiệm */}
-            {saved > 0 && (
-              <View style={s.savedRow}>
-                <Ionicons name="gift-outline" size={14} color={COLORS.success} />
-                <Text style={s.savedText}>Bạn tiết kiệm được <Text style={s.savedAmount}>{fmt(saved)}</Text></Text>
-              </View>
-            )}
+
 
             <View style={s.summaryGrid}>
               <View style={s.summaryLine}>
@@ -643,10 +637,6 @@ export default function CheckoutScreen() {
                 ) : (
                   <Text style={s.summaryValue}>{fmt(shippingFee)}</Text>
                 )}
-              </View>
-              <View style={s.summaryLine}>
-                <Text style={s.summaryLabel}>Tiết kiệm (từ giá gốc)</Text>
-                <Text style={[s.summaryValue, { color: COLORS.success }]}>-{fmt(saved)}</Text>
               </View>
               {voucherDiscount > 0 && (
                 <View style={s.summaryLine}>

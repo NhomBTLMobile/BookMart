@@ -28,6 +28,7 @@ type Order = {
     image: any;
     price: number;
     qty: number;
+    isCombo?: boolean;
   }[];
 };
 
@@ -78,7 +79,8 @@ export default function MyOrdersScreen() {
                 title: i.item_name,
                 image: i.image_url ? { uri: i.image_url } : require('../assets/images/book1.jpg'),
                 price: parseFloat(i.unit_price),
-                qty: i.quantity
+                qty: i.quantity,
+                isCombo: i.isCombo
               }))
             };
           });
@@ -123,6 +125,11 @@ export default function MyOrdersScreen() {
             <Image source={firstItem.image} style={styles.productImg} contentFit="cover" />
             <View style={styles.productInfo}>
               <Text style={styles.productTitle} numberOfLines={2}>{firstItem.title}</Text>
+              {firstItem.isCombo && (
+                <View style={{ alignSelf: 'flex-start', backgroundColor: '#E8F5E9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 2, marginBottom: 4 }}>
+                  <Text style={{ color: '#2E7D32', fontSize: 10, fontWeight: 'bold' }}>COMBO</Text>
+                </View>
+              )}
               <View style={styles.productPriceRow}>
                 <Text style={styles.productPrice}>{fmt(firstItem.price)}</Text>
                 <Text style={styles.productQty}>x{firstItem.qty}</Text>
