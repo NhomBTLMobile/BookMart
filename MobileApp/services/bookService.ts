@@ -17,5 +17,14 @@ export const bookService = {
     } catch {
       return { success: false, data: [] };
     }
+  },
+
+  createReview: async (data: any) => {
+    try {
+      const response = await api.post(`/reviews`, data);
+      return response.data;
+    } catch (e: any) {
+      return { success: false, message: e.response?.data?.message || 'Có lỗi xảy ra' };
+    }
   }
 };

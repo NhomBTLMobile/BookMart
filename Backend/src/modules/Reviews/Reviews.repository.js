@@ -85,12 +85,18 @@ export class ReviewsRepository {
   }
 
   async update(id, data) {
-    const [affectedRows] = await Reviews.update(data, { where: { id } })
+    const [affectedRows] = await Reviews.update(data, { 
+      where: { id },
+      individualHooks: true 
+    })
     if (affectedRows === 0) return null
     return this.findById(id)
   }
 
   async delete(id) {
-    return Reviews.destroy({ where: { id } })
+    return Reviews.destroy({ 
+      where: { id },
+      individualHooks: true 
+    })
   }
 }

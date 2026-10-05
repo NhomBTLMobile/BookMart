@@ -18,5 +18,23 @@ export const reviewService = {
       console.error('Error fetching my reviews:', error);
       throw error;
     }
+  },
+
+  updateReview: async (id: string, data: any) => {
+    try {
+      const response = await api.put(`/reviews/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || 'Có lỗi xảy ra' };
+    }
+  },
+
+  deleteReview: async (id: string) => {
+    try {
+      const response = await api.delete(`/reviews/${id}`);
+      return response.data;
+    } catch (error: any) {
+      return { success: false, message: error.response?.data?.message || 'Có lỗi xảy ra' };
+    }
   }
 };

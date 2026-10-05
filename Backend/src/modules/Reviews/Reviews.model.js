@@ -46,6 +46,9 @@ const Reviews = sequelize.define(
       afterSave: async (review, options) => {
         if (review.book_id) await updateBookRating(review.book_id)
       },
+      afterUpdate: async (review, options) => {
+        if (review.book_id) await updateBookRating(review.book_id)
+      },
       afterDestroy: async (review, options) => {
         if (review.book_id) await updateBookRating(review.book_id)
       }

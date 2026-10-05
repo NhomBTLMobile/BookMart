@@ -7,7 +7,11 @@ import {
   FlatList, 
   SafeAreaView, 
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Modal,
+  KeyboardAvoidingView,
+  TextInput,
+  Alert
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,25 +29,84 @@ type Review = {
   created_at: string;
 };
 
+const RATING_LABELS = ['', 'Rất tệ', 'Tệ', 'Bình thường', 'Rất tốt', 'Tuyệt vời!'];
+
 export default function MyReviewsScreen() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const res = await reviewService.getMyReviews();
-        if (res.success && res.data) {
-          setReviews(res.data);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
+  // Edit Modal State
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [myRating, setMyRating] = useState(5);
+  const [myComment, setMyComment] = useState('');
+
+  const fetchReviews = async () => {
+    setLoading(true);
+    try {
+      const res = await reviewService.getMyReviews();
+      if (res.success && res.data) {
+        setReviews(res.data);
       }
-    };
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchReviews();
   }, []);
+
+  const handleEdit = (review: Review) => {
+    setEditingReview(review);
+    setMyRating(review.rating);
+    setMyComment(review.body);
+    setModalVisible(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingReview) return;
+    try {
+      const res = await reviewService.updateReview(editingReview.id, {
+        rating: myRating,
+        body: myComment,
+      });
+      if (res.success !== false) {
+        Alert.alert('Thành công', 'Cập nhật đánh giá thành công');
+        setModalVisible(false);
+        fetchReviews();
+      } else {
+        Alert.alert('Lỗi', res.message || 'Không thể cập nhật đánh giá');
+      }
+    } catch (error) {
+      Alert.alert('Lỗi', 'Đã xảy ra lỗi');
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert('Xác nhận', 'Bạn có chắc chắn muốn xóa đánh giá này?', [
+      { text: 'Hủy', style: 'cancel' },
+      { 
+        text: 'Xóa', 
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const res = await reviewService.deleteReview(id);
+            if (res.success !== false) {
+              Alert.alert('Thành công', 'Đã xóa đánh giá');
+              fetchReviews();
+            } else {
+              Alert.alert('Lỗi', res.message || 'Không thể xóa đánh giá');
+            }
+          } catch (e) {
+            Alert.alert('Lỗi', 'Đã xảy ra lỗi');
+          }
+        }
+      }
+    ]);
+  };
 
   const renderStars = (rating: number) => {
     return (
@@ -90,6 +153,17 @@ export default function MyReviewsScreen() {
         <View style={styles.cardBody}>
           <Text style={styles.reviewBody}>{item.body}</Text>
         </View>
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity style={styles.editBtn} onPress={() => handleEdit(item)}>
+            <Ionicons name="pencil" size={14} color={COLORS.primaryDark} />
+            <Text style={styles.editBtnText}>Chỉnh sửa</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)}>
+            <Ionicons name="trash" size={14} color={COLORS.error} />
+            <Text style={styles.deleteBtnText}>Xóa</Text>
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -125,6 +199,53 @@ export default function MyReviewsScreen() {
           }
         />
       )}
+
+      {/* ── MODAL CHỈNH SỬA ĐÁNH GIÁ ── */}
+      <Modal animationType="slide" transparent visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalCard}>
+            <View style={styles.modalHandle} />
+            <View style={styles.rowBetween}>
+              <Text style={styles.modalTitle}>Chỉnh sửa đánh giá</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close-circle" size={28} color={COLORS.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalSubtitle} numberOfLines={1}>{editingReview?.book_title}</Text>
+
+            <View style={styles.starRow}>
+              {[1, 2, 3, 4, 5].map(s => (
+                <TouchableOpacity key={s} onPress={() => setMyRating(s)} activeOpacity={0.8}>
+                  <Ionicons
+                    name={s <= myRating ? 'star' : 'star-outline'}
+                    size={38}
+                    color="#E5A72A"
+                    style={{ marginHorizontal: 6 }}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.ratingLabel}>{RATING_LABELS[myRating]}</Text>
+
+            <TextInput
+              style={styles.reviewInput}
+              placeholder="Chia sẻ cảm nhận của bạn về cuốn sách này..."
+              placeholderTextColor={COLORS.textSecondary}
+              multiline
+              numberOfLines={5}
+              textAlignVertical="top"
+              value={myComment}
+              onChangeText={setMyComment}
+            />
+
+            <TouchableOpacity style={styles.submitBtn} onPress={handleUpdate} activeOpacity={0.85}>
+              <Text style={styles.submitText}>Cập nhật</Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -222,6 +343,33 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: SPACING.md,
+    gap: SPACING.sm,
+  },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primaryLight,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  editBtnText: { color: COLORS.primaryDark, fontSize: 13, fontWeight: '600' },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFEBEE',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  deleteBtnText: { color: COLORS.error, fontSize: 13, fontWeight: '600' },
+
   // Empty State
   emptyState: {
     alignItems: 'center',
@@ -232,5 +380,18 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     fontSize: FONT_SIZE.base,
     color: COLORS.textSecondary,
-  }
+  },
+
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalCard: { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 },
+  modalHandle: { width: 40, height: 5, backgroundColor: COLORS.divider, borderRadius: 3, alignSelf: 'center', marginBottom: 20 },
+  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text },
+  modalSubtitle: { fontSize: 14, color: COLORS.textSecondary, marginTop: 4 },
+  starRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
+  ratingLabel: { textAlign: 'center', color: '#E5A72A', fontSize: 15, fontWeight: '700', marginTop: 8 },
+  reviewInput: { backgroundColor: '#F9F9F9', borderRadius: 12, padding: 14, marginTop: 20, fontSize: 15, color: COLORS.text, minHeight: 100 },
+  submitBtn: { backgroundColor: COLORS.primary, paddingVertical: 14, borderRadius: 14, marginTop: 20, alignItems: 'center' },
+  submitText: { color: COLORS.white, fontSize: 16, fontWeight: '800' },
 });

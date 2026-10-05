@@ -25,25 +25,11 @@ const { width } = Dimensions.get('window');
 // ─── Tiny utility ───────────────────────────────────────────────────────────
 const Divider = () => <View style={styles.divider} />;
 
-const StarPicker = ({ value, onChange }: { value: number; onChange: (n: number) => void }) => (
-  <View style={styles.starRow}>
-    {[1, 2, 3, 4, 5].map(s => (
-      <TouchableOpacity key={s} onPress={() => onChange(s)} activeOpacity={0.8}>
-        <Ionicons
-          name={s <= value ? 'star' : 'star-outline'}
-          size={38}
-          color="#E5A72A"
-          style={{ marginHorizontal: 6 }}
-        />
-      </TouchableOpacity>
-    ))}
-  </View>
-);
-
 const RATING_LABELS = ['', 'Rất tệ', 'Tệ', 'Bình thường', 'Rất tốt', 'Tuyệt vời!'];
 
 import { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 import { useCart } from '../../context/CartContext';
 import { bookService } from '../../services/bookService';
@@ -63,9 +49,6 @@ export default function BookDetailsScreen() {
   const [ratingCounts, setRatingCounts] = useState<any>({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, total: 0 });
 
   const [isFavorite, setIsFavorite] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [myRating, setMyRating] = useState(5);
-  const [myComment, setMyComment] = useState('');
 
   useEffect(() => {
     const fetchBook = async () => {
@@ -133,12 +116,6 @@ export default function BookDetailsScreen() {
       // rollback if failed
       setIsFavorite(v => !v);
     }
-  };
-
-  const handleSubmitReview = () => {
-    setModalVisible(false);
-    setMyComment('');
-    setMyRating(5);
   };
 
   if (loading) {
@@ -362,15 +339,10 @@ export default function BookDetailsScreen() {
 
         {/* ── 6. ĐÁNH GIÁ ─────────────────────────────────────────
           Social Proof + Reciprocity: Hiển thị đánh giá thực → tạo uy tín.
-          Nút "Viết đánh giá" → kích thích người dùng tham gia.
         */}
         <View style={styles.section}>
           <View style={styles.rowBetween}>
             <Text style={styles.sectionTitle}>Đánh giá & Nhận xét</Text>
-            <TouchableOpacity style={styles.writeBtn} onPress={() => setModalVisible(true)}>
-              <Ionicons name="pencil-outline" size={13} color={COLORS.primaryDark} />
-              <Text style={styles.writeBtnText}> Viết đánh giá</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Tóm tắt điểm đánh giá */}
@@ -425,7 +397,7 @@ export default function BookDetailsScreen() {
           )}
 
           {reviews.length > 0 && (
-            <TouchableOpacity style={styles.seeAllBtn}>
+            <TouchableOpacity style={styles.seeAllBtn} onPress={() => router.push(`/reviews?bookId=${id}`)}>
               <Text style={styles.seeAllText}>Xem tất cả {totalReviews} đánh giá</Text>
               <Ionicons name="chevron-forward" size={16} color={COLORS.primaryDark} />
             </TouchableOpacity>
@@ -487,41 +459,6 @@ export default function BookDetailsScreen() {
           <Text style={styles.buyBtnText}>Mua ngay</Text>
         </TouchableOpacity>
       </View>
-
-      {/* ── MODAL VIẾT ĐÁNH GIÁ ──────────────────────────────────── */}
-      <Modal animationType="slide" transparent visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalCard}>
-            <View style={styles.modalHandle} />
-            <View style={styles.rowBetween}>
-              <Text style={styles.modalTitle}>Đánh giá của bạn</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close-circle" size={28} color={COLORS.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.modalSubtitle}>{book.title}</Text>
-
-            <StarPicker value={myRating} onChange={setMyRating} />
-            <Text style={styles.ratingLabel}>{RATING_LABELS[myRating]}</Text>
-
-            <TextInput
-              style={styles.reviewInput}
-              placeholder="Chia sẻ cảm nhận của bạn về cuốn sách này..."
-              placeholderTextColor={COLORS.textSecondary}
-              multiline
-              numberOfLines={5}
-              textAlignVertical="top"
-              value={myComment}
-              onChangeText={setMyComment}
-            />
-
-            <TouchableOpacity style={styles.submitBtn} onPress={handleSubmitReview} activeOpacity={0.85}>
-              <Text style={styles.submitText}>Gửi đánh giá</Text>
-            </TouchableOpacity>
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
 
     </SafeAreaView>
   );
@@ -727,13 +664,6 @@ const styles = StyleSheet.create({
   descText: { fontSize: 15, color: COLORS.textSecondary, lineHeight: 26, marginTop: 12 },
 
   // Reviews
-  writeBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: COLORS.primaryLight,
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-  },
-  writeBtnText: { color: COLORS.primaryDark, fontSize: 13, fontWeight: '700' },
-
   ratingOverview: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#F7FAF7',
