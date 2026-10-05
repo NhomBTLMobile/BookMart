@@ -12,6 +12,10 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SHADOW, SPACING } from '../../constants/colors';
+import { api } from '../../services/api';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import { Alert } from 'react-native';
 
 // ─── Mock Data (Nên fetch từ API ở thực tế) ─────────────────────────
 const MOCK_ORDER_DETAIL = {
@@ -46,10 +50,78 @@ const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 // ─── Component ──────────────────────────────────────────────────
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [order, setOrder] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetchOrder();
+  }, [id]);
+
+  const fetchOrder = async () => {
+    try {
+      const res = await api.get(`/orders/${id}`);
+      if (res.data?.success) {
+        setOrder(res.data.data);
+      }
+    } catch (error) {
+      console.log('Error fetching order', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRepay = async () => {
+    if (!order) return;
+    try {
+      const redirectUrl = Linking.createURL('payment-result');
+      const returnUrl = `${api.defaults.baseURL}/payments/vnpay/vnpay_return`;
+      const vnpRes = await api.post('/payments/vnpay/create_url', {
+        order_id: order.order_code,
+        amount: order.total_amount,
+        order_info: `Thanh toan don hang ${order.order_code}`,
+        return_url: returnUrl
+      }, {
+        params: { app_redirect: redirectUrl }
+      });
+
+      if (vnpRes.data?.success && vnpRes.data?.data?.payment_url) {
+        const result = await WebBrowser.openAuthSessionAsync(
+          vnpRes.data.data.payment_url,
+          redirectUrl
+        );
+        if (result.type === 'success') {
+          fetchOrder(); // Cập nhật lại trạng thái thành công
+        } else if (result.type === 'cancel' || result.type === 'dismiss') {
+          fetchOrder(); // Cập nhật lại trạng thái thất bại
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Lỗi', 'Không thể tạo link thanh toán.');
+    }
+  };
+
+  if (loading || !order) return <SafeAreaView style={styles.container} />;
+
+  // Map status
+  const mappedStatus = order.order_status?.toUpperCase() === 'PENDING' ? 'PENDING' :
+                       order.order_status?.toUpperCase() === 'PROCESSING' ? 'DELIVERING' :
+                       order.order_status?.toUpperCase() === 'COMPLETED' ? 'DELIVERED' : 'CANCELLED';
   
-  // Dùng mock data hiện tại
-  const order = { ...MOCK_ORDER_DETAIL, id: id || MOCK_ORDER_DETAIL.id };
-  const statusConfig = STATUS_CONFIG[order.status];
+  const statusConfig = STATUS_CONFIG[mappedStatus] || STATUS_CONFIG.PENDING;
+
+  // Xử lý địa chỉ
+  let parsedAddress = { name: '', phone: '', address: '' };
+  try {
+    const p = typeof order.shipping_address === 'string' ? JSON.parse(order.shipping_address) : order.shipping_address;
+    parsedAddress = {
+      name: p.receiver_name || '',
+      phone: p.phone_number || '',
+      address: p.address || ''
+    };
+  } catch (e) {}
+
+  const canRepay = order.payment_method === 'vnpay' && (order.payment_status === 'pending' || order.payment_status === 'failed');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -80,9 +152,9 @@ export default function OrderDetailScreen() {
             <Text style={styles.cardTitle}>Địa chỉ nhận hàng</Text>
           </View>
           <View style={styles.addressBox}>
-            <Text style={styles.addressName}>{order.shippingAddress.name}</Text>
-            <Text style={styles.addressPhone}>{order.shippingAddress.phone}</Text>
-            <Text style={styles.addressText}>{order.shippingAddress.address}</Text>
+            <Text style={styles.addressName}>{parsedAddress.name}</Text>
+            <Text style={styles.addressPhone}>{parsedAddress.phone}</Text>
+            <Text style={styles.addressText}>{parsedAddress.address}</Text>
           </View>
         </View>
 
@@ -93,16 +165,15 @@ export default function OrderDetailScreen() {
             <Text style={styles.cardTitle}>Sản phẩm đã mua</Text>
           </View>
           
-          {order.items.map((item, index) => (
+          {order.items?.map((item: any, index: number) => (
             <View key={item.id}>
               <View style={styles.itemRow}>
-                <Image source={item.image} style={styles.itemImage} contentFit="cover" />
+                <Image source={{ uri: item.image_url }} style={styles.itemImage} contentFit="cover" />
                 <View style={styles.itemInfo}>
-                  <Text style={styles.itemTitle} numberOfLines={2}>{item.title}</Text>
-                  <Text style={styles.itemAuthor}>{item.author}</Text>
+                  <Text style={styles.itemTitle} numberOfLines={2}>{item.item_name}</Text>
                   <View style={styles.itemPriceRow}>
-                    <Text style={styles.itemPrice}>{fmt(item.price)}</Text>
-                    <Text style={styles.itemQty}>x{item.qty}</Text>
+                    <Text style={styles.itemPrice}>{fmt(item.unit_price)}</Text>
+                    <Text style={styles.itemQty}>x{item.quantity}</Text>
                   </View>
                 </View>
               </View>
@@ -120,37 +191,45 @@ export default function OrderDetailScreen() {
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Mã đơn hàng</Text>
-            <Text style={styles.infoValue}>#{order.id}</Text>
+            <Text style={styles.infoValue}>#{order.order_code}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Thời gian đặt</Text>
-            <Text style={styles.infoValue}>{order.date}</Text>
+            <Text style={styles.infoValue}>{new Date(order.created_at).toLocaleString('vi-VN')}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Phương thức</Text>
-            <Text style={styles.infoValue}>{order.paymentMethod}</Text>
+            <Text style={styles.infoLabel}>Phương thức thanh toán</Text>
+            <Text style={styles.infoValue}>{order.payment_method === 'vnpay' ? 'VNPAY' : 'Thanh toán khi nhận hàng'}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Trạng thái thanh toán</Text>
+            <Text style={[styles.infoValue, { color: order.payment_status === 'paid' ? COLORS.success : COLORS.error }]}>
+              {order.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+            </Text>
           </View>
 
           <View style={styles.dashedDivider} />
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tạm tính</Text>
-            <Text style={styles.summaryValue}>{fmt(order.subtotal)}</Text>
+            <Text style={styles.summaryValue}>{fmt(order.total_amount - (order.shipping_fee || 0) + (order.voucher_discount || 0))}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Phí vận chuyển</Text>
-            <Text style={styles.summaryValue}>{fmt(order.shippingFee)}</Text>
+            <Text style={styles.summaryValue}>{fmt(order.shipping_fee || 0)}</Text>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Giảm giá</Text>
-            <Text style={[styles.summaryValue, { color: COLORS.success }]}>-{fmt(order.discount)}</Text>
-          </View>
+          {Number(order.voucher_discount) > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Giảm giá</Text>
+              <Text style={[styles.summaryValue, { color: COLORS.success }]}>-{fmt(order.voucher_discount)}</Text>
+            </View>
+          )}
           
           <View style={styles.divider} />
           
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Tổng thanh toán</Text>
-            <Text style={styles.totalValue}>{fmt(order.total)}</Text>
+            <Text style={styles.totalValue}>{fmt(order.total_amount)}</Text>
           </View>
         </View>
 
@@ -158,19 +237,19 @@ export default function OrderDetailScreen() {
 
       {/* ── Footer Actions ── */}
       <View style={styles.footer}>
-        {order.status === 'PENDING' && (
+        {canRepay && (
+          <TouchableOpacity style={[styles.primaryBtn, { marginBottom: SPACING.sm }]} onPress={handleRepay}>
+            <Text style={styles.primaryBtnText}>Thanh toán lại qua VNPAY</Text>
+          </TouchableOpacity>
+        )}
+        {mappedStatus === 'PENDING' && !canRepay && (
           <TouchableOpacity style={styles.cancelBtn}>
             <Text style={styles.cancelBtnText}>Hủy đơn hàng</Text>
           </TouchableOpacity>
         )}
-        {order.status === 'DELIVERED' && (
+        {mappedStatus === 'DELIVERED' && (
           <TouchableOpacity style={styles.primaryBtn}>
             <Text style={styles.primaryBtnText}>Đánh giá sản phẩm</Text>
-          </TouchableOpacity>
-        )}
-        {(order.status === 'CANCELLED' || order.status === 'DELIVERED') && (
-          <TouchableOpacity style={styles.primaryBtn}>
-            <Text style={styles.primaryBtnText}>Mua lại</Text>
           </TouchableOpacity>
         )}
       </View>

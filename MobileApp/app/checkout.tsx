@@ -19,6 +19,8 @@ import {
 } from '@/constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { useCart } from '../context/CartContext';
@@ -411,9 +413,56 @@ export default function CheckoutScreen() {
               
               if (res.success !== false) {
                 if (isBuyingFromCart) clearCart();
+                
+                const createdOrderId = res.data?.id; // UUID
+                const createdOrderCode = res.data?.order_code || payload.order_code;
+                
+                if (selectedPayment === 'vnpay' && createdOrderId) {
+                  try {
+                    const redirectUrl = Linking.createURL('payment-result');
+                    const returnUrl = `${api.defaults.baseURL}/payments/vnpay/vnpay_return`;
+
+                    const vnpRes = await api.post('/payments/vnpay/create_url', {
+                      order_id: createdOrderCode, // VNPAY không cho phép ký tự "-" trong vnp_TxnRef, nên dùng Order Code (VD: BM...)
+                      amount: total,
+                      order_info: `Thanh toan don hang ${createdOrderCode}`,
+                      return_url: returnUrl
+                    }, {
+                      params: { app_redirect: redirectUrl } // query string
+                    });
+                    
+                    if (vnpRes.data?.success && vnpRes.data?.data?.payment_url) {
+                      const result = await WebBrowser.openAuthSessionAsync(
+                        vnpRes.data.data.payment_url,
+                        redirectUrl
+                      );
+                      
+                      // WebBrowser.openAuthSessionAsync tự động đóng khi nhận được redirectUrl.
+                      if (result.type === 'success' && result.url) {
+                        const parsedUrl = Linking.parse(result.url);
+                        const status = parsedUrl.queryParams?.status as string || 'failed';
+                        const orderId = parsedUrl.queryParams?.orderId as string || createdOrderCode;
+                        
+                        router.replace({
+                          pathname: '/payment-result',
+                          params: { status, orderId }
+                        });
+                      } else if (result.type === 'cancel' || result.type === 'dismiss') {
+                        router.replace({
+                          pathname: '/payment-result',
+                          params: { status: 'failed', orderId: createdOrderCode }
+                        });
+                      }
+                      return;
+                    }
+                  } catch (e) {
+                    Alert.alert('Lỗi', 'Không thể khởi tạo thanh toán VNPAY');
+                  }
+                }
+
                 router.replace({
                   pathname: '/order-success',
-                  params: { orderId: res.data?.order_code || payload.order_code, total: total.toString() }
+                  params: { orderId: createdOrderCode, total: total.toString() }
                 });
               } else {
                 Alert.alert('Lỗi', res.message || 'Không thể tạo đơn hàng');

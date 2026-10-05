@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove } from './payments.controller.js'
+import { getAll, getById, create, update, remove, createVnpayUrl, vnpayReturn, vnpayIpn } from './payments.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -142,5 +142,9 @@ router.post('/', authMiddleware, create)
 router.get('/:id', authMiddleware, getById)
 router.put('/:id', authMiddleware, update)
 router.delete('/:id', authMiddleware, remove)
+
+router.post('/vnpay/create_url', authMiddleware, createVnpayUrl)
+router.get('/vnpay/vnpay_return', vnpayReturn)
+router.get('/vnpay/vnpay_ipn', vnpayIpn)
 
 export default router

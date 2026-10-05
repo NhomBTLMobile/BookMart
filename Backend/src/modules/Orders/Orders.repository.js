@@ -72,6 +72,35 @@ export class OrdersRepository {
     return order
   }
 
+  async findByOrderCode(orderCode) {
+    const [orders] = await sequelize.query(`
+      SELECT 
+        o.*,
+        u.full_name as customer_name,
+        u.email as customer_email,
+        u.phone as customer_phone
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      WHERE o.order_code = :orderCode
+    `, { replacements: { orderCode } })
+    
+    if (!orders || orders.length === 0) return null
+    const order = orders[0]
+
+    const [items] = await sequelize.query(`
+      SELECT oi.id, oi.item_name, oi.unit_price, oi.quantity, oi.total_price, oi.book_id, oi.combo_id,
+             COALESCE(bi.image_url, c.cover_image_url) as image_url,
+             CASE WHEN oi.combo_id IS NOT NULL THEN true ELSE false END as "isCombo"
+      FROM order_items oi
+      LEFT JOIN book_images bi ON oi.book_id = bi.book_id AND bi.sort_order = 1
+      LEFT JOIN combos c ON oi.combo_id = c.id
+      WHERE oi.order_id = :id
+    `, { replacements: { id: order.id } })
+    
+    order.items = items || []
+    return order
+  }
+
   async findByUserId(userId) {
     const [rows] = await sequelize.query(`
       SELECT o.*, u.full_name as customer_name

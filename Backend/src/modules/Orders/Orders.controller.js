@@ -25,7 +25,15 @@ export const getMyOrders = async (req, res, next) => {
 
 export const getById = async (req, res, next) => {
   try {
-    const data = await service.getById(req.params.id)
+    const id = req.params.id;
+    let data;
+    // Kiểm tra nếu là UUID thì dùng getById, nếu là orderCode thì dùng getByOrderCode
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(id)) {
+      data = await service.getById(id);
+    } else {
+      data = await service.getByOrderCode(id);
+    }
     sendSuccess(res, 'Lấy thông tin thành công', data)
   } catch (err) { next(err) }
 }
