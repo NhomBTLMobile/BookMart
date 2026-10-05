@@ -85,11 +85,10 @@ export class OrdersService {
       to_district_id: snapshot.district_id ? parseInt(snapshot.district_id, 10) : undefined,
       
       from_name: "BookMart Store",
-      from_phone: "0987654321",
-      from_address: "123 Đường Sách",
-      from_ward_name: "Phường An Khánh",
-      from_district_name: "Thành Phố Thủ Đức",
-      from_province_name: "Hồ Chí Minh",
+      from_phone: "0900000000",
+      from_address: "Kho Hưng Yên",
+      from_ward_code: process.env.GHN_FROM_WARD_CODE || "220208",
+      from_district_id: parseInt(process.env.GHN_FROM_DISTRICT_ID || '1717', 10),
 
       weight: parseInt(weight, 10) || 500,
       length: parseInt(length, 10) || 20,

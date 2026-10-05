@@ -19,7 +19,7 @@ import {
 } from '@/constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useRef, useState, useMemo, useCallback } from 'react';
+import { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { useCart } from '../context/CartContext';
 import { addressService } from '../services/addressService';
@@ -37,8 +37,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator
+  ActivityIndicator,
+  Switch
 } from 'react-native';
+import { api } from '../services/api';
 
 // ─── Types ───────────────────────────────────────────────────
 type PaymentMethod = 'cod' | 'vnpay';
@@ -135,7 +137,7 @@ function SuccessModal({ visible, orderId, total, onClose }: {
 
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
-      <View style={s.modalOverlay}>
+      <View style={s.vModalOverlay}>
         <Animated.View style={[s.modalCard, { transform: [{ scale: scaleAnim }], opacity: opacityAnim }]}>
           {/* Icon thành công */}
           <View style={s.successIconWrap}>
@@ -212,11 +214,30 @@ export default function CheckoutScreen() {
   const [address, setAddress] = useState<any>(null);
   const [loadingAddress, setLoadingAddress] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shippingFee, setShippingFee] = useState(0);
+  const [loadingFee, setLoadingFee] = useState(false);
+  
+  // -- Loyalty Points --
+  const [userPoints, setUserPoints] = useState(0);
+  const [usePoints, setUsePoints] = useState(false);
+  
+  // -- Vouchers --
+  const [showVoucherModal, setShowVoucherModal] = useState(false);
+  const [vouchersList, setVouchersList] = useState<any[]>([]);
+  const [loadingVouchers, setLoadingVouchers] = useState(false);
+  const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
 
   useFocusEffect(
     useCallback(() => {
-      const fetchAddress = async () => {
+      const fetchAddressAndUser = async () => {
         try {
+          // Fetch User Points
+          const userRes = await api.get('/users/me');
+          if (userRes.data?.success && userRes.data?.data?.loyalty_points) {
+            setUserPoints(userRes.data.data.loyalty_points);
+          }
+
+          // Fetch Address
           const res = await addressService.getMyAddresses();
           if (res && res.length > 0) {
             const selectedId = addressService.getSelectedAddressId();
@@ -237,17 +258,89 @@ export default function CheckoutScreen() {
           setLoadingAddress(false);
         }
       };
-      fetchAddress();
+      fetchAddressAndUser();
     }, [])
   );
+
+  const totalQty = ORDER_ITEMS.reduce((s: any, i: any) => s + i.quantity, 0);
+
+  useEffect(() => {
+    const fetchFee = async () => {
+      if (!address || !address.district_id || !address.ward_code) {
+        setShippingFee(0);
+        return;
+      }
+      setLoadingFee(true);
+      try {
+        const res = await orderService.calculateFee({
+          to_district_id: parseInt(address.district_id, 10),
+          to_ward_code: String(address.ward_code),
+          items: ORDER_ITEMS.map((it: any) => ({
+            id: it.id,
+            quantity: it.quantity
+          }))
+        });
+        if (res.success && res.data && res.data.total) {
+          setShippingFee(res.data.total);
+        } else {
+          setShippingFee(30_000); // fallback
+        }
+      } catch (e) {
+        setShippingFee(30_000);
+      } finally {
+        setLoadingFee(false);
+      }
+    };
+    fetchFee();
+  }, [address, totalQty]);
 
   // ── Tính tổng ──
   const subtotal = ORDER_ITEMS.reduce((sum: any, it: any) => sum + it.price * it.quantity, 0);
   const originalTotal = ORDER_ITEMS.reduce((sum: any, it: any) => sum + (it.originalPrice ?? it.price) * it.quantity, 0);
   const saved = originalTotal - subtotal;
-  const shippingFee = subtotal >= 200_000 ? 0 : 30_000;
-  const total = subtotal + shippingFee;
-  const totalQty = ORDER_ITEMS.reduce((s: any, i: any) => s + i.quantity, 0);
+
+  // -- Tính giảm giá Voucher --
+  let voucherDiscount = 0;
+  if (appliedVoucher) {
+    if (appliedVoucher.type === 'percent') {
+      voucherDiscount = (subtotal * appliedVoucher.value) / 100;
+      if (appliedVoucher.max_discount) {
+        voucherDiscount = Math.min(voucherDiscount, appliedVoucher.max_discount);
+      }
+    } else if (appliedVoucher.type === 'fixed') {
+      voucherDiscount = appliedVoucher.value;
+    } else if (appliedVoucher.type === 'freeship') {
+      voucherDiscount = Math.min(shippingFee, appliedVoucher.value || shippingFee);
+    }
+  }
+  
+  // -- Tính giảm giá Điểm thưởng -- (1 điểm = 1đ, dùng tối đa 50% đơn hàng hoặc hết điểm)
+  const maxPointsToUse = Math.min(userPoints, Math.floor(subtotal / 2));
+  const pointsDiscount = usePoints ? maxPointsToUse : 0;
+
+  const total = Math.max(0, subtotal + shippingFee - voucherDiscount - pointsDiscount);
+
+  const handleOpenVouchers = async () => {
+    setShowVoucherModal(true);
+    if (vouchersList.length === 0) {
+      setLoadingVouchers(true);
+      try {
+        const res = await api.get('/vouchers');
+        if (res.data?.success) {
+          setVouchersList(res.data.data.filter((v: any) => v.is_active));
+        }
+      } catch (e) {
+      } finally {
+        setLoadingVouchers(false);
+      }
+    }
+  };
+
+  const handleSelectVoucher = (v: any) => {
+    if (subtotal < (v.min_order_value || 0)) return; // Disabled
+    setAppliedVoucher(v);
+    setShowVoucherModal(false);
+  };
 
   const handleConfirm = async () => {
     if (!address) {
@@ -293,8 +386,11 @@ export default function CheckoutScreen() {
                 },
                 subtotal,
                 shipping_fee: shippingFee,
-                discount_amount: saved,
+                discount_amount: voucherDiscount,
+                points_discount: pointsDiscount,
                 total_amount: total,
+                voucher_id: appliedVoucher?.id || null,
+                points_used: pointsDiscount, // 1 point = 1 VND
                 payment_method: selectedPayment,
                 payment_status: 'unpaid',
                 order_status: 'pending',
@@ -448,7 +544,55 @@ export default function CheckoutScreen() {
             })}
           </View>
 
-          {/* ══ 3. TÓM TẮT ĐƠN HÀNG ══ */}
+          {/* ══ 4. KHUYẾN MÃI & ĐIỂM THƯỞNG ══ */}
+          <View style={s.card}>
+            <SectionHeader icon="pricetag-outline" title="Ưu đãi & Điểm thưởng" />
+            
+            <TouchableOpacity style={s.voucherSelectorBtn} onPress={handleOpenVouchers}>
+              <Ionicons name="ticket-outline" size={20} color={COLORS.primary} />
+              <Text style={s.voucherSelectorText}>
+                {appliedVoucher ? `Đã chọn mã: ${appliedVoucher.code}` : 'Chọn mã Voucher giảm giá'}
+              </Text>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+            
+            {appliedVoucher && (
+              <View style={s.appliedVoucherRow}>
+                <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                <Text style={s.appliedVoucherText}>
+                  {appliedVoucher.type === 'percent' ? `Giảm ${appliedVoucher.value}%` : 
+                   appliedVoucher.type === 'freeship' ? `Freeship (Tối đa ${fmt(appliedVoucher.value)})` : 
+                   `Giảm ${fmt(appliedVoucher.value)}`}
+                </Text>
+                <TouchableOpacity onPress={() => setAppliedVoucher(null)}>
+                  <Ionicons name="close-circle" size={18} color={COLORS.error} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <View style={s.summaryDivider} />
+
+            <View style={s.pointsRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.pointsTitle}>Dùng điểm BookMart</Text>
+                <Text style={s.pointsSub}>Bạn có {userPoints.toLocaleString('vi-VN')} điểm</Text>
+              </View>
+              <Switch
+                value={usePoints}
+                onValueChange={setUsePoints}
+                trackColor={{ false: COLORS.border, true: COLORS.primaryLight }}
+                thumbColor={usePoints ? COLORS.primary : '#f4f3f4'}
+                disabled={userPoints === 0}
+              />
+            </View>
+            {usePoints && (
+              <Text style={s.pointsDiscountText}>
+                - {pointsDiscount.toLocaleString('vi-VN')}đ (Dùng {pointsDiscount} điểm)
+              </Text>
+            )}
+          </View>
+
+          {/* ══ 5. TÓM TẮT ĐƠN HÀNG ══ */}
           <View style={s.card}>
             <SectionHeader icon="bag-outline" title={`Đơn hàng (${totalQty} cuốn)`} />
 
@@ -484,23 +628,38 @@ export default function CheckoutScreen() {
               </View>
               <View style={s.summaryLine}>
                 <Text style={s.summaryLabel}>Phí vận chuyển</Text>
-                {shippingFee === 0
-                  ? <Text style={[s.summaryValue, { color: COLORS.success }]}>Miễn phí</Text>
-                  : <Text style={s.summaryValue}>{fmt(shippingFee)}</Text>
-                }
+                {loadingFee ? (
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : shippingFee === 0 ? (
+                  <Text style={[s.summaryValue, { color: COLORS.success }]}>Miễn phí</Text>
+                ) : (
+                  <Text style={s.summaryValue}>{fmt(shippingFee)}</Text>
+                )}
               </View>
               <View style={s.summaryLine}>
-                <Text style={s.summaryLabel}>Giảm giá</Text>
+                <Text style={s.summaryLabel}>Tiết kiệm (từ giá gốc)</Text>
                 <Text style={[s.summaryValue, { color: COLORS.success }]}>-{fmt(saved)}</Text>
               </View>
+              {voucherDiscount > 0 && (
+                <View style={s.summaryLine}>
+                  <Text style={s.summaryLabel}>Voucher giảm giá</Text>
+                  <Text style={[s.summaryValue, { color: COLORS.success }]}>-{fmt(voucherDiscount)}</Text>
+                </View>
+              )}
+              {pointsDiscount > 0 && (
+                <View style={s.summaryLine}>
+                  <Text style={s.summaryLabel}>Dùng điểm thưởng</Text>
+                  <Text style={[s.summaryValue, { color: COLORS.success }]}>-{fmt(pointsDiscount)}</Text>
+                </View>
+              )}
               <View style={s.totalLine}>
-                <Text style={s.totalLabel}>Tổng cộng</Text>
+                <Text style={s.totalLabel}>Tổng thanh toán</Text>
                 <Text style={s.totalValue}>{fmt(total)}</Text>
               </View>
             </View>
           </View>
 
-          {/* ══ 4. GHI CHÚ ══ */}
+          {/* ══ 6. GHI CHÚ ══ */}
           <View style={s.card}>
             <SectionHeader icon="create-outline" title="Ghi chú đơn hàng" />
             <TextInput
@@ -515,7 +674,7 @@ export default function CheckoutScreen() {
             />
           </View>
 
-          {/* ══ 5. CHÍNH SÁCH ══ */}
+          {/* ══ 7. CHÍNH SÁCH ══ */}
           <View style={s.policyRow}>
             <Ionicons name="shield-checkmark-outline" size={14} color={COLORS.textSecondary} />
             <Text style={s.policyText}>
@@ -548,6 +707,59 @@ export default function CheckoutScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Voucher Modal */}
+      <Modal visible={showVoucherModal} animationType="slide" transparent>
+        <View style={s.vModalOverlay}>
+          <View style={s.vModalContent}>
+            <View style={s.vModalHeader}>
+              <Text style={s.vModalTitle}>Chọn Voucher</Text>
+              <TouchableOpacity onPress={() => setShowVoucherModal(false)}>
+                <Ionicons name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            {loadingVouchers ? (
+              <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />
+            ) : (
+              <ScrollView contentContainerStyle={s.voucherList}>
+                {vouchersList.length === 0 ? (
+                  <Text style={{ textAlign: 'center', color: COLORS.textSecondary, marginTop: 20 }}>Không có mã giảm giá nào.</Text>
+                ) : (
+                  vouchersList.map((v: any) => {
+                    const isValid = subtotal >= (v.min_order_value || 0);
+                    return (
+                      <TouchableOpacity 
+                        key={v.id} 
+                        style={[s.voucherItem, !isValid && s.voucherItemDisabled]}
+                        onPress={() => handleSelectVoucher(v)}
+                        activeOpacity={isValid ? 0.7 : 1}
+                      >
+                        <View style={s.voucherItemLeft}>
+                          <Ionicons name="ticket" size={24} color={isValid ? COLORS.primary : COLORS.textSecondary} />
+                        </View>
+                        <View style={s.voucherItemRight}>
+                          <Text style={[s.voucherItemCode, !isValid && { color: COLORS.textSecondary }]}>{v.code}</Text>
+                          <Text style={s.voucherItemDesc}>
+                            {v.type === 'percent' ? `Giảm ${v.value}% (tối đa ${fmt(v.max_discount)})` :
+                             v.type === 'freeship' ? `Freeship (tối đa ${fmt(v.value)})` :
+                             `Giảm ${fmt(v.value)}`}
+                          </Text>
+                          <Text style={s.voucherItemMin}>
+                            Đơn tối thiểu {fmt(v.min_order_value || 0)}
+                          </Text>
+                          {!isValid && (
+                            <Text style={s.voucherError}>Chưa đủ điều kiện</Text>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
 
     </View>
   );
@@ -792,6 +1004,42 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
 
+  // ── Voucher & Points ──
+  voucherSelectorBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    gap: SPACING.sm,
+    backgroundColor: COLORS.surface,
+  },
+  voucherSelectorText: {
+    flex: 1,
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.text,
+    fontWeight: FONT_WEIGHT.medium,
+  },
+  appliedVoucherRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EDF7ED',
+    padding: SPACING.sm,
+    borderRadius: RADIUS.sm,
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
+  },
+  appliedVoucherText: { flex: 1, color: COLORS.success, fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold },
+  pointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  pointsTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COLORS.text },
+  pointsSub: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 2 },
+  pointsDiscountText: { fontSize: FONT_SIZE.sm, color: COLORS.success, fontWeight: FONT_WEIGHT.semibold, marginTop: SPACING.xs },
+
   // ── Order Items ──
   orderItemRow: {
     flexDirection: 'row',
@@ -920,7 +1168,7 @@ const s = StyleSheet.create({
   },
 
   // ── Success Modal ──
-  modalOverlay: {
+  successOverlay: {
     flex: 1,
     backgroundColor: COLORS.overlay,
     alignItems: 'center',
@@ -1004,4 +1252,45 @@ const s = StyleSheet.create({
     fontWeight: FONT_WEIGHT.semibold,
     color: COLORS.primaryDark,
   },
+
+  // -- Modal Voucher --
+  vModalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  vModalContent: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+    maxHeight: '80%',
+    paddingBottom: SPACING.xl,
+  },
+  vModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  vModalTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COLORS.text },
+  voucherList: { padding: SPACING.md, gap: SPACING.sm },
+  voucherItem: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+  },
+  voucherItemDisabled: { backgroundColor: COLORS.background, opacity: 0.6 },
+  voucherItemLeft: {
+    width: 60,
+    backgroundColor: COLORS.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: COLORS.border,
+    borderStyle: 'dashed'
+  },
+  voucherItemRight: { padding: SPACING.sm, flex: 1, justifyContent: 'center' },
+  voucherItemCode: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: COLORS.primary, marginBottom: 2 },
+  voucherItemDesc: { fontSize: FONT_SIZE.sm, color: COLORS.text },
+  voucherItemMin: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 4 },
+  voucherError: { fontSize: FONT_SIZE.xs, color: COLORS.error, marginTop: 2, fontWeight: FONT_WEIGHT.bold },
 });

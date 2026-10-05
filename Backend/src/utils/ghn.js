@@ -26,3 +26,16 @@ export const createGHNOrder = async (orderData) => {
     throw err;
   }
 }
+
+export const calculateGHNFee = async (feeData) => {
+  try {
+    const response = await ghnApi.post('/shipping-order/fee', feeData);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi tính phí GHN:", error.response?.data || error.message);
+    const errMessage = error.response?.data?.message || 'Lỗi khi kết nối với GHN';
+    const err = new Error(errMessage);
+    err.status = 400;
+    throw err;
+  }
+}
