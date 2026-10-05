@@ -1,4 +1,5 @@
 import { api } from './api';
+import * as SecureStore from 'expo-secure-store';
 
 export const homeService = {
   getFeaturedBooks: async (limit = 10) => {
@@ -66,7 +67,10 @@ export const homeService = {
 
   getVouchers: async () => {
     try {
-      const response = await api.get('/vouchers?limit=10'); // Fetch a few to find a shipping voucher
+      const userStr = await SecureStore.getItemAsync('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const url = user?.id ? `/vouchers?limit=10&user_id=${user.id}` : '/vouchers?limit=10';
+      const response = await api.get(url); // Fetch a few to find a shipping voucher
       return response.data;
     } catch { return { success: false, data: [] }; }
   }

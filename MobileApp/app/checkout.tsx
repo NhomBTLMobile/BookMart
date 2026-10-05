@@ -336,7 +336,10 @@ export default function CheckoutScreen() {
     if (vouchersList.length === 0) {
       setLoadingVouchers(true);
       try {
-        const res = await api.get('/vouchers');
+        const userStr = await SecureStore.getItemAsync('user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const url = user?.id ? `/vouchers?user_id=${user.id}` : '/vouchers';
+        const res = await api.get(url);
         if (res.data?.success) {
           setVouchersList(res.data.data.filter((v: any) => v.is_active));
         }

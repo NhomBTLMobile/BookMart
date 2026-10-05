@@ -176,10 +176,17 @@ export class OrdersRepository {
 
       // Đánh dấu voucher đã sử dụng nếu có
       if (orderData.voucher_id && orderData.user_id) {
-        await UserVouchers.update(
-          { is_used: true },
-          { where: { user_id: orderData.user_id, voucher_id: orderData.voucher_id }, transaction }
-        );
+        const [userVoucher, created] = await UserVouchers.findOrCreate({
+          where: { user_id: orderData.user_id, voucher_id: orderData.voucher_id },
+          defaults: { is_used: true },
+          transaction
+        });
+        if (!created) {
+          if (userVoucher.is_used) {
+            throw new Error('Voucher này đã được sử dụng');
+          }
+          await userVoucher.update({ is_used: true }, { transaction });
+        }
       }
 
       await transaction.commit();
