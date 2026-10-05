@@ -90,3 +90,14 @@ export const loginWithGoogle = async (req, res, next) => {
     sendSuccess(res, 'Đăng nhập Google thành công', data)
   } catch (err) { next(err) }
 }
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword } = req.body
+    if (!oldPassword || !newPassword) {
+      return sendError(res, 'Vui lòng nhập mật khẩu cũ và mới', 400)
+    }
+    const data = await service.changePassword(req.user.id, oldPassword, newPassword)
+    sendSuccess(res, 'Đổi mật khẩu thành công', data)
+  } catch (err) { next(err) }
+}

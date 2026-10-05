@@ -77,6 +77,26 @@ export class UsersService {
     }
   }
 
+  async changePassword(userId, oldPassword, newPassword) {
+    const user = await repo.findById(userId)
+    if (!user) {
+      const err = new Error('User không tồn tại')
+      err.status = 404
+      throw err
+    }
+    if (user.password_hash) {
+      const isMatch = await bcrypt.compare(oldPassword, user.password_hash)
+      if (!isMatch) {
+        const err = new Error('Mật khẩu cũ không chính xác')
+        err.status = 400
+        throw err
+      }
+    }
+    const newPasswordHash = await bcrypt.hash(newPassword, 10)
+    await repo.update(userId, { password_hash: newPasswordHash })
+    return { success: true }
+  }
+
   async register(data) {
     const existingUser = await repo.findByEmail(data.email)
     if (existingUser) {

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove, login, refresh, getMe, register, loginWithGoogle } from './users.controller.js'
+import { getAll, getById, create, update, remove, login, refresh, getMe, register, loginWithGoogle, changePassword } from './users.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -109,6 +109,32 @@ router.post('/login/google', loginWithGoogle)
  *         description: Thành công
  */
 router.post('/refresh', refresh)
+
+/**
+ * @swagger
+ * /users/change-password:
+ *   post:
+ *     tags: [Users]
+ *     summary: Đổi mật khẩu
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [oldPassword, newPassword]
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Thành công
+ */
+router.post('/change-password', authMiddleware, changePassword)
 
 /**
  * @swagger

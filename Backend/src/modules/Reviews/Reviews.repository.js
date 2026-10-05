@@ -3,7 +3,7 @@ import Reviews from './reviews.model.js'
 import { sequelize } from '../../config/database.js'
 
 export class ReviewsRepository {
-  async findAll({ limit, offset, sort, order, search, book_id }) {
+  async findAll({ limit, offset, sort, order, search, book_id, user_id }) {
     let whereClause = ''
     const replacements = {}
     let conditions = []
@@ -16,6 +16,11 @@ export class ReviewsRepository {
     if (book_id) {
       conditions.push('r.book_id = :book_id')
       replacements.book_id = book_id
+    }
+
+    if (user_id) {
+      conditions.push('r.user_id = :user_id')
+      replacements.user_id = user_id
     }
 
     if (conditions.length > 0) {

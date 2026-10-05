@@ -44,6 +44,7 @@ const MENU_GROUPS: { title: string; items: MenuItem[] }[] = [
     title: 'Tài khoản',
     items: [
       { id: 'edit',     label: 'Chỉnh sửa hồ sơ',  icon: 'person-outline' },
+      { id: 'password', label: 'Đổi mật khẩu',     icon: 'lock-closed-outline' },
       { id: 'address',  label: 'Địa chỉ giao hàng', icon: 'location-outline' },
     ],
   },
@@ -90,8 +91,6 @@ export default function ProfileScreen() {
     points: 0,
   });
 
-  const [recentWishlist, setRecentWishlist] = useState<any[]>([]);
-
   useFocusEffect(
     useCallback(() => {
       const fetchUser = async () => {
@@ -134,20 +133,7 @@ export default function ProfileScreen() {
         }
       };
       
-      const fetchRecentWishlist = async () => {
-        try {
-          const { wishlistService } = await import('@/services/wishlistService');
-          const wlRes = await wishlistService.getMyWishlist();
-          if (wlRes.success && wlRes.data) {
-            setRecentWishlist(wlRes.data.slice(0, 5)); // Show up to 5 recently favorited books
-          }
-        } catch (e) {
-          console.error('Error fetching recent wishlist:', e);
-        }
-      };
-
       fetchUser();
-      fetchRecentWishlist();
     }, [])
   );
 
@@ -219,6 +205,9 @@ export default function ProfileScreen() {
                   onPress={() => {
                     if (item.id === 'orders') router.push('/my-orders');
                     else if (item.id === 'wishlist') router.push('/wishlist');
+                    else if (item.id === 'reviews') router.push('/my-reviews');
+                    else if (item.id === 'edit') router.push('/edit-profile');
+                    else if (item.id === 'password') router.push('/change-password');
                     else if (item.id === 'logout') handleLogout();
                     else Alert.alert('Thông báo', 'Tính năng đang được phát triển!');
                   }} 
@@ -228,36 +217,6 @@ export default function ProfileScreen() {
             ))}
           </View>
         ))}
-
-        {/* ── Gợi ý Sách Yêu Thích ── */}
-        {recentWishlist.length > 0 && (
-          <View style={[styles.menuCard, { paddingHorizontal: 0, paddingBottom: SPACING.md }]}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SPACING.lg, marginBottom: SPACING.sm }}>
-              <Text style={styles.menuGroupTitle}>Sách bạn đã yêu thích</Text>
-              <TouchableOpacity onPress={() => router.push('/wishlist')}>
-                <Text style={{ fontSize: FONT_SIZE.xs, color: COLORS.primaryDark, fontWeight: FONT_WEIGHT.medium }}>Xem tất cả</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: SPACING.lg, gap: SPACING.md }}>
-              {recentWishlist.map(book => (
-                <TouchableOpacity 
-                  key={book.id} 
-                  activeOpacity={0.8}
-                  onPress={() => router.push(`/book/${book.id}`)}
-                  style={{ width: 100 }}
-                >
-                  <Image 
-                    source={book.image_url ? { uri: book.image_url } : require('@/assets/images/book1.jpg')} 
-                    style={{ width: 100, height: 140, borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceAlt }} 
-                  />
-                  <Text style={{ fontSize: FONT_SIZE.xs, fontWeight: FONT_WEIGHT.bold, color: COLORS.text, marginTop: 8 }} numberOfLines={2}>
-                    {book.title}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
 
         <Text style={styles.version}>BookMart v1.0.0</Text>
       </ScrollView>
