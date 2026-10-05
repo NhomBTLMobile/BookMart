@@ -67,8 +67,7 @@ const INITIAL_ITEMS: CartItem[] = [
 const FREE_SHIP_THRESHOLD = 200_000; // Scarcity: ngưỡng miễn phí ship
 
 // ─── Helpers ─────────────────────────────────────────────────
-const fmt = (n: number) =>
-  n.toLocaleString('vi-VN') + 'đ';
+const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 
 // ─── CartItemRow ─────────────────────────────────────────────
 function CartItemRow({

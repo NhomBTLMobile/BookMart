@@ -47,7 +47,7 @@ const STATUS_CONFIG = {
   CANCELLED: { color: '#E53935', label: 'Đã hủy', icon: 'close-circle-outline' },
 };
 
-const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
+const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 
 // ─── Main Screen ─────────────────────────────────────────────────
 export default function MyOrdersScreen() {

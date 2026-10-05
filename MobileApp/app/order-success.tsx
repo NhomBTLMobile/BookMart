@@ -10,7 +10,7 @@ import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SHADOW, SPACING } from '../cons
 // 3. Clear Call-to-Action: Điều hướng người dùng tiếp tục mua sắm hoặc xem đơn.
 // ──────────────────────────────────────────────────────────────────────────
 
-const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
+const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 
 export default function OrderSuccessScreen() {
   const { orderId, total } = useLocalSearchParams<{ orderId: string; total: string }>();
@@ -208,3 +208,4 @@ const styles = StyleSheet.create({
     color: COLORS.primaryDark,
   },
 });
+

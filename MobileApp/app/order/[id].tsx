@@ -41,7 +41,7 @@ const STATUS_CONFIG: Record<string, { color: string; label: string; icon: string
   CANCELLED: { color: '#E53935', label: 'Đã hủy', icon: 'close-circle', desc: 'Đơn hàng đã bị hủy.' },
 };
 
-const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
+const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 
 // ─── Component ──────────────────────────────────────────────────
 export default function OrderDetailScreen() {
@@ -298,3 +298,4 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: { color: COLORS.text, fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold },
 });
+

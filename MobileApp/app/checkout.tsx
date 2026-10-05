@@ -73,7 +73,7 @@ const PAYMENT_OPTIONS: { id: PaymentMethod; label: string; sub: string; icon: st
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────
-const fmt = (n: number) => n.toLocaleString('vi-VN') + 'đ';
+const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 
 // ─── Step Indicator ──────────────────────────────────────────
 function StepBar({ current }: { current: 1 | 2 | 3 }) {
@@ -226,6 +226,14 @@ export default function CheckoutScreen() {
   const [vouchersList, setVouchersList] = useState<any[]>([]);
   const [loadingVouchers, setLoadingVouchers] = useState(false);
   const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
+
+  useEffect(() => {
+    // Luôn xoá bộ nhớ tạm địa chỉ khi VÀO MỚI trang thanh toán
+    addressService.setSelectedAddressId(null);
+    return () => {
+      addressService.setSelectedAddressId(null);
+    };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -575,7 +583,7 @@ export default function CheckoutScreen() {
             <View style={s.pointsRow}>
               <View style={{ flex: 1 }}>
                 <Text style={s.pointsTitle}>Dùng điểm BookMart</Text>
-                <Text style={s.pointsSub}>Bạn có {userPoints.toLocaleString('vi-VN')} điểm</Text>
+                <Text style={s.pointsSub}>Bạn có {(Number(userPoints) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} điểm</Text>
               </View>
               <Switch
                 value={usePoints}
@@ -587,7 +595,7 @@ export default function CheckoutScreen() {
             </View>
             {usePoints && (
               <Text style={s.pointsDiscountText}>
-                - {pointsDiscount.toLocaleString('vi-VN')}đ (Dùng {pointsDiscount} điểm)
+                - {(Number(pointsDiscount) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ (Dùng {(Number(pointsDiscount) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} điểm)
               </Text>
             )}
           </View>
