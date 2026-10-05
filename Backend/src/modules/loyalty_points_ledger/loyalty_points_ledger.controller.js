@@ -8,7 +8,7 @@ const service = new LoyaltyPointsLedgerService()
 export const getAll = async (req, res, next) => {
   try {
     const pagination = getPagination(req.query)
-    const { total, data } = await service.getAll({ ...pagination, search: req.query.search })
+    const { total, data } = await service.getAll({ ...pagination, search: req.query.search, user_id: req.query.user_id })
     const meta = getPaginationMeta(total, pagination.page, pagination.limit)
     sendSuccess(res, 'Lấy danh sách thành công', data, meta)
   } catch (err) { next(err) }

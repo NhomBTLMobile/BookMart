@@ -185,7 +185,7 @@ export default function ProfileScreen() {
               <Text style={styles.statLabel}>Yêu thích</Text>
             </TouchableOpacity>
             <View style={styles.statDivider} />
-            <TouchableOpacity style={styles.statItem}>
+            <TouchableOpacity style={styles.statItem} onPress={() => router.push('/loyalty-points')}>
               <Text style={[styles.statNum, { color: COLORS.warning }]}>
                 {user.points.toLocaleString()}
               </Text>

@@ -2,10 +2,11 @@ import { Op } from 'sequelize'
 import LoyaltyPointsLedger from './loyalty_points_ledger.model.js'
 
 export class LoyaltyPointsLedgerRepository {
-  async findAll({ limit, offset, sort, order, search }) {
+  async findAll({ limit, offset, sort, order, search, user_id }) {
     const where = {}
+    if (user_id) where.user_id = user_id;
 
-    const sortField = sort || 'id'
+    const sortField = sort || 'created_at'
     const { count, rows } = await LoyaltyPointsLedger.findAndCountAll({
       where,
       limit,
