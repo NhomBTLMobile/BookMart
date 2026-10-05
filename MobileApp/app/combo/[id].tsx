@@ -15,11 +15,13 @@ import { COLORS } from '@/constants/colors';
 import { homeService } from '@/services/homeService';
 import { bookService } from '@/services/bookService';
 import { useCart } from '@/context/CartContext';
+import { api } from '@/services/api';
 
 export default function ComboDetailScreen() {
   const { id } = useLocalSearchParams();
   const [combo, setCombo] = useState<any>(null);
   const [books, setBooks] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
 
@@ -41,6 +43,16 @@ export default function ComboDetailScreen() {
               }))
               .filter(b => b && b.id);
             setBooks(fetchedBooks);
+          }
+
+          // Fetch combo reviews
+          try {
+            const reviewRes = await api.get(`/reviews?combo_id=${id}&limit=20`);
+            if (reviewRes.data?.success) {
+              setReviews(reviewRes.data.data || []);
+            }
+          } catch (e) {
+            console.log('Error fetching combo reviews:', e);
           }
         }
       } catch (error) {
@@ -130,6 +142,17 @@ export default function ComboDetailScreen() {
           <Text style={styles.stockText}>
             Còn lại: <Text style={{ fontWeight: 'bold' }}>{combo.stock_qty || 0}</Text> bộ
           </Text>
+
+          {/* Rating summary */}
+          {combo.avg_rating > 0 && (
+            <View style={styles.ratingRow}>
+              <Ionicons name="star" size={18} color="#FFB800" />
+              <Text style={styles.ratingText}>
+                {Number(combo.avg_rating).toFixed(1)}
+              </Text>
+              <Text style={styles.reviewCountText}>({combo.review_count || 0} đánh giá)</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.booksSection}>
@@ -158,6 +181,48 @@ export default function ComboDetailScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* REVIEWS SECTION */}
+        {reviews.length > 0 && (
+          <View style={styles.reviewsSection}>
+            <Text style={styles.sectionTitle}>Đánh giá ({reviews.length})</Text>
+            {reviews.map((review: any) => {
+              const d = new Date(review.created_at);
+              const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+              const initial = (review.user_name || 'A').charAt(0).toUpperCase();
+              return (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    {review.user_avatar_url ? (
+                      <Image
+                        source={{ uri: review.user_avatar_url }}
+                        style={styles.avatarImage}
+                      />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Text style={styles.avatarText}>{initial}</Text>
+                      </View>
+                    )}
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={styles.reviewerName}>{review.user_name || 'Ẩn danh'}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View style={{ flexDirection: 'row', gap: 2 }}>
+                          {[1,2,3,4,5].map(s => (
+                            <Ionicons key={s} name={s <= review.rating ? 'star' : 'star-outline'} size={13} color="#FFB800" />
+                          ))}
+                        </View>
+                        <Text style={styles.reviewDate}>{dateStr}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  {!!review.body && (
+                    <Text style={styles.reviewBody}>{review.body}</Text>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
 
       {/* BOTTOM ACTION BAR */}
@@ -262,6 +327,72 @@ const styles = StyleSheet.create({
   stockText: {
     fontSize: 14,
     color: COLORS.textSecondary,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 6,
+  },
+  ratingText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  reviewCountText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  // Reviews section
+  reviewsSection: {
+    padding: 20,
+    backgroundColor: COLORS.surface,
+    marginTop: 10,
+  },
+  reviewCard: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  avatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.background,
+  },
+  avatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  reviewerName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: 2,
+  },
+  reviewDate: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+  },
+  reviewBody: {
+    fontSize: 14,
+    color: COLORS.text,
+    lineHeight: 20,
+    paddingLeft: 46,
   },
   booksSection: {
     padding: 20,

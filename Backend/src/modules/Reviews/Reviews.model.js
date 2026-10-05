@@ -48,22 +48,22 @@ const Reviews = sequelize.define(
     underscored: true,
     hooks: {
       afterSave: async (review, options) => {
-        if (review.book_id) await updateBookRating(review.book_id)
-        if (review.combo_id) await updateComboRating(review.combo_id)
+        if (review.book_id) await updateBookRating(review.book_id, options.transaction)
+        if (review.combo_id) await updateComboRating(review.combo_id, options.transaction)
       },
       afterUpdate: async (review, options) => {
-        if (review.book_id) await updateBookRating(review.book_id)
-        if (review.combo_id) await updateComboRating(review.combo_id)
+        if (review.book_id) await updateBookRating(review.book_id, options.transaction)
+        if (review.combo_id) await updateComboRating(review.combo_id, options.transaction)
       },
       afterDestroy: async (review, options) => {
-        if (review.book_id) await updateBookRating(review.book_id)
-        if (review.combo_id) await updateComboRating(review.combo_id)
+        if (review.book_id) await updateBookRating(review.book_id, options.transaction)
+        if (review.combo_id) await updateComboRating(review.combo_id, options.transaction)
       }
     }
   }
 )
 
-async function updateBookRating(bookId) {
+async function updateBookRating(bookId, transaction) {
   const query = `
     UPDATE books
     SET 
@@ -72,13 +72,13 @@ async function updateBookRating(bookId) {
     WHERE id = :bookId;
   `
   try {
-    await sequelize.query(query, { replacements: { bookId } })
+    await sequelize.query(query, { replacements: { bookId }, transaction })
   } catch (err) {
     console.error('Lỗi khi cập nhật rating cho sách:', err)
   }
 }
 
-async function updateComboRating(comboId) {
+async function updateComboRating(comboId, transaction) {
   const query = `
     UPDATE combos
     SET 
@@ -87,7 +87,7 @@ async function updateComboRating(comboId) {
     WHERE id = :comboId;
   `
   try {
-    await sequelize.query(query, { replacements: { comboId } })
+    await sequelize.query(query, { replacements: { comboId }, transaction })
   } catch (err) {
     console.error('Lỗi khi cập nhật rating cho combo:', err)
   }

@@ -12,6 +12,7 @@ export const getAll = async (req, res, next) => {
       ...pagination, 
       search: req.query.search,
       book_id: req.query.book_id,
+      combo_id: req.query.combo_id,
       user_id: req.query.user_id
     })
     const meta = getPaginationMeta(total, pagination.page, pagination.limit)

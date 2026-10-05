@@ -5,6 +5,8 @@ import { sequelize } from '../../config/database.js'
 import Users from '../users/users.model.js'
 import LoyaltyPointsLedger from '../loyalty_points_ledger/loyalty_points_ledger.model.js'
 import UserVouchers from '../user_vouchers/user_vouchers.model.js'
+import Books from '../books/books.model.js'
+import Combos from '../combos/combos.model.js'
 
 export class OrdersRepository {
   async findAll({ limit, offset, sort, order, search }) {
@@ -193,6 +195,11 @@ export class OrdersRepository {
     const transaction = await sequelize.transaction();
     try {
       const oldOrder = await Orders.findByPk(id, { transaction });
+      if (!oldOrder) {
+        await transaction.rollback();
+        return null;
+      }
+      
       const [affectedRows] = await Orders.update(data, { where: { id }, transaction });
       
       // Nếu đơn hàng bị hủy, hoàn lại điểm và voucher
@@ -248,12 +255,45 @@ export class OrdersRepository {
         }
       }
 
+      // Xử lý cập nhật số lượng tồn kho và lượt bán
+      if (data.order_status && data.order_status !== oldOrder.order_status) {
+        const deductedStates = ['packing', 'shipping', 'delivered'];
+        const oldIsDeducted = deductedStates.includes(oldOrder.order_status);
+        const newIsDeducted = deductedStates.includes(data.order_status);
+
+        if (newIsDeducted && !oldIsDeducted) {
+          await this._updateStockAndSold(id, transaction, 'deduct');
+        } else if (!newIsDeducted && oldIsDeducted) {
+          await this._updateStockAndSold(id, transaction, 'refund');
+        }
+      }
+
       await transaction.commit();
       if (affectedRows === 0) return null;
       return this.findById(id);
     } catch (e) {
       await transaction.rollback();
       throw e;
+    }
+  }
+
+  async _updateStockAndSold(orderId, transaction, action) {
+    const items = await OrderItems.findAll({ where: { order_id: orderId }, transaction });
+    for (const item of items) {
+      if (item.book_id) {
+        const book = await Books.findByPk(item.book_id, { transaction });
+        if (book) {
+          const newStock = action === 'deduct' ? Math.max(0, book.stock_qty - item.quantity) : book.stock_qty + item.quantity;
+          const newSold = action === 'deduct' ? (book.sold_count || 0) + item.quantity : Math.max(0, (book.sold_count || 0) - item.quantity);
+          await book.update({ stock_qty: newStock, sold_count: newSold }, { transaction });
+        }
+      } else if (item.combo_id) {
+        const combo = await Combos.findByPk(item.combo_id, { transaction });
+        if (combo) {
+          const newStock = action === 'deduct' ? Math.max(0, (combo.stock_qty || 0) - item.quantity) : (combo.stock_qty || 0) + item.quantity;
+          await combo.update({ stock_qty: newStock }, { transaction });
+        }
+      }
     }
   }
 
@@ -287,6 +327,12 @@ export class OrdersRepository {
           { is_used: false },
           { where: { user_id: order.user_id, voucher_id: order.voucher_id }, transaction }
         );
+      }
+
+      // Hoàn lại số lượng tồn kho nếu đơn hàng đang ở trạng thái đã trừ kho
+      const deductedStates = ['packing', 'shipping', 'delivered'];
+      if (deductedStates.includes(order.order_status)) {
+        await this._updateStockAndSold(id, transaction, 'refund');
       }
 
       await OrderItems.destroy({ where: { order_id: id }, transaction });

@@ -21,12 +21,14 @@ import { reviewService } from '../services/reviewService';
 
 type Review = {
   id: string;
-  book_id: string;
+  book_id: string | null;
+  combo_id: string | null;
   book_title: string;
   book_image_url: string;
   rating: number;
   body: string;
   created_at: string;
+  is_combo: boolean;
 };
 
 const RATING_LABELS = ['', 'Rất tệ', 'Tệ', 'Bình thường', 'Rất tốt', 'Tuyệt vời!'];
@@ -126,12 +128,13 @@ export default function MyReviewsScreen() {
   const renderReview = ({ item }: { item: Review }) => {
     const d = new Date(item.created_at);
     const dateStr = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+    const navigateTo = item.is_combo ? `/combo/${item.combo_id}` : `/book/${item.book_id}`;
 
     return (
       <TouchableOpacity 
         style={styles.reviewCard}
         activeOpacity={0.7}
-        onPress={() => router.push(`/book/${item.book_id}` as any)}
+        onPress={() => router.push(navigateTo as any)}
       >
         <View style={styles.cardHeader}>
           <Image 
@@ -140,7 +143,14 @@ export default function MyReviewsScreen() {
             contentFit="cover" 
           />
           <View style={styles.productInfo}>
-            <Text style={styles.productTitle} numberOfLines={2}>{item.book_title}</Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.productTitle} numberOfLines={2}>{item.book_title}</Text>
+              {item.is_combo && (
+                <View style={styles.comboBadge}>
+                  <Text style={styles.comboBadgeText}>COMBO</Text>
+                </View>
+              )}
+            </View>
             <View style={styles.ratingRow}>
               {renderStars(item.rating)}
               <Text style={styles.dateText}>{dateStr}</Text>
@@ -151,7 +161,7 @@ export default function MyReviewsScreen() {
         <View style={styles.divider} />
 
         <View style={styles.cardBody}>
-          <Text style={styles.reviewBody}>{item.body}</Text>
+          <Text style={styles.reviewBody}>{item.body || <Text style={{color: COLORS.textSecondary, fontStyle: 'italic'}}>Chưa có nhận xét</Text>}</Text>
         </View>
 
         <View style={styles.actionRow}>
@@ -212,7 +222,9 @@ export default function MyReviewsScreen() {
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalSubtitle} numberOfLines={1}>{editingReview?.book_title}</Text>
+            <Text style={styles.modalSubtitle} numberOfLines={1}>
+              {editingReview?.is_combo ? '🎁 ' : ''}{editingReview?.book_title}
+            </Text>
 
             <View style={styles.starRow}>
               {[1, 2, 3, 4, 5].map(s => (
@@ -382,6 +394,26 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
 
+  // Card header
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: SPACING.xs,
+  },
+  comboBadge: {
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+  },
+  comboBadgeText: {
+    color: '#2E7D32',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalCard: { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 },

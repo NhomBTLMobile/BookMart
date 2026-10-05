@@ -6,19 +6,24 @@ import LoyaltyPointsLedger from '../loyalty_points_ledger/loyalty_points_ledger.
 import OrderItems from '../order_items/order_items.model.js'
 
 export class ReviewsRepository {
-  async findAll({ limit, offset, sort, order, search, book_id, user_id }) {
+  async findAll({ limit, offset, sort, order, search, book_id, combo_id, user_id }) {
     let whereClause = ''
     const replacements = {}
     let conditions = []
 
     if (search) {
-      conditions.push('(r.body ILIKE :search OR u.full_name ILIKE :search OR b.title ILIKE :search)')
+      conditions.push('(r.body ILIKE :search OR u.full_name ILIKE :search OR b.title ILIKE :search OR c.name ILIKE :search)')
       replacements.search = `%${search}%`
     }
 
     if (book_id) {
       conditions.push('r.book_id = :book_id')
       replacements.book_id = book_id
+    }
+
+    if (combo_id) {
+      conditions.push('r.combo_id = :combo_id')
+      replacements.combo_id = combo_id
     }
 
     if (user_id) {
@@ -38,6 +43,7 @@ export class ReviewsRepository {
       FROM reviews r
       LEFT JOIN users u ON r.user_id = u.id
       LEFT JOIN books b ON r.book_id = b.id
+      LEFT JOIN combos c ON r.combo_id = c.id
       ${whereClause}
     `, { replacements })
 
@@ -49,11 +55,16 @@ export class ReviewsRepository {
         u.full_name as user_name,
         u.email as user_email,
         u.avatar_url as user_avatar_url,
-        b.title as book_title,
-        (SELECT image_url FROM book_images bi WHERE bi.book_id = b.id LIMIT 1) as book_image_url
+        COALESCE(b.title, c.name) as book_title,
+        COALESCE(
+          (SELECT image_url FROM book_images bi WHERE bi.book_id = b.id LIMIT 1),
+          c.cover_image_url
+        ) as book_image_url,
+        CASE WHEN r.combo_id IS NOT NULL THEN true ELSE false END as is_combo
       FROM reviews r
       LEFT JOIN users u ON r.user_id = u.id
       LEFT JOIN books b ON r.book_id = b.id
+      LEFT JOIN combos c ON r.combo_id = c.id
       ${whereClause}
       ORDER BY ${sortField} ${sortOrder}
       LIMIT :limit OFFSET :offset
