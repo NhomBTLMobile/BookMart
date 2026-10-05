@@ -408,64 +408,68 @@ export default function CheckoutScreen() {
                 items: itemsPayload
               };
               
-              const res = await orderService.createOrder(payload);
-              setIsSubmitting(false);
-              
-              if (res.success !== false) {
-                if (isBuyingFromCart) clearCart();
-                
-                const createdOrderId = res.data?.id; // UUID
-                const createdOrderCode = res.data?.order_code || payload.order_code;
-                
-                if (selectedPayment === 'vnpay' && createdOrderId) {
-                  try {
-                    const redirectUrl = Linking.createURL('payment-result');
-                    const returnUrl = `${api.defaults.baseURL}/payments/vnpay/vnpay_return`;
+              if (selectedPayment === 'vnpay') {
+                try {
+                  const redirectUrl = Linking.createURL('payment-result');
+                  const returnUrl = `${api.defaults.baseURL}/payments/vnpay/vnpay_return`;
 
-                    const vnpRes = await api.post('/payments/vnpay/create_url', {
-                      order_id: createdOrderCode, // VNPAY không cho phép ký tự "-" trong vnp_TxnRef, nên dùng Order Code (VD: BM...)
-                      amount: total,
-                      order_info: `Thanh toan don hang ${createdOrderCode}`,
-                      return_url: returnUrl
-                    }, {
-                      params: { app_redirect: redirectUrl } // query string
-                    });
-                    
-                    if (vnpRes.data?.success && vnpRes.data?.data?.payment_url) {
-                      const result = await WebBrowser.openAuthSessionAsync(
+                  const vnpRes = await api.post('/payments/vnpay/create_url', {
+                    amount: total,
+                    order_info: `Thanh toan don hang BookMart`,
+                    return_url: returnUrl,
+                    checkoutPayload: payload
+                  }, {
+                    params: { app_redirect: redirectUrl }
+                  });
+                  
+                  setIsSubmitting(false);
+
+                  if (vnpRes.data?.success && vnpRes.data?.data?.payment_url) {
+                    const createdOrderCode = vnpRes.data.data.order_code;
+                    const result = await WebBrowser.openAuthSessionAsync(
                         vnpRes.data.data.payment_url,
                         redirectUrl
                       );
                       
                       // WebBrowser.openAuthSessionAsync tự động đóng khi nhận được redirectUrl.
-                      if (result.type === 'success' && result.url) {
-                        const parsedUrl = Linking.parse(result.url);
-                        const status = parsedUrl.queryParams?.status as string || 'failed';
-                        const orderId = parsedUrl.queryParams?.orderId as string || createdOrderCode;
-                        
-                        router.replace({
-                          pathname: '/payment-result',
-                          params: { status, orderId }
-                        });
-                      } else if (result.type === 'cancel' || result.type === 'dismiss') {
-                        router.replace({
-                          pathname: '/payment-result',
-                          params: { status: 'failed', orderId: createdOrderCode }
-                        });
+                    if (result.type === 'success' && result.url) {
+                      const parsedUrl = Linking.parse(result.url);
+                      const status = parsedUrl.queryParams?.status as string || 'failed';
+                      const orderId = parsedUrl.queryParams?.orderId as string || createdOrderCode;
+                      
+                      if (status === 'success' && isBuyingFromCart) {
+                        clearCart();
                       }
-                      return;
+                      
+                      router.replace({
+                        pathname: '/payment-result',
+                        params: { status, orderId }
+                      });
+                    } else if (result.type === 'cancel' || result.type === 'dismiss') {
+                      router.replace({
+                        pathname: '/payment-result',
+                        params: { status: 'failed', orderId: '' }
+                      });
                     }
-                  } catch (e) {
-                    Alert.alert('Lỗi', 'Không thể khởi tạo thanh toán VNPAY');
+                    return;
                   }
+                } catch (e) {
+                  Alert.alert('Lỗi', 'Không thể khởi tạo thanh toán VNPAY');
                 }
-
-                router.replace({
-                  pathname: '/order-success',
-                  params: { orderId: createdOrderCode, total: total.toString() }
-                });
               } else {
-                Alert.alert('Lỗi', res.message || 'Không thể tạo đơn hàng');
+                // COD Flow
+                const res = await orderService.createOrder(payload);
+                setIsSubmitting(false);
+                if (res.success !== false) {
+                  if (isBuyingFromCart) clearCart();
+                  const createdOrderCode = res.data?.order_code || payload.order_code;
+                  router.replace({
+                    pathname: '/order-success',
+                    params: { orderId: createdOrderCode, total: total.toString() }
+                  });
+                } else {
+                  Alert.alert('Lỗi', res.message || 'Không thể tạo đơn hàng');
+                }
               }
             } catch(e) {
               setIsSubmitting(false);

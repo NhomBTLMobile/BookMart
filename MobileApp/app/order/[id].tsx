@@ -121,7 +121,7 @@ export default function OrderDetailScreen() {
     };
   } catch (e) {}
 
-  const canRepay = order.payment_method === 'vnpay' && (order.payment_status === 'pending' || order.payment_status === 'failed');
+  const canRepay = mappedStatus !== 'CANCELLED' && order.payment_method === 'vnpay' && (order.payment_status === 'pending' || order.payment_status === 'failed');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -250,6 +250,11 @@ export default function OrderDetailScreen() {
         {mappedStatus === 'DELIVERED' && (
           <TouchableOpacity style={styles.primaryBtn}>
             <Text style={styles.primaryBtnText}>Đánh giá sản phẩm</Text>
+          </TouchableOpacity>
+        )}
+        {(mappedStatus === 'CANCELLED' || mappedStatus === 'DELIVERED') && (
+          <TouchableOpacity style={styles.primaryBtn}>
+            <Text style={styles.primaryBtnText}>Mua lại</Text>
           </TouchableOpacity>
         )}
       </View>

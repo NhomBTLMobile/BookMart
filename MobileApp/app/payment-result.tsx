@@ -32,11 +32,11 @@ export default function PaymentResultScreen() {
           if (isSuccess) {
             router.replace({ pathname: '/order-success', params: { orderId: orderId as string, total: '0' } });
           } else {
-            router.replace({ pathname: `/order/${orderId}` });
+            router.replace('/(tabs)');
           }
         }}
       >
-        <Text style={s.btnText}>{isSuccess ? 'Xem đơn hàng' : 'Xem chi tiết đơn hàng'}</Text>
+        <Text style={s.btnText}>{isSuccess ? 'Xem đơn hàng' : 'Về trang chủ'}</Text>
       </TouchableOpacity>
     </View>
   );

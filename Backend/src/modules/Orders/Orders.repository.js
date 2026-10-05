@@ -2,6 +2,9 @@ import { Op } from 'sequelize'
 import Orders from './orders.model.js'
 import OrderItems from '../order_items/order_items.model.js'
 import { sequelize } from '../../config/database.js'
+import Users from '../users/users.model.js'
+import LoyaltyPointsLedger from '../loyalty_points_ledger/loyalty_points_ledger.model.js'
+import UserVouchers from '../user_vouchers/user_vouchers.model.js'
 
 export class OrdersRepository {
   async findAll({ limit, offset, sort, order, search }) {
@@ -137,6 +140,35 @@ export class OrdersRepository {
         }));
         await OrderItems.bulkCreate(orderItemsData, { transaction });
       }
+
+      // Trừ điểm thưởng nếu có
+      if (orderData.points_used && orderData.points_used > 0 && orderData.user_id) {
+        const user = await Users.findByPk(orderData.user_id, { transaction });
+        if (user && user.loyalty_points >= orderData.points_used) {
+          const newBalance = user.loyalty_points - orderData.points_used;
+          await user.update({ loyalty_points: newBalance }, { transaction });
+          
+          await LoyaltyPointsLedger.create({
+            user_id: orderData.user_id,
+            delta: -orderData.points_used,
+            balance_after: newBalance,
+            type: 'redeem_order',
+            ref_id: order.id,
+            created_at: new Date()
+          }, { transaction });
+        } else {
+          throw new Error('Không đủ điểm thưởng để thanh toán');
+        }
+      }
+
+      // Đánh dấu voucher đã sử dụng nếu có
+      if (orderData.voucher_id && orderData.user_id) {
+        await UserVouchers.update(
+          { is_used: true },
+          { where: { user_id: orderData.user_id, voucher_id: orderData.voucher_id }, transaction }
+        );
+      }
+
       await transaction.commit();
       return this.findById(order.id);
     } catch (e) {
@@ -147,12 +179,84 @@ export class OrdersRepository {
   }
 
   async update(id, data) {
-    const [affectedRows] = await Orders.update(data, { where: { id } })
-    if (affectedRows === 0) return null
-    return this.findById(id)
+    const transaction = await sequelize.transaction();
+    try {
+      const oldOrder = await Orders.findByPk(id, { transaction });
+      const [affectedRows] = await Orders.update(data, { where: { id }, transaction });
+      
+      // Nếu đơn hàng bị hủy, hoàn lại điểm và voucher
+      if (data.order_status === 'cancelled' && oldOrder.order_status !== 'cancelled') {
+        if (oldOrder.points_used && oldOrder.points_used > 0 && oldOrder.user_id) {
+          const user = await Users.findByPk(oldOrder.user_id, { transaction });
+          if (user) {
+            const newBalance = (user.loyalty_points || 0) + oldOrder.points_used;
+            await user.update({ loyalty_points: newBalance }, { transaction });
+            await LoyaltyPointsLedger.create({
+              user_id: oldOrder.user_id,
+              delta: oldOrder.points_used,
+              balance_after: newBalance,
+              type: 'refund_order',
+              ref_id: oldOrder.id,
+              created_at: new Date()
+            }, { transaction });
+          }
+        }
+        if (oldOrder.voucher_id && oldOrder.user_id) {
+          await UserVouchers.update(
+            { is_used: false },
+            { where: { user_id: oldOrder.user_id, voucher_id: oldOrder.voucher_id }, transaction }
+          );
+        }
+      }
+
+      await transaction.commit();
+      if (affectedRows === 0) return null;
+      return this.findById(id);
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
   }
 
   async delete(id) {
-    return Orders.destroy({ where: { id } })
+    const transaction = await sequelize.transaction();
+    try {
+      const order = await Orders.findByPk(id, { transaction });
+      if (!order) {
+        await transaction.rollback();
+        return;
+      }
+      
+      // Hoàn lại điểm và voucher trước khi xóa
+      if (order.points_used && order.points_used > 0 && order.user_id) {
+        const user = await Users.findByPk(order.user_id, { transaction });
+        if (user) {
+          const newBalance = (user.loyalty_points || 0) + order.points_used;
+          await user.update({ loyalty_points: newBalance }, { transaction });
+          await LoyaltyPointsLedger.create({
+            user_id: order.user_id,
+            delta: order.points_used,
+            balance_after: newBalance,
+            type: 'refund_order',
+            ref_id: order.id,
+            created_at: new Date()
+          }, { transaction });
+        }
+      }
+      if (order.voucher_id && order.user_id) {
+        await UserVouchers.update(
+          { is_used: false },
+          { where: { user_id: order.user_id, voucher_id: order.voucher_id }, transaction }
+        );
+      }
+
+      await OrderItems.destroy({ where: { order_id: id }, transaction });
+      await Orders.destroy({ where: { id }, transaction });
+
+      await transaction.commit();
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
   }
 }
