@@ -74,10 +74,11 @@ export const reviewsApi = {
 
 // ── Dashboard ──────────────────────────────────────────────────
 export const dashboardApi = {
-  getStats:       () => api.get('/dashboard/stats'),
-  getRevenueChart:() => api.get('/dashboard/revenue-chart'),
-  getTopBooks:    () => api.get('/dashboard/top-books'),
-  getRecentOrders:() => api.get('/dashboard/recent-orders'),
+  getStats:       (params) => api.get('/dashboard/stats', { params }),
+  getRevenueChart:(params) => api.get('/dashboard/revenue-chart', { params }),
+  getTopBooks:    (params) => api.get('/dashboard/top-books', { params }),
+  getRecentOrders:(params) => api.get('/dashboard/recent-orders', { params }),
+  getExportData:  (params) => api.get('/dashboard/export-data', { params }),
 }
 
 // ── Publishers ─────────────────────────────────────────────────

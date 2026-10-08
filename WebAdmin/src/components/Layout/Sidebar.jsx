@@ -10,6 +10,7 @@ import {
   StarOutlined,
   TagOutlined,
   TeamOutlined,
+  BarChartOutlined,
 } from "@ant-design/icons";
 import { Avatar, Layout, Menu, Tag, Tooltip, Typography } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -23,6 +24,12 @@ const ALL_ITEMS = [
     key: "/",
     label: "Dashboard",
     icon: <DashboardOutlined />,
+    roles: ["ADMIN", "STAFF"],
+  },
+  {
+    key: "/reports",
+    label: "Báo cáo",
+    icon: <BarChartOutlined />,
     roles: ["ADMIN", "STAFF"],
   },
   { type: "divider", roles: ["ADMIN", "STAFF"], key: "d1" },

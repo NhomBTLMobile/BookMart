@@ -3,7 +3,8 @@ import { logger } from '../../utils/logger.js'
 
 export const getStats = async (req, res, next) => {
   try {
-    const stats = await dashboardService.getStats()
+    const { startDate, endDate } = req.query
+    const stats = await dashboardService.getStats({ startDate, endDate })
     res.json({ success: true, data: stats })
   } catch (error) {
     logger.error('Error in getStats: ' + error.message)
@@ -13,7 +14,8 @@ export const getStats = async (req, res, next) => {
 
 export const getRevenueChart = async (req, res, next) => {
   try {
-    const data = await dashboardService.getRevenueChart()
+    const { startDate, endDate } = req.query
+    const data = await dashboardService.getRevenueChart({ startDate, endDate })
     res.json({ success: true, data })
   } catch (error) {
     logger.error('Error in getRevenueChart: ' + error.message)
@@ -23,7 +25,8 @@ export const getRevenueChart = async (req, res, next) => {
 
 export const getTopBooks = async (req, res, next) => {
   try {
-    const data = await dashboardService.getTopBooks()
+    const { startDate, endDate } = req.query
+    const data = await dashboardService.getTopBooks({ startDate, endDate })
     res.json({ success: true, data })
   } catch (error) {
     logger.error('Error in getTopBooks: ' + error.message)
@@ -33,10 +36,22 @@ export const getTopBooks = async (req, res, next) => {
 
 export const getRecentOrders = async (req, res, next) => {
   try {
-    const data = await dashboardService.getRecentOrders()
+    const { startDate, endDate } = req.query
+    const data = await dashboardService.getRecentOrders({ startDate, endDate })
     res.json({ success: true, data })
   } catch (error) {
     logger.error('Error in getRecentOrders: ' + error.message)
+    next(error)
+  }
+}
+
+export const getExportData = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query
+    const data = await dashboardService.getExportReportData({ startDate, endDate })
+    res.json({ success: true, data })
+  } catch (error) {
+    logger.error('Error in getExportData: ' + error.message)
     next(error)
   }
 }

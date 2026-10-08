@@ -10,5 +10,6 @@ router.get('/stats', dashboardController.getStats)
 router.get('/revenue-chart', dashboardController.getRevenueChart)
 router.get('/top-books', dashboardController.getTopBooks)
 router.get('/recent-orders', dashboardController.getRecentOrders)
+router.get('/export-data', dashboardController.getExportData)
 
 export default router
