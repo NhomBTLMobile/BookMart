@@ -508,12 +508,7 @@ export default function CheckoutScreen() {
           {/* ── Step Indicator ── */}
           <StepBar current={2} />
 
-          {/* ── Bảo mật ── */}
-          <View style={s.securityBadge}>
-            <Ionicons name="lock-closed" size={13} color={COLORS.primary} />
-            <Text style={s.securityText}>Thanh toán được mã hóa SSL 256-bit</Text>
-          </View>
-
+          
           {/* ══ 1. ĐỊA CHỈ GIAO HÀNG ══ */}
           <View style={s.card}>
             <SectionHeader icon="location-outline" title="Địa chỉ giao hàng" />

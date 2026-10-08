@@ -1,4 +1,5 @@
 import { Op } from 'sequelize'
+import { sequelize } from '../../config/database.js'
 import Books from './books.model.js'
 
 export class BooksRepository {

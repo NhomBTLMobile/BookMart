@@ -105,9 +105,13 @@ export class UsersService {
       throw err
     }
     const password_hash = await bcrypt.hash(data.password, 10)
+    const randomSeed = Math.random().toString(36).substring(7)
+    const avatar_url = `https://api.dicebear.com/7.x/avataaars/png?seed=${randomSeed}`
+    
     const newUser = await repo.create({
       ...data,
       password_hash,
+      avatar_url,
       role: 'customer',
       is_active: true
     })

@@ -26,5 +26,14 @@ export const bookService = {
     } catch (e: any) {
       return { success: false, message: e.response?.data?.message || 'Có lỗi xảy ra' };
     }
+  },
+
+  getSimilarBooks: async (bookId: string, limit = 10) => {
+    try {
+      const response = await api.get(`/recommendations/books/${bookId}/similar?limit=${limit}`);
+      return response.data;
+    } catch {
+      return { success: false, data: [] };
+    }
   }
 };

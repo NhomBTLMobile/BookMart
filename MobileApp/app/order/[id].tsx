@@ -406,6 +406,7 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: { color: COLORS.white, fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
   reviewBtn: {
+    marginBottom: SPACING.md,
     backgroundColor: '#FF9800',
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,

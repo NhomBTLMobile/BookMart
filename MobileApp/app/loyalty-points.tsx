@@ -20,7 +20,7 @@ export default function LoyaltyPointsScreen() {
   const [points, setPoints] = useState(0);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + ' điểm';
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -96,7 +96,7 @@ export default function LoyaltyPointsScreen() {
           </View>
         </View>
         <Text style={[styles.historyDelta, { color: isPositive ? COLORS.success : COLORS.text }]}>
-          {isPositive ? '+' : ''}{item.delta}
+          {isPositive ? '+' : ''}{fmt(item.delta)}
         </Text>
       </View>
     );

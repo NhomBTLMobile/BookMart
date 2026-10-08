@@ -45,6 +45,7 @@ export default function BookDetailsScreen() {
   const [loading, setLoading] = useState(true);
   const [vouchers, setVouchers] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [similarBooks, setSimilarBooks] = useState<any[]>([]);
   const [totalReviews, setTotalReviews] = useState<number>(0);
   const [ratingCounts, setRatingCounts] = useState<any>({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, total: 0 });
 
@@ -53,10 +54,11 @@ export default function BookDetailsScreen() {
   useEffect(() => {
     const fetchBook = async () => {
       try {
-        const [bookRes, vouchersRes, reviewsRes] = await Promise.all([
+        const [bookRes, vouchersRes, reviewsRes, similarRes] = await Promise.all([
           bookService.getBookDetails(id as string),
           homeService.getVouchers(),
-          bookService.getBookReviews(id as string, 10)
+          bookService.getBookReviews(id as string, 10),
+          bookService.getSimilarBooks(id as string, 10)
         ]);
         
         if (bookRes.success && bookRes.data) {
@@ -86,6 +88,10 @@ export default function BookDetailsScreen() {
             if (counts[r.rating] !== undefined) counts[r.rating]++;
           });
           setRatingCounts(counts);
+        }
+
+        if (similarRes.success && similarRes.data) {
+          setSimilarBooks(similarRes.data);
         }
       } catch (err) {
         console.log(err);
@@ -409,14 +415,36 @@ export default function BookDetailsScreen() {
         {/* ── 7. GỢI Ý SẢN PHẨM ───────────────────────────────────
           Mere Exposure Effect: Thấy nhiều sản phẩm → quen → muốn mua thêm
         */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Có thể bạn sẽ thích</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 16 }}>
-            <BookCard image={require('../../assets/images/book2.jpg')} title="Nhà Giả Kim" author="Paulo Coelho" price="55.000đ" rating={4.9} onPress={() => router.push('/book/2')} onAddToCart={() => { }} />
-            <BookCard image={require('../../assets/images/book3.jpg')} title="Tôi thấy hoa vàng..." author="Nguyễn Nhật Ánh" price="65.000đ" rating={4.7} onPress={() => router.push('/book/3')} onAddToCart={() => { }} />
-            <BookCard image={require('../../assets/images/book4.jpg')} title="Tuổi trẻ đáng giá bao nhiêu" author="Rosie Nguyễn" price="49.000đ" rating={4.8} onPress={() => router.push('/book/4')} onAddToCart={() => { }} />
-          </ScrollView>
-        </View>
+        {similarBooks.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sách tương tự dành cho bạn</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 16 }}>
+              {similarBooks.map((simBook: any) => (
+                <BookCard 
+                  key={simBook.id}
+                  image={{ uri: simBook.images?.[0]?.image_url || 'https://via.placeholder.com/150' }}
+                  title={simBook.title}
+                  author={simBook.authors?.map((a: any) => a.name).join(', ') || 'Đang cập nhật'}
+                  price={`${new Intl.NumberFormat('vi-VN').format(simBook.sale_price)}đ`}
+                  rating={simBook.avg_rating ? Number(simBook.avg_rating) : 5}
+                  onPress={() => router.push(`/book/${simBook.id}`)}
+                  onAddToCart={() => {
+                    addToCart({
+                      id: simBook.id,
+                      title: simBook.title,
+                      author: simBook.authors?.map((a: any) => a.name).join(', ') || 'Đang cập nhật',
+                      price: simBook.sale_price,
+                      originalPrice: simBook.original_price,
+                      image: { uri: simBook.images?.[0]?.image_url || 'https://via.placeholder.com/150' },
+                      quantity: 1
+                    });
+                    Alert.alert('Thành công', 'Đã thêm sách vào giỏ hàng');
+                  }} 
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
       </ScrollView>
 
