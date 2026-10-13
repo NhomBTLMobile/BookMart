@@ -164,7 +164,9 @@ export default function DashboardPage() {
                   </span>
                 )
               })),
-              onClick: (e) => handleStatusChange(record.id, e.key)
+              onClick: (e) => {
+                if (e.key !== currentKey) handleStatusChange(record.id, e.key);
+              }
             }}
             trigger={['click']}
           >

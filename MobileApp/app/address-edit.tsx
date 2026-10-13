@@ -54,8 +54,7 @@ export default function AddressEditScreen() {
       setLoading(true);
       try {
         const provs = await ghnService.getProvinces();
-        // GHN provinces are sorted by province_name, sometimes not perfectly.
-        setProvinces(provs.sort((a: any, b: any) => a.ProvinceName.localeCompare(b.ProvinceName)));
+        setProvinces((provs || []).sort((a: any, b: any) => (a.ProvinceName || '').localeCompare(b.ProvinceName || '')));
 
         if (isEdit) {
           const addr = await addressService.getAddressById(id as string);
@@ -76,11 +75,11 @@ export default function AddressEditScreen() {
             // Fetch districts and wards for the selected ones to populate state
             if (addr.province_id) {
                const dists = await ghnService.getDistricts(addr.province_id);
-               setDistricts(dists.sort((a: any, b: any) => a.DistrictName.localeCompare(b.DistrictName)));
+               setDistricts((dists || []).sort((a: any, b: any) => (a.DistrictName || '').localeCompare(b.DistrictName || '')));
             }
             if (addr.district_id) {
                const wds = await ghnService.getWards(addr.district_id);
-               setWards(wds.sort((a: any, b: any) => a.WardName.localeCompare(b.WardName)));
+               setWards((wds || []).sort((a: any, b: any) => (a.WardName || '').localeCompare(b.WardName || '')));
             }
           }
         }
@@ -103,7 +102,7 @@ export default function AddressEditScreen() {
     setModalType('NONE');
     setLoading(true);
     const dists = await ghnService.getDistricts(item.ProvinceID);
-    setDistricts(dists.sort((a: any, b: any) => a.DistrictName.localeCompare(b.DistrictName)));
+    setDistricts((dists || []).sort((a: any, b: any) => (a.DistrictName || '').localeCompare(b.DistrictName || '')));
     setLoading(false);
   };
 
@@ -115,7 +114,7 @@ export default function AddressEditScreen() {
     setModalType('NONE');
     setLoading(true);
     const wds = await ghnService.getWards(item.DistrictID);
-    setWards(wds.sort((a: any, b: any) => a.WardName.localeCompare(b.WardName)));
+    setWards((wds || []).sort((a: any, b: any) => (a.WardName || '').localeCompare(b.WardName || '')));
     setLoading(false);
   };
 

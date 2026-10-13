@@ -1,21 +1,24 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  Platform 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  Platform,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, RADIUS, SHADOW, SPACING } from '../../constants/colors';
 import { api } from '../../services/api';
+import { orderService } from '../../services/orderService';
+import { useCart } from '../../context/CartContext';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { Alert } from 'react-native';
 
 // ─── Mock Data (Nên fetch từ API ở thực tế) ─────────────────────────
 const MOCK_ORDER_DETAIL = {
@@ -39,12 +42,12 @@ const MOCK_ORDER_DETAIL = {
 };
 
 const STATUS_CONFIG: Record<string, { color: string; label: string; icon: string; desc: string }> = {
-  PENDING: { color: '#E5A72A', label: 'Chờ xác nhận', icon: 'time', desc: 'Đơn hàng đang chờ người bán xác nhận.' },
-  CONFIRMED: { color: '#2E7D32', label: 'Đã xác nhận', icon: 'checkmark-done-circle', desc: 'Đơn hàng đã được xác nhận và chờ chuẩn bị.' },
-  PACKING: { color: '#0277BD', label: 'Đang chuẩn bị hàng', icon: 'cube', desc: 'Người bán đang đóng gói đơn hàng của bạn.' },
-  DELIVERING: { color: '#1A56DB', label: 'Đang giao hàng', icon: 'bicycle', desc: 'Đơn hàng đang trên đường giao đến bạn.' },
-  DELIVERED: { color: COLORS.primaryDark, label: 'Giao hàng thành công', icon: 'checkmark-circle', desc: 'Đơn hàng đã được giao thành công.' },
-  CANCELLED: { color: '#E53935', label: 'Đã hủy', icon: 'close-circle', desc: 'Đơn hàng đã bị hủy.' },
+  PENDING: { color: '#E5A72A', label: 'Chờ xử lý', icon: 'time', desc: 'Đơn hàng đang chờ người bán xử lý.' },
+  CONFIRMED: { color: '#1565C0', label: 'Đã xác nhận', icon: 'checkmark-done-circle', desc: 'Đơn hàng đã được xác nhận và chờ chuẩn bị.' },
+  PACKING: { color: '#6A1B9A', label: 'Đang đóng gói', icon: 'cube', desc: 'Người bán đang đóng gói đơn hàng của bạn.' },
+  DELIVERING: { color: '#0277BD', label: 'Đang giao hàng', icon: 'bicycle', desc: 'Đơn hàng đang trên đường giao đến bạn.' },
+  DELIVERED: { color: '#2E7D32', label: 'Giao hàng thành công', icon: 'checkmark-circle', desc: 'Đơn hàng đã được giao thành công.' },
+  CANCELLED: { color: '#C62828', label: 'Đã hủy', icon: 'close-circle', desc: 'Đơn hàng đã bị hủy.' },
 };
 
 const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
@@ -54,6 +57,8 @@ export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [order, setOrder] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [cancelling, setCancelling] = React.useState(false);
+  const { addToCart } = useCart();
 
   React.useEffect(() => {
     fetchOrder();
@@ -69,6 +74,61 @@ export default function OrderDetailScreen() {
       console.log('Error fetching order', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelOrder = () => {
+    Alert.alert(
+      'Xác nhận hủy đơn hàng',
+      'Bạn có chắc chắn muốn hủy đơn hàng này không?',
+      [
+        { text: 'Quay lại', style: 'cancel' },
+        {
+          text: 'Xác nhận hủy',
+          style: 'destructive',
+          onPress: async () => {
+            setCancelling(true);
+            try {
+              const res = await orderService.cancelOrder(order.id || id);
+              if (res.success) {
+                // Cập nhật trạng thái đơn hàng thành "Đã hủy" ngay trong giao diện mà không cần tải lại trang thủ công
+                setOrder((prev: any) => ({
+                  ...prev,
+                  order_status: 'cancelled',
+                }));
+                Alert.alert('Thành công', 'Đơn hàng đã được hủy thành công.');
+              } else {
+                Alert.alert('Hủy đơn hàng thất bại', res.message || 'Không thể hủy đơn hàng lúc này. Vui lòng thử lại sau.');
+              }
+            } catch (err: any) {
+              const msg = err.response?.data?.message || err.message || 'Không thể hủy đơn hàng lúc này. Vui lòng thử lại sau.';
+              Alert.alert('Hủy đơn hàng thất bại', msg);
+            } finally {
+              setCancelling(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleBuyAgain = () => {
+    if (order?.items && order.items.length > 0) {
+      order.items.forEach((item: any) => {
+        addToCart({
+          id: item.book_id || item.combo_id || item.id || '',
+          title: item.item_name || item.title,
+          price: parseFloat(item.unit_price || item.price),
+          image: item.image_url ? { uri: item.image_url } : require('../../assets/images/book1.jpg'),
+          quantity: item.quantity || 1,
+          isCombo: !!item.combo_id,
+        });
+      });
+      Alert.alert('Đã thêm vào giỏ!', 'Các sản phẩm đã được thêm vào giỏ hàng.', [
+        { text: 'Xem giỏ hàng', onPress: () => router.push('/(tabs)/cart') },
+        { text: 'Tiếp tục mua sắm', style: 'cancel' },
+      ]);
     }
   };
 
@@ -107,14 +167,14 @@ export default function OrderDetailScreen() {
 
   // Map status
   let mappedStatus = 'PENDING';
-  const os = order.order_status?.toLowerCase() || '';
+  const os = (order.order_status || '').toLowerCase().trim();
   if (os === 'pending') mappedStatus = 'PENDING';
   else if (os === 'confirmed') mappedStatus = 'CONFIRMED';
   else if (os === 'packing') mappedStatus = 'PACKING';
-  else if (os === 'shipping') mappedStatus = 'DELIVERING';
+  else if (os === 'shipping' || os === 'delivering') mappedStatus = 'DELIVERING';
   else if (os === 'delivered') mappedStatus = 'DELIVERED';
   else if (os === 'cancelled' || os === 'returned') mappedStatus = 'CANCELLED';
-  
+
   const statusConfig = STATUS_CONFIG[mappedStatus] || STATUS_CONFIG.PENDING;
 
   // Xử lý địa chỉ
@@ -127,7 +187,7 @@ export default function OrderDetailScreen() {
       phone: p.phone || order.customer_phone || '',
       address: pAddress
     };
-  } catch (e) {}
+  } catch (e) { }
 
   const canRepay = mappedStatus !== 'CANCELLED' && order.payment_method === 'vnpay' && (order.payment_status === 'pending' || order.payment_status === 'failed');
 
@@ -143,7 +203,7 @@ export default function OrderDetailScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        
+
         {/* ── Status Banner ── */}
         <View style={[styles.statusBanner, { backgroundColor: statusConfig.color }]}>
           <View style={{ flex: 1 }}>
@@ -172,7 +232,7 @@ export default function OrderDetailScreen() {
             <Ionicons name="bag-outline" size={18} color={COLORS.primary} />
             <Text style={styles.cardTitle}>Sản phẩm đã mua</Text>
           </View>
-          
+
           {order.items?.map((item: any, index: number) => (
             <View key={item.id}>
               <View style={styles.itemRow}>
@@ -243,9 +303,9 @@ export default function OrderDetailScreen() {
               <Text style={[styles.summaryValue, { color: COLORS.success }]}>-{fmt(order.points_discount)}</Text>
             </View>
           )}
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Tổng thanh toán</Text>
             <Text style={styles.totalValue}>{fmt(order.total_amount)}</Text>
@@ -261,9 +321,19 @@ export default function OrderDetailScreen() {
             <Text style={styles.primaryBtnText}>Thanh toán lại qua VNPAY</Text>
           </TouchableOpacity>
         )}
-        {mappedStatus === 'PENDING' && !canRepay && (
-          <TouchableOpacity style={styles.cancelBtn}>
-            <Text style={styles.cancelBtnText}>Hủy đơn hàng</Text>
+        {/* Chỉ hiển thị nút "Hủy đơn hàng" đối với đơn hàng có trạng thái "Chờ xử lý" */}
+        {mappedStatus === 'PENDING' && (
+          <TouchableOpacity
+            style={styles.cancelBtn}
+            onPress={handleCancelOrder}
+            disabled={cancelling}
+            activeOpacity={0.7}
+          >
+            {cancelling ? (
+              <ActivityIndicator size="small" color="#C62828" />
+            ) : (
+              <Text style={styles.cancelBtnText}>Hủy đơn hàng</Text>
+            )}
           </TouchableOpacity>
         )}
         {mappedStatus === 'DELIVERED' && (
@@ -273,7 +343,7 @@ export default function OrderDetailScreen() {
           </TouchableOpacity>
         )}
         {(mappedStatus === 'CANCELLED' || mappedStatus === 'DELIVERED') && (
-          <TouchableOpacity style={styles.primaryBtn}>
+          <TouchableOpacity style={styles.primaryBtn} onPress={handleBuyAgain}>
             <Text style={styles.primaryBtnText}>Mua lại</Text>
           </TouchableOpacity>
         )}
@@ -301,7 +371,7 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: SPACING.xs },
   headerTitle: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: COLORS.text },
-  
+
   content: {
     paddingBottom: SPACING['3xl'],
   },
@@ -370,23 +440,23 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   infoLabel: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
   infoValue: { fontSize: FONT_SIZE.sm, color: COLORS.text, fontWeight: FONT_WEIGHT.medium },
-  
+
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   summaryLabel: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
   summaryValue: { fontSize: FONT_SIZE.sm, color: COLORS.text, fontWeight: FONT_WEIGHT.medium },
-  
+
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: SPACING.sm },
   totalLabel: { fontSize: FONT_SIZE.base, fontWeight: FONT_WEIGHT.bold, color: COLORS.text },
   totalValue: { fontSize: FONT_SIZE.xl, fontWeight: FONT_WEIGHT.extrabold, color: COLORS.primaryDark },
 
   // Dividers
   divider: { height: 1, backgroundColor: COLORS.divider, marginVertical: SPACING.md },
-  dashedDivider: { 
-    height: 1, 
-    borderStyle: 'dashed', 
-    borderWidth: 1, 
-    borderColor: COLORS.divider, 
-    marginVertical: SPACING.md 
+  dashedDivider: {
+    height: 1,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    marginVertical: SPACING.md
   },
 
   // Footer Actions
@@ -417,13 +487,95 @@ const styles = StyleSheet.create({
   },
   reviewBtnText: { color: COLORS.white, fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
   cancelBtn: {
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFEBEE',
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.divider,
+    borderColor: '#EF9A9A',
   },
-  cancelBtnText: { color: COLORS.text, fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold },
+  cancelBtnText: { color: '#C62828', fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    ...(Platform.OS === 'web' ? {
+      position: 'fixed' as any,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 9999,
+    } : {}),
+  },
+  modalCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    width: '100%',
+    maxWidth: 360,
+    alignItems: 'center',
+    ...SHADOW.lg,
+  },
+  modalIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFEBEE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  modalTitle: {
+    fontSize: FONT_SIZE.lg,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: FONT_SIZE.base,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: SPACING.xl,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    width: '100%',
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.divider,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelBtnText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZE.base,
+    fontWeight: FONT_WEIGHT.semibold,
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: RADIUS.md,
+    backgroundColor: '#C62828',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalConfirmBtnText: {
+    color: COLORS.white,
+    fontSize: FONT_SIZE.base,
+    fontWeight: FONT_WEIGHT.bold,
+  },
 });
 

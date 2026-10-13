@@ -48,32 +48,34 @@ type Order = {
 
 // ─── Constants ───────────────────────────────────────────────────
 const TABS: { id: OrderStatus; label: string; icon: string }[] = [
-  { id: 'PENDING',   label: 'Chờ duyệt',  icon: 'time-outline' },
-  { id: 'CONFIRMED', label: 'Đã duyệt',   icon: 'checkmark-outline' },
-  { id: 'PACKING',   label: 'Đóng gói',   icon: 'cube-outline' },
-  { id: 'SHIPPING',  label: 'Đang giao',  icon: 'bicycle-outline' },
-  { id: 'DELIVERED', label: 'Đã giao',    icon: 'checkmark-circle-outline' },
-  { id: 'CANCELLED', label: 'Đã hủy',     icon: 'close-circle-outline' },
+  { id: 'PENDING', label: 'Chờ xử lý', icon: 'time-outline' },
+  { id: 'CONFIRMED', label: 'Đã duyệt', icon: 'checkmark-outline' },
+  { id: 'PACKING', label: 'Đóng gói', icon: 'cube-outline' },
+  { id: 'SHIPPING', label: 'Đang giao', icon: 'bicycle-outline' },
+  { id: 'DELIVERED', label: 'Đã giao', icon: 'checkmark-circle-outline' },
+  { id: 'CANCELLED', label: 'Đã hủy', icon: 'close-circle-outline' },
 ];
 
 const STATUS_CONFIG: Record<OrderStatus, { color: string; bg: string; label: string; icon: string }> = {
-  PENDING:   { color: '#E5A72A', bg: '#FFF8E1', label: 'Chờ xác nhận',         icon: 'time-outline' },
-  CONFIRMED: { color: '#1565C0', bg: '#E3F2FD', label: 'Đã xác nhận',          icon: 'checkmark-circle-outline' },
-  PACKING:   { color: '#6A1B9A', bg: '#F3E5F5', label: 'Đang đóng gói',        icon: 'cube-outline' },
-  SHIPPING:  { color: '#0277BD', bg: '#E1F5FE', label: 'Đang giao hàng',       icon: 'bicycle-outline' },
-  DELIVERED: { color: '#2E7D32', bg: '#E8F5E9', label: 'Giao thành công',      icon: 'checkmark-circle' },
-  CANCELLED: { color: '#C62828', bg: '#FFEBEE', label: 'Đã hủy',               icon: 'close-circle-outline' },
+  PENDING: { color: '#E5A72A', bg: '#FFF8E1', label: 'Chờ xử lý', icon: 'time-outline' },
+  CONFIRMED: { color: '#1565C0', bg: '#E3F2FD', label: 'Đã xác nhận', icon: 'checkmark-circle-outline' },
+  PACKING: { color: '#6A1B9A', bg: '#F3E5F5', label: 'Đang đóng gói', icon: 'cube-outline' },
+  SHIPPING: { color: '#0277BD', bg: '#E1F5FE', label: 'Đang giao hàng', icon: 'bicycle-outline' },
+  DELIVERED: { color: '#2E7D32', bg: '#E8F5E9', label: 'Giao thành công', icon: 'checkmark-circle' },
+  CANCELLED: { color: '#C62828', bg: '#FFEBEE', label: 'Đã hủy', icon: 'close-circle-outline' },
 };
 
 const fmt = (n: any) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
 
 const DB_STATUS_MAP: Record<string, OrderStatus> = {
-  pending:   'PENDING',
+  pending: 'PENDING',
   confirmed: 'CONFIRMED',
-  packing:   'PACKING',
-  shipping:  'SHIPPING',
+  packing: 'PACKING',
+  shipping: 'SHIPPING',
+  delivering: 'SHIPPING',
   delivered: 'DELIVERED',
   cancelled: 'CANCELLED',
+  returned: 'CANCELLED',
 };
 
 // ReviewModal removed. Utilizing order-review screen instead.
@@ -83,6 +85,7 @@ export default function MyOrdersScreen() {
   const [activeTab, setActiveTab] = useState<OrderStatus>('PENDING');
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const { addToCart } = useCart();
 
   const fetchOrders = useCallback(async () => {
@@ -91,7 +94,7 @@ export default function MyOrdersScreen() {
       const res = await orderService.getMyOrders();
       if (res.success && res.data) {
         const mappedOrders: Order[] = res.data.map((o: any) => {
-          const rawStatus = o.order_status || 'pending';
+          const rawStatus = (o.order_status || 'pending').toLowerCase().trim();
           const status: OrderStatus = DB_STATUS_MAP[rawStatus] || 'PENDING';
           const d = new Date(o.created_at);
           return {
@@ -126,22 +129,45 @@ export default function MyOrdersScreen() {
   // Reload every time screen gets focus
   useFocusEffect(useCallback(() => { fetchOrders(); }, [fetchOrders]));
 
-  // ── Hủy đơn ──
+  // ── Hủy đơn hàng ──
   const handleCancel = (order: Order) => {
-    Alert.alert('Hủy đơn hàng', 'Bạn có chắc muốn hủy đơn này không?', [
-      { text: 'Không', style: 'cancel' },
-      {
-        text: 'Hủy đơn', style: 'destructive',
-        onPress: async () => {
-          try {
-            await api.put(`/orders/${order.internalId}`, { order_status: 'cancelled' });
-            fetchOrders();
-          } catch {
-            Alert.alert('Lỗi', 'Không thể hủy đơn lúc này');
-          }
+    Alert.alert(
+      'Xác nhận hủy đơn hàng',
+      'Bạn có chắc chắn muốn hủy đơn hàng này không?',
+      [
+        { text: 'Quay lại', style: 'cancel' },
+        {
+          text: 'Xác nhận hủy',
+          style: 'destructive',
+          onPress: async () => {
+            setCancellingId(order.internalId);
+            try {
+              const res = await orderService.cancelOrder(order.internalId || order.id);
+              if (res.success) {
+                // Cập nhật trạng thái đơn hàng thành "Đã hủy" ngay trong giao diện mà không cần tải lại trang thủ công
+                setOrders(prev =>
+                  prev.map(o =>
+                    (o.internalId === order.internalId || o.id === order.id)
+                      ? { ...o, status: 'CANCELLED', rawStatus: 'cancelled' }
+                      : o
+                  )
+                );
+                Alert.alert('Thành công', 'Đơn hàng đã được hủy thành công.');
+                fetchOrders();
+              } else {
+                Alert.alert('Hủy đơn hàng thất bại', res.message || 'Không thể hủy đơn hàng lúc này. Vui lòng thử lại sau.');
+              }
+            } catch (err: any) {
+              const msg = err.response?.data?.message || err.message || 'Không thể hủy đơn hàng lúc này. Vui lòng thử lại sau.';
+              Alert.alert('Hủy đơn hàng thất bại', msg);
+            } finally {
+              setCancellingId(null);
+            }
+          },
         },
-      },
-    ]);
+      ],
+      { cancelable: true }
+    );
   };
 
   // ── Mua lại ──
@@ -219,14 +245,22 @@ export default function MyOrdersScreen() {
           </View>
 
           <View style={s.actions}>
-            {/* Hủy đơn — chỉ khi đang chờ */}
+            {/* Hủy đơn hàng — chỉ hiển thị đối với đơn hàng có trạng thái "Chờ xử lý" */}
             {item.status === 'PENDING' && (
               <TouchableOpacity
-                style={s.btnOutline}
+                style={s.btnCancel}
                 onPress={() => handleCancel(item)}
                 activeOpacity={0.7}
+                disabled={cancellingId === item.internalId}
               >
-                <Text style={s.btnOutlineText}>Hủy đơn</Text>
+                {cancellingId === item.internalId ? (
+                  <ActivityIndicator size="small" color="#C62828" />
+                ) : (
+                  <>
+                    <Ionicons name="close-circle-outline" size={14} color="#C62828" />
+                    <Text style={s.btnCancelText}>Hủy đơn hàng</Text>
+                  </>
+                )}
               </TouchableOpacity>
             )}
 
@@ -428,6 +462,22 @@ const s = StyleSheet.create({
     ...SHADOW.sm,
   },
   btnReviewText: { color: '#fff', fontSize: 13, fontWeight: FONT_WEIGHT.bold },
+  btnCancel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#EF9A9A',
+    backgroundColor: '#FFEBEE',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: RADIUS.md,
+  },
+  btnCancelText: {
+    color: '#C62828',
+    fontSize: 13,
+    fontWeight: FONT_WEIGHT.semibold,
+  },
 
   // Empty
   emptyState: { alignItems: 'center', paddingTop: 80, paddingHorizontal: SPACING.xl },

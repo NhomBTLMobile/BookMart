@@ -41,15 +41,109 @@ export default function ReviewsPage() {
 
   const columns = [
     {
+      title: "Sản phẩm",
+      key: "product",
+      width: 240,
+      render: (_, rec) => (
+        <Space orientation="horizontal" size={10} style={{ maxWidth: 240 }}>
+          {rec.book_image_url ? (
+            <img
+              src={rec.book_image_url}
+              alt=""
+              style={{ width: 36, height: 48, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 36,
+                height: 48,
+                borderRadius: 4,
+                background: isDark ? '#3f3f46' : '#e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <BookOutlined style={{ color: '#94a3b8' }} />
+            </div>
+          )}
+          <div style={{ overflow: 'hidden' }}>
+            <Text
+              strong
+              style={{
+                fontSize: 13,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                lineHeight: '18px'
+              }}
+            >
+              {rec.book_title || 'N/A'}
+            </Text>
+            {rec.is_combo && (
+              <Tag color="purple" style={{ fontSize: 10, lineHeight: '16px', padding: '0 4px', marginTop: 2 }}>
+                COMBO
+              </Tag>
+            )}
+          </div>
+        </Space>
+      ),
+    },
+    {
+      title: "Khách hàng",
+      key: "user",
+      width: 180,
+      render: (_, rec) => (
+        <Space size={8}>
+          {rec.user_avatar_url ? (
+            <img
+              src={rec.user_avatar_url}
+              alt=""
+              style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                background: '#059669',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                fontWeight: 'bold',
+              }}
+            >
+              {(rec.user_name || 'U').charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div style={{ overflow: 'hidden' }}>
+            <Text strong style={{ fontSize: 13, display: 'block' }}>
+              {rec.user_name || 'Khách'}
+            </Text>
+            {rec.user_email && (
+              <Text type="secondary" style={{ fontSize: 11, display: 'block' }} ellipsis>
+                {rec.user_email}
+              </Text>
+            )}
+          </div>
+        </Space>
+      ),
+    },
+    {
       title: "Đánh giá",
       dataIndex: "rating",
-      width: 170,
+      width: 160,
       render: (v) => (
-        <Space size={10}>
+        <Space size={8}>
           <div
             style={{
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               borderRadius: 8,
               background: ratingColor(v) + "15",
               border: `1px solid ${ratingColor(v)}33`,
@@ -58,12 +152,12 @@ export default function ReviewsPage() {
               justifyContent: "center",
               fontWeight: 800,
               color: ratingColor(v),
-              fontSize: 15,
+              fontSize: 14,
             }}
           >
             {v}
           </div>
-          <Rate disabled value={v} style={{ fontSize: 13 }} />
+          <Rate disabled value={v} style={{ fontSize: 12 }} />
         </Space>
       ),
     },
@@ -83,7 +177,7 @@ export default function ReviewsPage() {
     {
       title: "Xác thực",
       dataIndex: "is_verified",
-      width: 130,
+      width: 120,
       align: "center",
       render: (v) => (
         v ? (
@@ -96,7 +190,7 @@ export default function ReviewsPage() {
     {
       title: "Ngày đánh giá",
       dataIndex: "created_at",
-      width: 130,
+      width: 120,
       render: (v) => (
         <Text type="secondary">{v ? new Date(v).toLocaleDateString("vi-VN") : '—'}</Text>
       ),
@@ -115,7 +209,7 @@ export default function ReviewsPage() {
               onClick={() => setViewRec(rec)}
             />
           </Tooltip>
-          {user?.role === "ADMIN" && (
+          {(user?.role?.toUpperCase() === "ADMIN" || user?.role?.toLowerCase() === "admin") && (
             <Popconfirm
               title="Xóa đánh giá này?"
               okText="Xóa"

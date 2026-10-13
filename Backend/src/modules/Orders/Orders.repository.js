@@ -41,8 +41,8 @@ export class OrdersRepository {
       ${whereClause}
       ORDER BY ${sortField} ${sortOrder}
       LIMIT :limit OFFSET :offset
-    `, { 
-      replacements: { ...replacements, limit, offset } 
+    `, {
+      replacements: { ...replacements, limit, offset }
     })
 
     return { total, data: rows }
@@ -59,7 +59,7 @@ export class OrdersRepository {
       LEFT JOIN users u ON o.user_id = u.id
       WHERE o.id = :id
     `, { replacements: { id } })
-    
+
     if (!orders || orders.length === 0) return null
     const order = orders[0]
 
@@ -73,9 +73,9 @@ export class OrdersRepository {
       LEFT JOIN combos c ON oi.combo_id = c.id
       WHERE oi.order_id = :id
     `, { replacements: { id } })
-    
+
     order.items = items || []
-    
+
     const [pointsResult] = await sequelize.query(`
       SELECT COUNT(*) as count 
       FROM loyalty_points_ledger 
@@ -97,7 +97,7 @@ export class OrdersRepository {
       LEFT JOIN users u ON o.user_id = u.id
       WHERE o.order_code = :orderCode
     `, { replacements: { orderCode } })
-    
+
     if (!orders || orders.length === 0) return null
     const order = orders[0]
 
@@ -111,7 +111,7 @@ export class OrdersRepository {
       LEFT JOIN combos c ON oi.combo_id = c.id
       WHERE oi.order_id = :id
     `, { replacements: { id: order.id } })
-    
+
     order.items = items || []
     return order
   }
@@ -152,6 +152,9 @@ export class OrdersRepository {
           order_id: order.id
         }));
         await OrderItems.bulkCreate(orderItemsData, { transaction });
+
+        // Trừ số lượng tồn kho và tăng lượt bán khi đặt đơn hàng
+        await this._updateStockAndSold(order.id, transaction, 'deduct');
       }
 
       // Trừ điểm thưởng nếu có
@@ -160,7 +163,7 @@ export class OrdersRepository {
         if (user && user.loyalty_points >= orderData.points_used) {
           const newBalance = user.loyalty_points - orderData.points_used;
           await user.update({ loyalty_points: newBalance }, { transaction });
-          
+
           await LoyaltyPointsLedger.create({
             user_id: orderData.user_id,
             delta: -orderData.points_used,
@@ -206,9 +209,9 @@ export class OrdersRepository {
         await transaction.rollback();
         return null;
       }
-      
+
       const [affectedRows] = await Orders.update(data, { where: { id }, transaction });
-      
+
       // Nếu đơn hàng bị hủy, hoàn lại điểm và voucher
       if (data.order_status === 'cancelled' && oldOrder.order_status !== 'cancelled') {
         if (oldOrder.points_used && oldOrder.points_used > 0 && oldOrder.user_id) {
@@ -241,7 +244,7 @@ export class OrdersRepository {
           where: { user_id: oldOrder.user_id, ref_id: oldOrder.id, type: 'earn_order' },
           transaction
         });
-        
+
         if (!existingEarn) {
           const earnedPoints = Math.floor(oldOrder.total_amount / 100);
           if (earnedPoints > 0) {
@@ -264,9 +267,11 @@ export class OrdersRepository {
 
       // Xử lý cập nhật số lượng tồn kho và lượt bán
       if (data.order_status && data.order_status !== oldOrder.order_status) {
-        const deductedStates = ['packing', 'shipping', 'delivered'];
-        const oldIsDeducted = deductedStates.includes(oldOrder.order_status);
-        const newIsDeducted = deductedStates.includes(data.order_status);
+        const deductedStates = ['pending', 'confirmed', 'packing', 'shipping', 'delivered'];
+        const oldStatus = (oldOrder.order_status || 'pending').toLowerCase();
+        const newStatus = (data.order_status || '').toLowerCase();
+        const oldIsDeducted = deductedStates.includes(oldStatus);
+        const newIsDeducted = deductedStates.includes(newStatus);
 
         if (newIsDeducted && !oldIsDeducted) {
           await this._updateStockAndSold(id, transaction, 'deduct');
@@ -287,17 +292,21 @@ export class OrdersRepository {
   async _updateStockAndSold(orderId, transaction, action) {
     const items = await OrderItems.findAll({ where: { order_id: orderId }, transaction });
     for (const item of items) {
+      const qty = parseInt(item.quantity, 10) || 1;
       if (item.book_id) {
         const book = await Books.findByPk(item.book_id, { transaction });
         if (book) {
-          const newStock = action === 'deduct' ? Math.max(0, book.stock_qty - item.quantity) : book.stock_qty + item.quantity;
-          const newSold = action === 'deduct' ? (book.sold_count || 0) + item.quantity : Math.max(0, (book.sold_count || 0) - item.quantity);
+          const currentStock = parseInt(book.stock_qty, 10) || 0;
+          const currentSold = parseInt(book.sold_count, 10) || 0;
+          const newStock = action === 'deduct' ? Math.max(0, currentStock - qty) : currentStock + qty;
+          const newSold = action === 'deduct' ? currentSold + qty : Math.max(0, currentSold - qty);
           await book.update({ stock_qty: newStock, sold_count: newSold }, { transaction });
         }
       } else if (item.combo_id) {
         const combo = await Combos.findByPk(item.combo_id, { transaction });
         if (combo) {
-          const newStock = action === 'deduct' ? Math.max(0, (combo.stock_qty || 0) - item.quantity) : (combo.stock_qty || 0) + item.quantity;
+          const currentStock = parseInt(combo.stock_qty, 10) || 0;
+          const newStock = action === 'deduct' ? Math.max(0, currentStock - qty) : currentStock + qty;
           await combo.update({ stock_qty: newStock }, { transaction });
         }
       }
@@ -312,7 +321,7 @@ export class OrdersRepository {
         await transaction.rollback();
         return;
       }
-      
+
       // Hoàn lại điểm và voucher trước khi xóa
       if (order.points_used && order.points_used > 0 && order.user_id) {
         const user = await Users.findByPk(order.user_id, { transaction });
@@ -337,8 +346,9 @@ export class OrdersRepository {
       }
 
       // Hoàn lại số lượng tồn kho nếu đơn hàng đang ở trạng thái đã trừ kho
-      const deductedStates = ['packing', 'shipping', 'delivered'];
-      if (deductedStates.includes(order.order_status)) {
+      const deductedStates = ['pending', 'confirmed', 'packing', 'shipping', 'delivered'];
+      const currentStatus = (order.order_status || 'pending').toLowerCase();
+      if (deductedStates.includes(currentStatus)) {
         await this._updateStockAndSold(id, transaction, 'refund');
       }
 

@@ -1,5 +1,5 @@
 import { OrdersService } from './orders.service.js'
-import { calculateGHNFee as ghnCalculateFee } from '../../utils/ghn.js'
+import { calculateGHNFee as ghnCalculateFee, getGHNProvinces, getGHNDistricts, getGHNWards } from '../../utils/ghn.js'
 import { sendSuccess, sendCreated, sendError } from '../../utils/response.js'
 import { getPagination, getPaginationMeta } from '../../utils/pagination.js'
 import { createOrdersSchema, updateOrdersSchema } from './orders.validation.js'
@@ -60,6 +60,47 @@ export const remove = async (req, res, next) => {
   try {
     await service.delete(req.params.id)
     sendSuccess(res, 'Xóa thành công')
+  } catch (err) { next(err) }
+}
+
+export const cancelOrder = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    let order;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(id)) {
+      order = await service.getById(id);
+    } else {
+      order = await service.getByOrderCode(id);
+    }
+
+    if (!order) {
+      return sendError(res, 'Không tìm thấy đơn hàng', 404);
+    }
+
+    // Kiểm tra quyền (chủ đơn hàng hoặc admin)
+    if (req.user && req.user.role !== 'admin' && order.user_id && order.user_id !== req.user.id) {
+      return sendError(res, 'Bạn không có quyền thao tác trên đơn hàng này', 403);
+    }
+
+    const currentStatus = (order.order_status || '').toLowerCase();
+    if (currentStatus === 'cancelled') {
+      return sendError(res, 'Đơn hàng này đã được hủy trước đó', 400);
+    }
+
+    if (currentStatus !== 'pending') {
+      return sendError(res, 'Chỉ có thể hủy đơn hàng khi ở trạng thái "Chờ xử lý"', 400);
+    }
+
+    const updatePayload = {
+      order_status: 'cancelled',
+    };
+    if (order.payment_status === 'paid') {
+      updatePayload.payment_status = 'refunded';
+    }
+
+    const updated = await service.update(order.id, updatePayload);
+    sendSuccess(res, 'Hủy đơn hàng thành công', updated);
   } catch (err) { next(err) }
 }
 
@@ -140,24 +181,121 @@ export const calculateFee = async (req, res, next) => {
       width: maxWid
     };
 
-    const ghnRes = await ghnCalculateFee(feeData);
-    
-    // ĐIỀU CHỈNH MÔI TRƯỜNG DEV: Giảm cước gốc của API Test theo tỷ lệ phần trăm
-    // Mức phí Dev thường cao gấp đôi thực tế, ta nhân với hệ số 0.48 (tương đương 48% giá dev)
-    // Cách này giúp giá nhảy cực kỳ chuẩn xác theo khoảng cách và cân nặng thực.
-    if (ghnRes && ghnRes.data && ghnRes.data.total) {
-      let adjustedFee = Math.round((ghnRes.data.total * 0.48) / 100) * 100;
-      
-      // Chốt chặn nhỏ nhất
-      if (adjustedFee < 15500) adjustedFee = 15500;
-      
-      ghnRes.data.total = adjustedFee;
-      if (ghnRes.data.service_fee) {
-        ghnRes.data.service_fee = adjustedFee;
+    let feeResult = null;
+    try {
+      const ghnRes = await ghnCalculateFee(feeData);
+      // Sử dụng cước phí thực tế từ API Thật của GHN
+      if (ghnRes && ghnRes.data && (ghnRes.data.total !== undefined || ghnRes.data.service_fee !== undefined)) {
+        feeResult = ghnRes.data;
       }
+    } catch (ghnErr) {
+      console.warn("GHN API Thật chưa phản hồi (kiểm tra lại GHN_TOKEN trong file .env):", ghnErr.message);
+      // Fallback tính phí dự phòng nếu token trong .env chưa đúng hoặc mất kết nối
+      const baseFee = 25000;
+      const extraWeightFee = totalWeight > 1000 ? Math.ceil((totalWeight - 1000) / 500) * 5000 : 0;
+      const total = baseFee + extraWeightFee;
+      feeResult = {
+        total,
+        service_fee: total
+      };
     }
 
-    sendSuccess(res, 'Tính phí thành công', ghnRes.data);
+    sendSuccess(res, 'Tính phí thành công', feeResult);
   } catch (err) { next(err) }
 }
+
+export const getProvinces = async (req, res, next) => {
+  try {
+    const data = await getGHNProvinces();
+    const filtered = (data || []).filter(item => 
+      !item.ProvinceName?.toLowerCase().includes('test') && 
+      !item.ProvinceName?.toLowerCase().includes('alert')
+    );
+    if (filtered.length > 0) {
+      return sendSuccess(res, 'Lấy danh sách tỉnh/thành thành công', filtered);
+    }
+    throw new Error('Danh sách trống');
+  } catch (err) {
+    console.warn("Lỗi lấy tỉnh/thành từ GHN API Thật (hãy kiểm tra GHN_TOKEN trong .env):", err.message);
+    // Danh sách dự phòng nếu GHN_TOKEN chưa điền vào .env
+    sendSuccess(res, 'Lấy danh sách tỉnh/thành', [
+      { ProvinceID: 201, ProvinceName: 'Hà Nội' },
+      { ProvinceID: 202, ProvinceName: 'Hồ Chí Minh' },
+      { ProvinceID: 203, ProvinceName: 'Đà Nẵng' },
+      { ProvinceID: 204, ProvinceName: 'Hải Phòng' },
+      { ProvinceID: 205, ProvinceName: 'Cần Thơ' },
+      { ProvinceID: 206, ProvinceName: 'Bình Dương' },
+      { ProvinceID: 207, ProvinceName: 'Đồng Nai' },
+      { ProvinceID: 208, ProvinceName: 'Quảng Ninh' },
+      { ProvinceID: 209, ProvinceName: 'Thừa Thiên Huế' },
+      { ProvinceID: 210, ProvinceName: 'Khánh Hòa' },
+      { ProvinceID: 211, ProvinceName: 'Hưng Yên' },
+      { ProvinceID: 212, ProvinceName: 'Bắc Ninh' },
+      { ProvinceID: 213, ProvinceName: 'Hải Dương' },
+      { ProvinceID: 214, ProvinceName: 'Nam Định' },
+      { ProvinceID: 215, ProvinceName: 'Thái Bình' },
+      { ProvinceID: 216, ProvinceName: 'Ninh Bình' },
+      { ProvinceID: 217, ProvinceName: 'Thanh Hóa' },
+      { ProvinceID: 218, ProvinceName: 'Nghệ An' },
+      { ProvinceID: 219, ProvinceName: 'Hà Tĩnh' },
+      { ProvinceID: 220, ProvinceName: 'Lâm Đồng' }
+    ]);
+  }
+};
+
+export const getDistricts = async (req, res, next) => {
+  try {
+    const provinceId = req.query.province_id;
+    if (!provinceId) return sendSuccess(res, 'Thiếu province_id', []);
+    const data = await getGHNDistricts(provinceId);
+    const filtered = (data || []).filter(item => 
+      !item.DistrictName?.toLowerCase().includes('test') && 
+      !item.DistrictName?.toLowerCase().includes('alert')
+    );
+    if (filtered.length > 0) {
+      return sendSuccess(res, 'Lấy danh sách quận/huyện thành công', filtered);
+    }
+    throw new Error('Danh sách trống');
+  } catch (err) {
+    console.warn("Lỗi lấy quận/huyện từ GHN API Thật (hãy kiểm tra GHN_TOKEN trong .env):", err.message);
+    const pId = Number(req.query.province_id) || 201;
+    sendSuccess(res, 'Lấy danh sách quận/huyện', [
+      { DistrictID: 1442, DistrictName: 'Quận Ba Đình', ProvinceID: pId },
+      { DistrictID: 1443, DistrictName: 'Quận Cầu Giấy', ProvinceID: pId },
+      { DistrictID: 1444, DistrictName: 'Quận Đống Đa', ProvinceID: pId },
+      { DistrictID: 1482, DistrictName: 'Quận Hoàn Kiếm', ProvinceID: pId },
+      { DistrictID: 1717, DistrictName: 'Huyện Hoài Đức', ProvinceID: pId },
+      { DistrictID: 1446, DistrictName: 'Quận 1', ProvinceID: pId },
+      { DistrictID: 1447, DistrictName: 'Quận 3', ProvinceID: pId },
+      { DistrictID: 1450, DistrictName: 'Quận 7', ProvinceID: pId },
+      { DistrictID: 1452, DistrictName: 'Thành phố Thủ Đức', ProvinceID: pId },
+    ]);
+  }
+};
+
+export const getWards = async (req, res, next) => {
+  try {
+    const districtId = req.query.district_id;
+    if (!districtId) return sendSuccess(res, 'Thiếu district_id', []);
+    const data = await getGHNWards(districtId);
+    const filtered = (data || []).filter(item => 
+      !item.WardName?.toLowerCase().includes('test') && 
+      !item.WardName?.toLowerCase().includes('alert')
+    );
+    if (filtered.length > 0) {
+      return sendSuccess(res, 'Lấy danh sách phường/xã thành công', filtered);
+    }
+    throw new Error('Danh sách trống');
+  } catch (err) {
+    console.warn("Lỗi lấy phường/xã từ GHN API Thật (hãy kiểm tra GHN_TOKEN trong .env):", err.message);
+    const dId = Number(req.query.district_id) || 1443;
+    sendSuccess(res, 'Lấy danh sách phường/xã', [
+      { WardCode: '20101', WardName: 'Phường Dịch Vọng', DistrictID: dId },
+      { WardCode: '20102', WardName: 'Phường Dịch Vọng Hậu', DistrictID: dId },
+      { WardCode: '220208', WardName: 'Xã An Khánh', DistrictID: dId },
+      { WardCode: '20301', WardName: 'Phường Bến Nghé', DistrictID: dId },
+      { WardCode: '1A0101', WardName: 'Phường Phúc Xá', DistrictID: dId },
+    ]);
+  }
+};
 

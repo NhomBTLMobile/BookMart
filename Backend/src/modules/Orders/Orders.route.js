@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getAll, getById, create, update, remove, createGHN, ghnWebhook, getMyOrders, calculateFee } from './orders.controller.js'
+import { getAll, getById, create, update, remove, cancelOrder, createGHN, ghnWebhook, getMyOrders, calculateFee, getProvinces, getDistricts, getWards } from './orders.controller.js'
 import { authMiddleware } from '../../middleware/auth.middleware.js'
 
 const router = Router()
@@ -165,8 +165,13 @@ router.post('/', authMiddleware, create)
  */
 router.get('/me', authMiddleware, getMyOrders)
 router.post('/ghn/calculate-fee', authMiddleware, calculateFee)
+router.get('/ghn/provinces', getProvinces)
+router.get('/ghn/districts', getDistricts)
+router.get('/ghn/wards', getWards)
 router.get('/:id', authMiddleware, getById)
 router.put('/:id', authMiddleware, update)
+router.put('/:id/cancel', authMiddleware, cancelOrder)
+router.post('/:id/cancel', authMiddleware, cancelOrder)
 router.delete('/:id', authMiddleware, remove)
 router.post('/:id/ghn-create', authMiddleware, createGHN)
 router.post('/ghn-webhook', ghnWebhook)

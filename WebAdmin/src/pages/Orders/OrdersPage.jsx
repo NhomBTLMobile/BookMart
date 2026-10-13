@@ -94,12 +94,14 @@ export default function OrdersPage() {
   };
 
   const handleSaveStatus = async () => {
+    if (saving) return;
     try {
       const values = await form.validateFields();
       setSaving(true);
-      await crud.update(viewRec.id, values);
+      await ordersApi.update(viewRec.id, values);
       message.success("Cập nhật trạng thái thành công");
       setViewRec(prev => ({ ...prev, ...values }));
+      crud.refresh();
     } catch (err) {
       if (err?.response) message.error(err.response.data?.message || "Lỗi cập nhật");
     } finally {
@@ -108,13 +110,14 @@ export default function OrdersPage() {
   };
 
   const handleCreateGhn = async () => {
+    if (creatingGhn) return;
     try {
       const vals = await ghnForm.validateFields();
       setCreatingGhn(true);
       const res = await ordersApi.createGHN(viewRec.id, vals);
       message.success("Tạo vận đơn GHN thành công!");
       setGhnModalOpen(false);
-      crud.fetchData();
+      crud.refresh();
       setViewRec(prev => ({ ...prev, order_status: 'packing' }));
       form.setFieldsValue({ order_status: 'packing' });
     } catch (err) {
@@ -204,13 +207,14 @@ export default function OrdersPage() {
                 label: <span style={{ color: opt.color, fontWeight: 500 }}>{opt.label}</span>
               })),
               onClick: async (e) => {
+                if (e.key === currentKey) return;
                 if (['cancelled', 'delivered'].includes(currentKey) && e.key !== currentKey) {
                    return message.warning("Không thể đổi trạng thái của đơn đã hoàn thành hoặc đã hủy!");
                 }
                 try {
                   await ordersApi.update(rec.id, { order_status: e.key });
                   message.success("Cập nhật trạng thái thành công");
-                  crud.fetchData();
+                  crud.refresh();
                 } catch (err) {
                   message.error("Lỗi cập nhật trạng thái");
                 }

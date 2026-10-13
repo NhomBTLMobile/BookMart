@@ -9,7 +9,7 @@ export const orderService = {
       return { success: false, data: [] };
     }
   },
-  
+
   createOrder: async (data: any) => {
     try {
       const response = await api.post('/orders', data);
@@ -26,5 +26,27 @@ export const orderService = {
     } catch (e: any) {
       return { success: false, message: e.response?.data?.message || 'Không thể tính phí' };
     }
-  }
+  },
+
+  getOrderById: async (id: string) => {
+    try {
+      const response = await api.get(`/orders/${id}`);
+      return response.data;
+    } catch (e: any) {
+      return { success: false, message: e.response?.data?.message || 'Không thể lấy thông tin đơn hàng' };
+    }
+  },
+
+  cancelOrder: async (orderId: string) => {
+    try {
+      const response = await api.put(`/orders/${orderId}/cancel`);
+      return response.data;
+    } catch (e: any) {
+      return {
+        success: false,
+        message: e.response?.data?.message || 'Không thể hủy đơn hàng lúc này',
+      };
+    }
+  },
 };
+

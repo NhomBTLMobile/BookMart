@@ -49,5 +49,6 @@ export function useCrud(apiFns, limit = 10) {
     data, meta, page, setPage,
     search, handleSearch,
     loading, create, update, remove, refresh: fetch,
+    fetchData: fetch,
   }
 }

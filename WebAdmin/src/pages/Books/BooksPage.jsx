@@ -59,7 +59,7 @@ export default function BooksPage() {
   const { message } = App.useApp();
   const crud = useCrud(booksApi);
   const [form] = Form.useForm();
-  
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -69,9 +69,9 @@ export default function BooksPage() {
   const [publishers, setPublishers] = useState([]);
 
   useEffect(() => {
-    authorsApi.getAll({ limit: 1000 }).then(res => setAuthors(res.data.data)).catch(() => {});
-    categoriesApi.getAll({ limit: 1000 }).then(res => setCategories(res.data.data)).catch(() => {});
-    publishersApi.getAll({ limit: 1000 }).then(res => setPublishers(res.data.data)).catch(() => {});
+    authorsApi.getAll({ limit: 1000 }).then(res => setAuthors(res.data.data)).catch(() => { });
+    categoriesApi.getAll({ limit: 1000 }).then(res => setCategories(res.data.data)).catch(() => { });
+    publishersApi.getAll({ limit: 1000 }).then(res => setPublishers(res.data.data)).catch(() => { });
   }, []);
 
   const openCreate = () => {
@@ -229,7 +229,7 @@ export default function BooksPage() {
             allowClear
           />
         </div>
-        
+
         <Table
           dataSource={crud.data}
           columns={columns}
@@ -264,7 +264,7 @@ export default function BooksPage() {
         }
       >
         <Form form={form} layout="vertical" requiredMark="optional">
-          
+
           <Divider orientation="left" style={{ borderColor: '#34D399', color: '#059669' }}>Thông tin Cơ bản</Divider>
           <Row gutter={16}>
             <Col span={24}>
